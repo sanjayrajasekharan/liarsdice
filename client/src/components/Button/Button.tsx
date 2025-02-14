@@ -1,5 +1,5 @@
 import React from "react";
-import "./Button.module.css";
+import styles from "./Button.module.css";
 interface ButtonProps {
     onClick?: () => void;
     onMouseEnter?: () => void;
@@ -11,7 +11,7 @@ interface ButtonProps {
 
 const Button: React.FC<ButtonProps> = ({ onClick, onMouseEnter, onMouseLeave, text, disabled, variant='red' }) => {
     return (
-        <button className={variant} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} disabled={disabled}>
+        <button className={`${styles.button} ${styles[variant]}`} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} disabled={disabled}>
             {text}
         </button>
     );
