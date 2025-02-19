@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GameService } from '../services/gameService';
 import  Button from '../components/Button/Button';
+import Card from '../components/Card/Card';
 interface CreateGameProps {
     gameCode: string;
     setGameCode: (code: string) => void;
@@ -39,16 +40,15 @@ const CreateGame: React.FC<CreateGameProps> = ({ gameCode, setGameCode, playerNa
             setIsHost(true);
             navigate(`/game/${gameCode}`);
         } catch (error) {
-            // setErrorMessage('Failed to create game: ' + error.message); // Set error message on catch
+            setErrorMessage('Failed to create game: ' + error); // Set error message on catch
             console.error('Failed to create game:', error);
         }
     };
 
     return (
         <div className="container">
-            <div className="card">
-                <h1><em>NEW GAME</em></h1>
-                <div className="form-group">
+            <Card title="NEW GAME" error={errorMessage}>
+                {/* <h1><em>NEW GAME</em></h1> */}
                     <input
                         type="text"
                         value={playerName}
@@ -56,9 +56,8 @@ const CreateGame: React.FC<CreateGameProps> = ({ gameCode, setGameCode, playerNa
                         placeholder="Enter your name"
                         className="input-field"
                     />
-                    <Button onClick={handleCreateGame} text="Create Game" variant='red'/>
-                </div>
-            </div>
+                    <Button onClick={handleCreateGame} text="Create" variant='red'/>
+            </Card>
         </div>
     );
 };

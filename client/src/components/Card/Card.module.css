@@ -1,0 +1,70 @@
+.title {
+    font-family: "Crimson Text", serif;
+    font-size: 40px;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 35%;
+    height: 28%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+
+    /* Prevent card from resizing on desktop */
+    max-width: 400px;
+    min-width: 300px;
+    max-height: 500px;
+    min-height: 350px;
+    margin: auto;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .card {
+        width: 90%;  /* Allow it to take most of the screen */
+        height: auto; /* Let height adjust naturally */
+        padding: 40px; /* Less padding on small screens */
+    }
+
+    .title {
+        /* font-size: 28px; Adjust title size for mobile */
+    }
+}
+
+/* .error_message {
+    color: red;
+
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+} */
+
+.error_message {
+    color: red;
+    min-height: 20px; /* Always reserve space */
+    text-align: center;
+    font-size: 14px;
+}
+
+
+.form_group {
+    overflow-y: auto;
+    width: 70%;
+    margin: auto;
+    max-width: 300px; /* Lock max width */
+    min-width: 250px; /* Prevent too small on shrink */
+}
+
+.form_group * {
+    margin: 10px;
+    width: calc(100% - 20px);
+    box-sizing: border-box;
+}
