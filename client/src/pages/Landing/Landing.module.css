@@ -1,0 +1,47 @@
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 500px;
+    height: 400px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.form_group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: auto;
+    justify-content: center;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+}
+
+.button_container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.container {
+    min-height: 100vh;
+    min-width: 520px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.title {
+    font-family: 'Crimson Text', serif;
+    font-size: 40px;
+    /* margin-bottom: 10px; */
+  }
