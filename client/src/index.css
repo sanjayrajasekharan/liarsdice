@@ -34,33 +34,12 @@ body {
   min-height: 100vh;
 }
 
-h1 {
+/* h1 {
   font-family: 'Crimson Text', serif;
   font-size: 40px;
-  /* margin-bottom: 10px; */
-}
+} */
 
-button {
-  padding: 12px 24px;
-  font-size: 18px;
-  font-weight: 300;  /* Lighter font weight */
-  border-radius: 4px;
-  border: none;
-  background: linear-gradient(135deg, #b20000 0%, #890000 100%);  /* Brighter dark red gradient */
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
-}
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
-  background: linear-gradient(135deg, #660000 0%, #4c0000 100%);
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
+
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -107,7 +86,7 @@ body {
   padding: 20px;
 }
 
-.card {
+/* .card {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -119,9 +98,9 @@ body {
   flex-direction: column;
   justify-content: center;
   flex-shrink: 0;
-}
+} */
 
-.form-group {
+/* .form-group {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -130,8 +109,8 @@ body {
   max-width: 320px;
   margin-left: auto;
   margin-right: auto;
-  position: relative; /* Needed for absolute positioning */
-}
+  position: relative; 
+} */
 
 .error-message {
   color: red;
@@ -170,35 +149,7 @@ body {
   margin-top: 20px;
 }
 
-/* Style for all buttons in cards */
-.card button {
-    padding: 12px 24px;
-    font-size: 18px;
-    font-weight: 300;  /* Lighter font weight */
-    border-radius: 4px;
-    border: none;
-    background: linear-gradient(135deg, #b20000 0%, #890000 100%);  /* Brighter dark red gradient */
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-}
 
-.card button:hover {
-    background: linear-gradient(135deg, #660000 0%, #4c0000 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
-}
-
-/* Special styling for Join Game button on landing page */
-.button-container a:last-child button {
-    background: linear-gradient(135deg, #434343 0%, #212121 100%);
-}
-
-.button-container a:last-child button:hover {
-    background: linear-gradient(135deg, #212121 0%, #000000 100%);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
 
 @media (max-width: 600px) {
   .card {

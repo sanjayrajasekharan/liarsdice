@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LandingPage from "./pages/Landing";
+import LandingPage from "./pages/Landing/Landing";
 import CreateGame from "./pages/CreateGame";
 import JoinGame from "./pages/JoinGame";
 import GameRoom from "./components/GameRoom";

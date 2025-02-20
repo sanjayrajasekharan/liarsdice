@@ -1,3 +1,9 @@
+import { use } from "framer-motion/client";
+import {ServerMessage, PlayerMessage, ErrorMessage} from "../../../shared/messages.ts";
+import {GameStage, StateChange} from "../../../shared/states.ts";
+import { useGameState } from "../store/gameStore.ts";
+
+
 interface CreateGameResponse {
     gameCode: string;
     message: string;
@@ -89,6 +95,49 @@ export class GameService {
                 () => this.createWebSocketConnection(gameCode, playerId),
                 5000
             );
+        };
+
+        ws.onmessage = (event) => {
+            const message : ServerMessage = JSON.parse(event.data);
+
+            switch (message.change) {
+                case StateChange.GAME_STARTED:
+                    // handle game start, mount table, i think
+                    break;
+                case StateChange.PLAYER_LEFT:
+                    // handle player leaving, low prioirty
+                    break;
+                case StateChange.PLAYER_JOINED:
+                    // handle player joining, low priority
+                    break;
+                case StateChange.ROUND_STARTED:
+                    // handle round start, mount dice roller
+                    break;
+                case StateChange.DICE_ROLLED:
+                    // load keypad etc
+
+                case StateChange.CLAIM_MADE:
+                    // update zustand
+                    if (message.claim != null) {
+                        useGameState.getState().updateClaim(message.claim);
+                       
+                    }
+
+                    if (message.player != null) {
+
+                        useGameState.getState().updateTurn((message.player.index + 1 )%(useGameState.getState().opponents.length + 1));
+                    }
+                    break;
+
+                    case StateChange.CHALLENGE_MADE:
+                        // if (message.challenge != null) {
+
+                        //     useGameState.getState().updateClaim(message.challenge);
+                        // }
+                }
+
+
+
         };
 
         return ws;

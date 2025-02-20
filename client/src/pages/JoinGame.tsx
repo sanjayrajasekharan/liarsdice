@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../index.css'; // Ensure to import the CSS file
+// import 'index.css'; // Ensure to import the CSS file
+import Button from '../components/Button/Button';
+import Card from '../components/Card/Card';
 
 interface JoinGameProps {
     gameCode: string;
@@ -58,8 +60,7 @@ const JoinGame: React.FC<JoinGameProps> = ({ gameCode, setGameCode, playerName, 
     return (
         <div style={{ position: 'relative' }}>
             <div className="container">
-                <div className="card">
-                    <h1> <em>JOIN</em></h1> <div className="form-group">
+                <Card title="JOIN" error={errorMessage}>
                         <input
                             type="text"
                             value={gameCode}
@@ -84,10 +85,9 @@ const JoinGame: React.FC<JoinGameProps> = ({ gameCode, setGameCode, playerName, 
                                 }
                             }}
                         />
-                        <button onClick={handleJoinGame}>Join Game</button>
+                        <Button onClick={handleJoinGame} text="Join" variant='red'/>
                         {errorMessage && <p className="error-message">{errorMessage}</p>}
-                    </div>
-                </div>
+                </Card>
             </div>
         </div>
     );

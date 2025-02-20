@@ -8,35 +8,21 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
     padding: 40px;
-    width: 35%;
-    height: 28%;
+    width: 500px;
+    height: 400px;
     text-align: center;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    flex-shrink: 0;
+    /* justify-content: center; */
+    /* flex-shrink: 0; */
 
     /* Prevent card from resizing on desktop */
-    max-width: 400px;
-    min-width: 300px;
-    max-height: 500px;
-    min-height: 350px;
+    /* max-width: 400px; */
+    /* min-width: 300px; */
+    /* max-height: 500px; */
+    /* min-height: 350px; */
     margin: auto;
 }
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    .card {
-        width: 90%;  /* Allow it to take most of the screen */
-        height: auto; /* Let height adjust naturally */
-        padding: 40px; /* Less padding on small screens */
-    }
-
-    .title {
-        /* font-size: 28px; Adjust title size for mobile */
-    }
-}
-
 /* .error_message {
     color: red;
 
@@ -56,11 +42,14 @@
 
 
 .form_group {
+    display: flex;             /* Enable Flexbox */
+    flex-direction: column;    /* Stack elements vertically */
+    justify-content: center;   /* Center vertically */
+    align-items: center;       /* Center horizontally */
     overflow-y: auto;
     width: 70%;
     margin: auto;
-    max-width: 300px; /* Lock max width */
-    min-width: 250px; /* Prevent too small on shrink */
+    height: 100vh;             /* Full viewport height for vertical centering */
 }
 
 .form_group * {

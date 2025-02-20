@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import {Claim} from "../../../shared/actions.ts";
 
 interface Opponent {
     name: string;
@@ -17,11 +18,11 @@ interface Player {
 
 interface GameState {
     opponents: Opponent[];
-    claim: { quantity: number; value: number };
+    claim: Claim;
     turn: number;
     player: Player | null;
     setPlayer: (id: string, name: string, isHost: boolean) => void;
-    updateClaim: (quantity: number, value: number) => void;
+    updateClaim: (newClaim: Claim) => void;
     updateTurn: (turn: number) => void;
 }
 
@@ -29,9 +30,9 @@ export const useGameState = create<GameState>((set) => ({
     opponents: [] as Opponent[],
     updateOpponents: (newOpponents: Opponent[]): void =>
         set({ opponents: newOpponents }),
-    claim: { quantity: 0, value: 0 },
-    updateClaim: (newQuantity: number, newValue: number): void =>
-        set({ claim: { quantity: newQuantity, value: newValue } }),
+    claim: { value: 0, quantity: 0 },
+    updateClaim: (newClaim : Claim): void =>
+        set({ claim: newClaim }),
     turn: 0,
     updateTurn: (newTurn: number): void => set({ turn: newTurn }),
     player: null,
