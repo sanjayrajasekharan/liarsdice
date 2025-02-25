@@ -21,6 +21,7 @@ interface GameState {
     claim: Claim;
     turn: number;
     player: Player | null;
+    updateOpponents: (newOpponents: Opponent[]) => void;
     setPlayer: (id: string, name: string, isHost: boolean) => void;
     updateClaim: (newClaim: Claim) => void;
     updateTurn: (turn: number) => void;
