@@ -1,89 +1,127 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { GameService } from '../services/gameService';
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { GameService } from "../services/gameService";
+import { useGameState } from "../store/gameStore";
+import Card from "./Card/Card";
+import Button from "./Button/Button";
+import PlayerLobby from "./PlayerLobby/PlayerLobby";
+import JoinGame from "../pages/JoinGame";
 
 interface GameRoomProps {
-    isHost : boolean;
+    isHost: boolean;
     playerName: string;
-    playerId : string;
+    playerId: string;
 }
 
-const GameRoom: React.FC<GameRoomProps>= ({isHost, playerName, playerId}) => {
+const GameRoom: React.FC<GameRoomProps> = ({
+    isHost,
+    playerName,
+    playerId,
+}) => {
     const { gameCode } = useParams<{ gameCode: string }>();
     const navigate = useNavigate();
     // const [players, setPlayers] = useState<string[]>([]);
     const ws = useRef<WebSocket | null>(null);
     const [error, setError] = useState<string | null>(null);
-
+    const [name, setName] = useState<string>("");
 
     useEffect(() => {
+        console.log(gameCode);
         if (!gameCode) {
-            navigate('/');
+            console.log("No game code");
+            navigate("/");
             return;
         }
 
-        console.log(gameCode);
-        const websocket = GameService.createWebSocketConnection(gameCode, playerId);
-        websocket.onopen = () => {
-            console.log('Connected to game server');
+        // const websocket = GameService.createWebSocketConnection(gameCode, playerId);
+
+        const connectToGame = async () => {
+            try {
+                if (!useGameState().webSocket)
+                    console.log("player in Game but ");
+                GameService.joinGame(gameCode, playerName);
+            } catch (error) {
+                if (error instanceof Error) {
+                    useGameState.getState().updateError(error.message);
+                    navigate("/");
+                }
+            }
         };
 
-        websocket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            // Handle incoming messages
-            console.log(data);
-        };
+        // console.log("About to call gameExists with:", gameCode);
 
-        websocket.onclose = (event) => {
-            console.log('WebSocket connection closed:', event);
-        };
-
-        websocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-
-        ws.current = websocket;
-
-        return () => {
-            websocket.close();
-        };
-        
-    }, [])
+        if (useGameState.getState().gameCode === useGameState.getInitialState().gameCode) {
+            console.log("disconnected", GameService.getOrCreatePlayerId());
+            GameService.playerInGame(gameCode, GameService.getOrCreatePlayerId())
+                .then((inGame) => {
+                    if (inGame) {
+                        console.log("Player in game");
+                        GameService.rejoinGame(
+                            gameCode,
+                            GameService.getOrCreatePlayerId()
+                        );
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                    useGameState.getState().updateError(error.message);
+                    navigate("/");
+                });
+        }
+    }, [gameCode]);
 
     useEffect(() => {
         // TODO: check if gameCode is valid
         // Create WebSocket connection
         // gameCode is undefined when the component first mounts
         if (!gameCode) {
-            navigate('/');
+            navigate("/");
             return;
         }
-
     }, [gameCode, navigate, playerId]);
 
     const handleStartGame = () => {
         if (ws.current) {
-            ws.current.send(JSON.stringify({ action: 'START_GAME' }));
+            ws.current.send(JSON.stringify({ action: "START_GAME" }));
         }
+    };
+
+    const handleJoinGame = async () => {
+        if (gameCode && name) await GameService.joinGame(gameCode, name);
     };
 
     return (
         <div className="container">
-            <div className="card">
-                <h1>Game Room: {gameCode}</h1>
-                <h2>Players:</h2>
-                <ul>
-                    {/* {players.map((player, index) => (
-                        <li key={index}>{player}</li>
-                    ))} */}
-                </ul>
-                {isHost && (
-                    <button onClick={handleStartGame}>Start Game</button>
-                )}
-                {error && <p className="error-message">{error}</p>}
-            </div>
+            {/* if no player set ask for playerName and set*/}
+            {useGameState().player === null ? (
+                <Card title={`JOIN`} error={error}>
+                    <div>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Enter your name"
+                            className="input-field"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleJoinGame(); // Trigger the button press
+                                }
+                            }}
+                        />
+                        <Button
+                            onClick={handleJoinGame}
+                            text="Join"
+                            variant="red"
+                        />
+                    </div>
+                </Card>
+            ) : (
+                <Card title={`PLAYERS`} error={error}>
+                    <PlayerLobby />
+                </Card>
+            )}
         </div>
     );
 };
 
-export default GameRoom; 
+export default GameRoom;

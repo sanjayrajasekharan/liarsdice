@@ -3,9 +3,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 
 :root {
+  --font-size-base : 1rem;
+  --font-size-biggish : 1.75rem;
+  --font-size-big: 2.75rem;
+
+  --padding-small : 12px;
+  --padding-biggish : 24px;
+  
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
-  font-weight: 400;
+  
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -34,10 +41,10 @@ body {
   min-height: 100vh;
 }
 
-/* h1 {
+h1 {
   font-family: 'Crimson Text', serif;
-  font-size: 40px;
-} */
+  font-size: var(--font-size-big);
+}
 
 
 
@@ -74,7 +81,7 @@ body {
   color: #000000;
   background-color: #f0f2f5;
 }
-
+/*
 .container {
   min-height: 100vh;
   min-width: 520px;
@@ -85,6 +92,7 @@ body {
   justify-content: center;
   padding: 20px;
 }
+*/
 
 /* .card {
   background: white;
@@ -112,15 +120,18 @@ body {
   position: relative; 
 } */
 
+/*
 .error-message {
   color: red;
   position: absolute;
-  bottom: -30px; /* Moves the error message below the input fields */
+  bottom: -30px; 
   left: 0;
   width: 100%;
   text-align: center;
   font-size: 14px;
 }
+  
+
 .input-field {
   padding: 12px;
   font-size: 16px;
@@ -158,20 +169,15 @@ body {
     min-height: 400px;
   }
 }
+  */
 
+/*
 .button-emoji {
   display: inline-block;
   margin-left: 8px;
 }
 
-@keyframes spin {
-  0% {
-      transform: rotate(0deg);
-  }
-  100% {
-      transform: rotate(360deg);
-  }
-}
+
 
 .title-emoji {
     display: inline-block;
@@ -187,3 +193,7 @@ body {
         transform: rotate(360deg);
     }
 }
+
+
+
+*/

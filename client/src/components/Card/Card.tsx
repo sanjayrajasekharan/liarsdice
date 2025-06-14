@@ -4,7 +4,7 @@ import styles from "./Card.module.css";
 interface CardProps {
     title?: string;
     children: React.ReactNode;
-    error?: string;
+    error: string | null;
 }
 const Card: React.FC<CardProps> = ({ title, children, error }) => {
     return (

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 // import 'index.css'; // Ensure to import the CSS file
 import Button from '../components/Button/Button';
 import Card from '../components/Card/Card';
+import { use } from 'framer-motion/client';
+import { GameService } from '../services/gameService';
 
 interface JoinGameProps {
     gameCode: string;
@@ -16,6 +18,8 @@ interface JoinGameProps {
 const JoinGame: React.FC<JoinGameProps> = ({ gameCode, setGameCode, playerName, setPlayerName, playerId, setPlayerId }) => {
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
+    const location = useLocation();
+    
 
     function getOrCreatePlayerId() {
         let id = localStorage.getItem("playerId");
@@ -27,28 +31,18 @@ const JoinGame: React.FC<JoinGameProps> = ({ gameCode, setGameCode, playerName, 
     }
 
     useEffect(() => {
+        location.state?.error && setErrorMessage(useLocation().state.error);
+    }, [location]);
+
+    useEffect(() => {
         const id = getOrCreatePlayerId();
         setPlayerId(id);
     }, [setPlayerId]);
 
     const handleJoinGame = async () => {
         try {
-            const response = await fetch('http://localhost:3000/join-game', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ gameCode, playerId, playerName }),
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                setErrorMessage(errorData.error || 'An unknown error occurred');
-                setGameCode('');
-                console.error('Error joining game:', errorData);
-                return; // Exit if there's an error
-            }
-
+            // Call joinGame function from GameService
+            await GameService.joinGame(gameCode, playerName);
             setErrorMessage('');
             navigate(`/game/${gameCode}`);
         } catch (error) {

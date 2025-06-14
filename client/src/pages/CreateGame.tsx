@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GameService } from '../services/gameService';
 import  Button from '../components/Button/Button';
 import Card from '../components/Card/Card';
+import { useGameState } from '../store/gameStore';
 interface CreateGameProps {
     gameCode: string;
     setGameCode: (code: string) => void;
@@ -14,31 +15,24 @@ interface CreateGameProps {
     setIsHost: (isHost: boolean) => void;
 }
 
-const CreateGame: React.FC<CreateGameProps> = ({ gameCode, setGameCode, playerName, setPlayerName, playerId, setPlayerId, isHost, setIsHost }) => {
+const CreateGame: React.FC<CreateGameProps> = ({playerName, setPlayerName, playerId, setPlayerId, isHost, setIsHost }) => {
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState(''); // State for error message
+
+    const {gameCode} = useGameState();
+
 
     // Function to get or create playerId
     // Set playerId when the component mounts
     useEffect(() => {
-        const id = GameService.getOrCreatePlayerId();
-        setPlayerId(id);
-    }, []);
+        if (gameCode) {
+            navigate(`/game/${gameCode}`);
+        }
+    }, [gameCode]);
 
     const handleCreateGame = async () => {
         try {
-            const response = await fetch('http://localhost:3000/create-game', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ hostId: playerId, hostName: playerName }), // Include playerId in the request
-            });
-
-            const { gameCode } = await response.json();
-            setGameCode(gameCode); // Update gameCode state
-            setIsHost(true);
-            navigate(`/game/${gameCode}`);
+            GameService.createGame(playerName); // Call createGame function from GameService
         } catch (error) {
             setErrorMessage('Failed to create game: ' + error); // Set error message on catch
             console.error('Failed to create game:', error);
@@ -55,6 +49,7 @@ const CreateGame: React.FC<CreateGameProps> = ({ gameCode, setGameCode, playerNa
                         onChange={(e) => setPlayerName(e.target.value)}
                         placeholder="Enter your name"
                         className="input-field"
+                        onKeyDown={(e) => e.key === 'Enter' && handleCreateGame()}
                     />
                     <Button onClick={handleCreateGame} text="Create" variant='red'/>
             </Card>

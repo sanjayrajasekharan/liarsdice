@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import UserController from "../../components/UserController";
+import UserController from "../../components/UserController/UserController";
 import UserDisplay from "../../components/UserDisplay";
 import styles from "./Table.module.css";
 import { GameService } from "../../services/gameService";

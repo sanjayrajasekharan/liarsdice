@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
-import { createGame, joinGame, handleGameConnection } from './gameManager.js';
+import { createGame, joinGame, handleGameConnection, gameExists, playerInGame } from './gameManager.js';
 
 // Shared state for games
 const games = {};
@@ -37,6 +37,33 @@ app.post("/join-game", (req, res) => {
         playerIndex: result.playerIndex,
         message: `Player ${playerId} (${playerName}) joined the game`,
     });
+});
+
+
+// app.get("/game/:gameCode", (req, res) => {
+
+//     console.log(`Checking if game exists with code: ${req.params.gameCode}`);
+
+//     if (!gameExists(req.params.gameCode)) {
+//         return res.status(404).json({ error: "Game not found" });
+//     }
+
+//     res.status(200);
+// });
+// check if player is member of game
+app.get("/member/:gameCode/:playerId", (req, res) => {
+
+    console.log(`Checking if player ${req.params.playerId} is in game with code: ${req.params.gameCode}`);
+    
+    if (!gameExists(req.params.gameCode)) {
+        return res.status(404).json({ error: "Game not found" });
+    }
+
+    if (!playerInGame(req.params.gameCode, req.params.playerId)) {
+        return res.status(403).json({ error: "Player not found" });
+    }
+
+    res.status(200).json(true);
 });
 
 // Create a single HTTP server instance

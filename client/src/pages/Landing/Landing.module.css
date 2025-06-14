@@ -40,8 +40,27 @@
     padding: 20px;
 }
 
-.title {
-    font-family: 'Crimson Text', serif;
-    font-size: 40px;
-    /* margin-bottom: 10px; */
-  }
+.error_message {
+    color: red;
+    font-size: 14px;
+    height: 20px; /* Ensures space is always reserved */
+    display: flex;
+    align-items: center; /* Align text vertically */
+    justify-content: center; /* Center text horizontally */
+    white-space: nowrap; /* Prevents wrapping */
+}
+
+.title-emoji {
+    display: inline-block;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

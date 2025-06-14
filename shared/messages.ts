@@ -1,10 +1,12 @@
 import { StateChange } from './states.js';
 import { Action, Claim } from './actions.js';
 import { ErrorCode } from './errorCodes.js';
+import { SanitizedGameState } from './types.js';
 
 export interface ServerMessage {
     change : StateChange;
     player? : {
+        id: string;
         name : string;
         index: number};
     claim? : Claim;
@@ -17,6 +19,7 @@ export interface ServerMessage {
     };
     roll?: number;
     rolls?: number[];
+    gameState? : SanitizedGameState;
 }
 
 export interface PlayerMessage {

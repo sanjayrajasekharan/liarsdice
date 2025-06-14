@@ -8,39 +8,6 @@ interface DiceRollerProps {
     rolling: boolean;
 }
 
-// Standard dice layouts (3x3 grid) for **dice positioning**
-const diceLayouts: Record<number, number[][]> = {
-    1: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 0, 0],
-    ], // Single die centered
-    2: [
-        [0, 0, 0],
-        [1, 0, 1],
-        [0, 0, 0],
-    ], // Two dice diagonally
-    3: [
-        [0, 0, 0],
-        [1, 1, 1],
-        [0, 0, 0],
-    ], // Three dice in a diagonal
-    4: [
-        [1, 0, 1],
-        [0, 0, 0],
-        [1, 0, 1],
-    ], // Four dice in a square
-    5: [
-        [1, 0, 1],
-        [0, 1, 0],
-        [1, 0, 1],
-    ], // Five dice in an X shape
-    6: [
-        [0, 0, 0],
-        [1, 1, 1],
-        [1, 1, 1],
-    ], // Six dice in 3 rows of 2
-};
 
 // Standard die face values (3x3 grid)
 const dieFaces: Record<number, number[][]> = {
@@ -119,15 +86,17 @@ const DiceRoller: React.FC<DiceRollerProps> = ({
 
     let diceIndex = 0; // Track which dice to plac
 
+    console.log(numDice);
+
     // console.log(diceLayouts);
     return (
         <div className={styles.diceContainer}>
             {
             
             Array.from({ length: numDice }).map((_, index) => ( 
-                        <motion.div
-                            // key={`${rowIndex}-${colIndex}`}
-                            className={styles.dice}
+                <motion.div
+                key={index}
+                className={styles.dice}
                             animate={
                                 rolling ? { scale: [1, 1.1, 1] } : { scale: 1 }
                             } // Subtle scale effect
@@ -138,19 +107,17 @@ const DiceRoller: React.FC<DiceRollerProps> = ({
                             }
                         >
                             <div className={styles.diceFace}>
-                                {dieFaces[tempDiceValues[diceIndex++]].map(
-                                    (faceRow, faceRowIndex) =>
-                                        faceRow.map((dot, faceColIndex) => (
-                                            <div
-                                                key={`${faceRowIndex}-${faceColIndex}`}
-                                                className={`${styles.dot} ${
-                                                    dot ? styles.activeDot : ""
-                                                }`}
-                                            />
-                                        ))
-                                )}
-                            </div>
-                        </motion.div>
+                    {dieFaces[tempDiceValues[index]].map((faceRow, faceRowIndex) =>
+                        faceRow.map((dot, faceColIndex) => (
+                            <div
+                                key={`${faceRowIndex}-${faceColIndex}`}
+                                className={`${styles.dot} ${dot ? styles.activeDot : ""}`}
+                            />
+                        ))
+                    )}
+                </div>
+            </motion.div>
+             
                     ) 
                 
             )}

@@ -9,10 +9,13 @@ import {
 import { GameStage, StateChange } from "../shared/states.js";
 import { Action } from "../shared/actions.js";
 import { send } from "process";
+import { randomUUID } from "crypto";
+import { SanitizedGameState } from "../shared/types.js";
 
 export interface Player {
     name: string;
-    id: string; // change to hash
+    privateId: string; // change to hash
+    publicId: string;
     ws: WebSocket | null;
     dice: number[];
     remainingDice: number;
@@ -37,6 +40,14 @@ export type GameCode = string;
 // Store the games by gameCode
 const games: { [gameCode: GameCode]: Game } = {};
 
+export function gameExists(gameCode: GameCode): boolean {
+    return !!games[gameCode];
+}
+
+export function playerInGame(gameCode: GameCode, playerId: string): boolean {
+    return games[gameCode].players[playerId] !== undefined;
+}
+
 export function createGame(hostId: string, hostName: string): GameCode {
     console.log(`Creating game for host: ${hostId} (${hostName})`);
     let gameCode: GameCode;
@@ -52,7 +63,8 @@ export function createGame(hostId: string, hostName: string): GameCode {
 
     const host = {
         name: hostName,
-        id: hostId,
+        privateId: hostId,
+        publicId: randomUUID(), //generate a random code for the player to share with others
         ws: null,
         remainingDice: 6,
         dice: [],
@@ -84,7 +96,10 @@ export function joinGame(
 ) {
     if (!games[gameCode]) {
         return { error: "Game not found" };
-    } else if (games[gameCode].players[playerId]) {
+    } else if (
+        games[gameCode].players[playerId] &&
+        games[gameCode].players[playerId].active
+    ) {
         return { error: "Player already in the game" };
     } else if (games[gameCode].numPlayers >= 6) {
         return { error: "Game is full" };
@@ -92,25 +107,55 @@ export function joinGame(
         return { error: "Game is in progress" };
     }
 
-    games[gameCode].players[playerId] = {
-        name: playerName,
-        id: playerId,
-        ws: null,
-        remainingDice: 6,
-        dice: [],
-        hasRolled: false,
-        startRoll: null,
-        index: games[gameCode].numPlayers,
-        active: false,
-    };
+    if (!games[gameCode].players[playerId]) {
+        games[gameCode].players[playerId] = {
+            name: playerName,
+            privateId: playerId,
+            publicId: randomUUID(),
+            ws: null,
+            remainingDice: 6,
+            dice: [],
+            hasRolled: false,
+            startRoll: null,
+            index: games[gameCode].numPlayers,
+            active: false,
+        };
 
-    games[gameCode].numPlayers += 1;
+        games[gameCode].numPlayers += 1;
+    }
 
     return {
         gameCode,
         playerIndex: games[gameCode].players[playerId].index,
         message: `Player ${playerId} (${playerName}) joined the game`,
     };
+}
+
+function removePlayer(gameCode: string, playerId: string) : void {
+    const game = games[gameCode];
+    const player = game.players[playerId];
+
+    delete game.players[playerId];
+    game.numPlayers -= 1;
+
+    if (game.numPlayers == 0) {
+        delete games[gameCode];
+    }
+
+    const playerIndex = player.index
+
+    //map
+
+    Object.keys(game.players).forEach((pId : string) => {
+        const p = game.players[pId];
+        if (game.hostId == playerId && p.index == 1 + playerIndex) {
+            game.hostId = pId;
+        }
+        if (p.index > playerIndex) {
+            p.index -= 1;
+        }
+    }
+);
 }
 
 // Function to handle a new WebSocket connection for a game room
@@ -124,7 +169,7 @@ export function handleGameConnection(
     if (!game) {
         console.error(
             `${ErrorCode.GAME_NOT_FOUND} : ${
-                errorDescription[ErrorCode.GAME_NOT_FOUND]
+                errorDescription[ErrorCode.GAME_NOT_FOUND] + ": " + gameCode
             }`
         ); // Error that's getting flagged
         ws.close(
@@ -150,11 +195,20 @@ export function handleGameConnection(
         return;
     } else {
         player.ws = ws;
+        player.active = true;
         console.log(`Player ${playerId} connected to game ${gameCode}`);
-        broadcastMessageToAll(game, {
-            change: StateChange.PLAYER_JOINED,
-            player: { name: player.name, index: player.index },
-        });
+        broadcastMessageToAll(
+            game,
+            {
+                change: StateChange.PLAYER_JOINED,
+                player: {
+                    name: player.name,
+                    index: player.index,
+                    id: player.publicId,
+                },
+            },
+            player
+        );
         sendGameStateToPlayer(player, gameCode);
     }
 
@@ -172,9 +226,18 @@ export function handleGameConnection(
         console.log(`${playerId} disconnected from game: ${gameCode}`);
         broadcastMessageToAll(game, {
             change: StateChange.PLAYER_LEFT,
-            player: {name: player.name, index: player.index}
-        })
+            player: {
+                name: player.name,
+                index: player.index,
+                id: player.publicId,
+            },
+        });
         player.ws = null;
+        player.active = false;
+        
+        if (game.gameStage == GameStage.PRE_GAME) {
+            removePlayer(gameCode, playerId);
+        }
     });
 
     // broadcastGameState(gameCode);
@@ -214,10 +277,11 @@ function handleMessage(
         default:
             console.error(`Invalid action: ${message.action}`);
     }
+    console.log(games[gameCode]);
 }
 
 function startGame(game: Game, player: Player) {
-    if (game.hostId !== player.id) {
+    if (game.hostId !== player.privateId) {
         sendErrorToPlayer(player, ErrorCode.UNAUTHORIZED);
     } else if (game.gameStage !== GameStage.PRE_GAME) {
         sendErrorToPlayer(player, ErrorCode.GAME_IN_PROGRESS);
@@ -233,7 +297,7 @@ function startGame(game: Game, player: Player) {
 function startRound(game: Game, player: Player) {
     if (game.gameStage !== GameStage.START_SELECTION) {
         sendErrorToPlayer(player, ErrorCode.ROUND_NOT_ACTIVE);
-    } else if (player.id !== game.hostId) {
+    } else if (player.privateId !== game.hostId) {
         sendErrorToPlayer(player, ErrorCode.UNAUTHORIZED);
     } else {
         game.gameStage = GameStage.START_SELECTION;
@@ -251,7 +315,7 @@ function makeClaim(
 ) {
     if (game.gameStage !== GameStage.ROUND_ROBBIN) {
         sendErrorToPlayer(player, ErrorCode.ROUND_NOT_ACTIVE);
-    } else if (player.id !== game.players[game.turnIndex].id) {
+    } else if (player.privateId !== game.players[game.turnIndex].privateId) {
         sendErrorToPlayer(player, ErrorCode.OUT_OF_TURN);
     } else if (!isValidClaim(game.currentClaim, claim)) {
         sendErrorToPlayer(player, ErrorCode.INVALID_CLAIM);
@@ -270,7 +334,7 @@ function makeClaim(
 function makeChallenge(game: Game, player: Player) {
     if (game.gameStage !== GameStage.ROUND_ROBBIN) {
         sendErrorToPlayer(player, ErrorCode.ROUND_NOT_ACTIVE);
-    } else if (player.id !== game.players[game.turnIndex].id) {
+    } else if (player.privateId !== game.players[game.turnIndex].privateId) {
         sendErrorToPlayer(player, ErrorCode.OUT_OF_TURN);
     } else if (!game.currentClaim) {
         sendErrorToPlayer(player, ErrorCode.INVALID_CHALLENGE);
@@ -362,6 +426,7 @@ function rollForStart(player: Player, game: Game) {
             player: {
                 name: startingPlayer.name,
                 index: startingPlayer.index,
+                id: startingPlayer.publicId,
             },
         });
     }
@@ -404,24 +469,34 @@ function sendErrorToPlayer(player: Player, errorCode: ErrorCode) {
 function sendGameStateToPlayer(player: Player, gameCode: GameCode) {
     let game = games[gameCode];
 
-    let sanitizedGameState = {
-        host: game.players[game.hostId].index,
+    let sanitizedGameState : SanitizedGameState = {
+        host: game.players[game.hostId].publicId,
         currentClaim: game.currentClaim,
         turnIndex: game.turnIndex,
         gameStage: game.gameStage,
 
-        players: Object.values(game.players)
+        opponents: Object.values(game.players)
+            .filter((p) => p.privateId !== player.privateId)
             .map((player) => ({
                 name: player.name,
                 remainingDice: player.remainingDice,
                 index: player.index,
+                id: player.privateId,
+                dice: player.dice
             }))
+
             .sort((a, b) => a.index - b.index),
+        player: {
+            name: player.name,
+            remainingDice: player.remainingDice,
+            dice: player.dice,
+            index: player.index,
+            id: player.publicId,
+            isHost: player.privateId === game.hostId,
+        },
     };
 
-    if (player && player.ws && player.ws.readyState === WebSocket.OPEN) {
-        player.ws.send(JSON.stringify(sanitizedGameState));
-    }
+    sendMessageToPlayer(player, { change: StateChange.YOU_JOINED, gameState: sanitizedGameState });
 }
 
 function sendMessageToPlayer(player: Player, message: ServerMessage) {
@@ -431,10 +506,14 @@ function sendMessageToPlayer(player: Player, message: ServerMessage) {
 }
 
 // Utility to broadcast a specific message to all players
-function broadcastMessageToAll(game: Game, message: ServerMessage) {
+function broadcastMessageToAll(
+    game: Game,
+    message: ServerMessage,
+    exclude: Player | null = null
+) {
     const playersArray = Object.values(game.players) as Player[];
     playersArray.forEach((player: Player) => {
-        sendMessageToPlayer(player, message);
+        if (player !== exclude) sendMessageToPlayer(player, message);
     });
 }
 
@@ -459,4 +538,3 @@ function countDice(game: Game, value: number): number {
         return total + player.dice.filter((die) => die === value).length;
     }, 0);
 }
-

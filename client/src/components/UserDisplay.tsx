@@ -3,13 +3,14 @@ import React from "react";
 interface UserDisplayProps {
   userName: string;
   userIcon: string; // Expecting an emoji
+  size?: number;
 }
 
-const UserDisplay: React.FC<UserDisplayProps> = ({ userName, userIcon }) => {
+const UserDisplay: React.FC<UserDisplayProps> = ({ userName, userIcon, size=80}) => {
   return (
     <div style={styles.container}>
-      <div style={styles.iconContainer}>
-        <span style={styles.icon}>{userIcon}</span>
+      <div style={{...styles.iconContainer, width: `${size}px`, height: `${size}px`}}>
+        <span style={{...styles.icon, fontSize: `${55/88 * size}px`}}>{userIcon}</span>
       </div>
       <p style={styles.userName}>{userName}</p>
     </div>
@@ -23,11 +24,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
-    padding: "10px",
   },
   iconContainer: {
-    width: "80px",
-    height: "80px",
     borderRadius: "50%",
     backgroundColor: "#f0f0f0",
     display: "flex",
@@ -37,7 +35,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
   },
   icon: {
-    fontSize: "55px",
+    // fontSize: "55px",
   },
   userName: {
     marginTop: "8px",

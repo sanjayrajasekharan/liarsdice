@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import Button from '../../components/Button/Button';
 import styles from './Landing.module.css';
+import { useGameState } from '../../store/gameStore';
 
 const LandingPage: React.FC = () => {
     const [titleEmoji, setTitleEmoji] = useState('🎲');
+    const location = useLocation();
+    const error = useGameState((state) => state.error);
 
     const handleMouseEnter = () => {
         const emoji = document.querySelector('.title-emoji') as HTMLElement;
@@ -37,6 +40,7 @@ const LandingPage: React.FC = () => {
                         <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="Join Game" variant='black'/>
                     </Link>
                 </div>
+                <div className={styles.error_message}>{error || " "}</div>
                 </div>
             </div>
         </div>

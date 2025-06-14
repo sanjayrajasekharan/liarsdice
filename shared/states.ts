@@ -8,6 +8,7 @@ export enum GameStage {
 }
 
 export enum StateChange {
+    YOU_JOINED = "YOU_JOINED",
     PLAYER_JOINED = "PLAYER_JOINED",
     PLAYER_LEFT = "PLAYER_LEFT",
     GAME_STARTED = "GAME_STARTED",

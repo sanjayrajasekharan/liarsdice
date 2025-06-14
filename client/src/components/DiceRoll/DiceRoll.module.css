@@ -1,56 +1,49 @@
-/* Define a root variable for dice size */
-:root {
-  --dice-size: 50px; /* Change this value to resize everything */
-}
-
-/* Dice container uses a 3x3 grid to match die layouts */
 .diceContainer {
-  /* display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr); */
-  display:flex;
-  gap: calc(var(--dice-size) * 0.2); /* Scales proportionally */
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  width: fit-content;
-  margin: auto;
-}
+  /* width: 200px; */
+  /* height: 100%; */
+  gap: 5px;
+  /* border: 1px solid black;
+   */
+   /* margin-bottom: 10px; */
+} 
 
-/* Dice appearance */
+/* Dice scales relative to the container */
 .dice {
-  width: var(--dice-size);
-  height: var(--dice-size);
+  width: 45px; /* 1/6 of the container width */
+  aspect-ratio: 1 / 1; /* Keeps dice square */
   background: white;
-  border: calc(var(--dice-size) * 0.06) solid black; /* Border scales with dice */
-  border-radius: calc(var(--dice-size) * 0.14); /* Slightly rounded */
+  border: 2.5px solid black;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease-in-out;
+
+  /* top: 50%;
+  left: 50%;
+  transform-origin: center center; */
+
 }
 
-/* Empty slots ensure correct positioning of dice */
-.emptySlot {
-  width: var(--dice-size);
-  height: var(--dice-size);
-  visibility: hidden;
-}
-
-/* Dice dot layout */
+/* Dice face uses 3x3 grid */
 .diceFace {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  width: 100%;
-  height: 100%;
-  padding: calc(var(--dice-size) * 0.15);
+  width: 90%;
+  height: 90%;
+  padding: 5%; /* Prevent dots from touching edges */
 }
 
-/* Dice dots */
+/* Dots scale with dice */
 .dot {
-  width: calc(var(--dice-size) * 0.15);
-  height: calc(var(--dice-size) * 0.15);
+  width: 50%; /* Larger dots relative to grid cell */
+  height: 50%;
   border-radius: 50%;
   margin: auto;
   background-color: transparent;
@@ -60,15 +53,3 @@
 .activeDot {
   background-color: black;
 }
- /* @keyframes breathingEffect {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); } 
-    100% { transform: scale(1); }
-}
-
-
-/* Apply breathing effect only to inner elements (dots & face) */
-/*
-.dice .diceFace {
-    animation: breathingEffect 1.5s infinite ease-in-out;
-}  */

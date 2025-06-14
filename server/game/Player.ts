@@ -13,7 +13,7 @@ export class Player {
   isHost: boolean = false;
   ws: WebSocket | null = null;
 
-  constructor(privateId: string, name: string, index: number, publicId: string) {
+  constructor(privateId: string, publicId: string, name: string, index: number) {
     this.privateId = privateId;
     this.name = name;
     this.index = index;
