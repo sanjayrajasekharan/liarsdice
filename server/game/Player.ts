@@ -1,8 +1,8 @@
 import WebSocket from 'ws';
 
 export class Player {
-  readonly privateId: string;
-  readonly publicId: string;
+  readonly bearerToken: string;
+  readonly playerId: string;
   name: string;
   index: number;
   remainingDice: number = 6;
@@ -13,11 +13,11 @@ export class Player {
   isHost: boolean = false;
   ws: WebSocket | null = null;
 
-  constructor(privateId: string, publicId: string, name: string, index: number) {
-    this.privateId = privateId;
+  constructor(playerId: string, name: string, index: number) {
+    this.bearerToken = this.generateBearerToken();
     this.name = name;
     this.index = index;
-    this.publicId = publicId;
+    this.playerId = playerId;
   }
 
   connect(ws: WebSocket) {
@@ -28,6 +28,10 @@ export class Player {
   disconnect() {
     this.ws = null;
     this.active = false;
+  }
+
+  private generateBearerToken(): string {
+    return 'Bearer ' + Math.random().toString(36).substring(2);
   }
 
   rollDice() {
@@ -41,9 +45,19 @@ export class Player {
     this.startRoll = null;
   }
 
+  resetForRound() {
+    this.clearDice();
+    this.hasRolled = false;
+    this.startRoll = null;
+  }
+
   send(message: object) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     }
+  }
+
+  public get privateId(): string {
+    return this.playerId;
   }
 }
