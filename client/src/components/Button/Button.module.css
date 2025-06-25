@@ -1,37 +1,153 @@
+/* Button component using design system */
 .button {
-    padding: var(--padding-small) var(--padding-biggish);
-    font-size: var(--font-size-base);
-    transition: all 0.3s ease;
-    border-radius: 4px;
+    /* Base button styles */
+    padding: var(--space-md) var(--space-xl);
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    font-family: var(--font-secondary);
+    
+    /* Layout and appearance */
+    border-radius: var(--radius-lg);
     border: none;
+    cursor: pointer;
+    
+    /* Transitions */
+    transition: all var(--duration-normal) var(--ease-out);
+    
+    /* Interactive states */
+    transform: translateY(0);
+    
+    /* Typography */
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    
+    /* Accessibility */
+    min-height: calc(var(--space-3xl) + var(--space-xs));
+    position: relative;
+    overflow: hidden;
 }
 
 .button:hover {
-    cursor: pointer;
-    transition: all 0.3s ease;
-    transform: translateY(-2px);
+    transform: translateY(calc(var(--space-xs) * -0.5));
+    transition: all var(--duration-fast) var(--ease-back);
 }
 
+.button:active {
+    transform: translateY(0);
+    transition: all var(--duration-instant) var(--ease-linear);
+}
+
+.button:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Red variant - Primary action */
 .red {
     background: linear-gradient(
         135deg,
-        #b20000 0%,
-        #890000 100%
+        var(--color-primary-600) 0%,
+        var(--color-primary-700) 100%
     );
-    color: white;
+    color: var(--text-inverse);
+    box-shadow: var(--shadow-sm);
 }
 
-.red:hover {
-    background: linear-gradient(135deg, #660000 0%, #4c0000 100%);
-    box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
+.red:hover:not(:disabled) {
+    background: linear-gradient(
+        135deg, 
+        var(--color-primary-700) 0%, 
+        var(--color-primary-800) 100%
+    );
+    box-shadow: var(--shadow-lg);
 }
 
+.red:active:not(:disabled) {
+    background: linear-gradient(
+        135deg, 
+        var(--color-primary-800) 0%, 
+        var(--color-primary-900) 100%
+    );
+    box-shadow: var(--shadow-md);
+}
+
+/* Black variant - Secondary action */
 .black {
-    background: linear-gradient(135deg, #434343 0%, #212121 100%);
-    color: white;
+    background: linear-gradient(
+        135deg, 
+        var(--color-neutral-600) 0%, 
+        var(--color-neutral-700) 100%
+    );
+    color: var(--text-inverse);
+    box-shadow: var(--shadow-sm);
 }
 
-.black:hover {
-    background: linear-gradient(135deg, #212121 0%, #000000 100%);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+.black:hover:not(:disabled) {
+    background: linear-gradient(
+        135deg, 
+        var(--color-neutral-700) 0%, 
+        var(--color-neutral-800) 100%
+    );
+    box-shadow: var(--shadow-lg);
+}
+
+.black:active:not(:disabled) {
+    background: linear-gradient(
+        135deg, 
+        var(--color-neutral-800) 0%, 
+        var(--color-neutral-900) 100%
+    );
+    box-shadow: var(--shadow-md);
+}
+
+/* Size variants */
+.small {
+    padding: var(--space-xs) var(--space-lg);
+    font-size: var(--text-sm);
+    min-height: var(--space-2xl);
+}
+
+.large {
+    padding: var(--space-lg) var(--space-2xl);
+    font-size: var(--text-lg);
+    min-height: var(--space-4xl);
+}
+
+/* Outline variants */
+.redOutline {
+    background: transparent;
+    color: var(--color-primary-600);
+    border: 2px solid var(--color-primary-600);
+    box-shadow: none;
+}
+
+.redOutline:hover:not(:disabled) {
+    background: var(--color-primary-50);
+    color: var(--color-primary-700);
+    border-color: var(--color-primary-700);
+    box-shadow: var(--shadow-sm);
+}
+
+.blackOutline {
+    background: transparent;
+    color: var(--color-neutral-700);
+    border: 2px solid var(--color-neutral-700);
+    box-shadow: none;
+}
+
+.blackOutline:hover:not(:disabled) {
+    background: var(--color-neutral-100);
+    color: var(--color-neutral-800);
+    border-color: var(--color-neutral-800);
+    box-shadow: var(--shadow-sm);
 }

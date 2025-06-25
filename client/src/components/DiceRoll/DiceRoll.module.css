@@ -1,33 +1,39 @@
+/* Dice Roll component using design system */
 .diceContainer {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  /* width: 200px; */
-  /* height: 100%; */
-  gap: 5px;
-  /* border: 1px solid black;
-   */
-   /* margin-bottom: 10px; */
+  gap: var(--space-sm);
+  padding: var(--space-base);
+  border-radius: var(--radius-lg);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-light);
 } 
 
 /* Dice scales relative to the container */
 .dice {
-  width: 45px; /* 1/6 of the container width */
-  aspect-ratio: 1 / 1; /* Keeps dice square */
-  background: white;
-  border: 2.5px solid black;
-  border-radius: 5px;
+  width: calc(var(--space-unit) * 2.8);
+  aspect-ratio: 1 / 1;
+  background: var(--surface-elevated);
+  border: 2px solid var(--color-neutral-800);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease-in-out;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--duration-fast) var(--ease-out);
+  cursor: pointer;
+}
 
-  /* top: 50%;
-  left: 50%;
-  transform-origin: center center; */
+.dice:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
 
+.dice:active {
+  transform: scale(0.98);
+  transition: transform var(--duration-instant) var(--ease-linear);
 }
 
 /* Dice face uses 3x3 grid */
@@ -37,19 +43,37 @@
   grid-template-rows: repeat(3, 1fr);
   width: 90%;
   height: 90%;
-  padding: 5%; /* Prevent dots from touching edges */
+  padding: 5%;
 }
 
 /* Dots scale with dice */
 .dot {
-  width: 50%; /* Larger dots relative to grid cell */
+  width: 50%;
   height: 50%;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   margin: auto;
   background-color: transparent;
-  transition: background-color 0.1s ease-in-out;
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 .activeDot {
-  background-color: black;
+  background-color: var(--color-neutral-900);
+}
+
+/* Responsive dice sizing */
+@media (max-width: 640px) {
+  .dice {
+    width: calc(var(--space-unit) * 2.4);
+  }
+  
+  .diceContainer {
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .dice {
+    width: calc(var(--space-unit) * 2);
+  }
 }

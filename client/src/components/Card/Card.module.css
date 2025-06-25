@@ -1,54 +1,115 @@
+/* Card component using design system */
 .card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
-    padding: 40px;
-    width: 500px;
-    height: 400px;
-    text-align: center;
+    /* Surface styling */
+    background: var(--surface-elevated);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    
+    /* Layout */
+    padding: var(--space-2xl);
+    width: 100%;
+    max-width: var(--container-lg);
+    min-height: var(--container-sm);
+    
+    /* Flexbox layout */
     display: flex;
     flex-direction: column;
-    /* justify-content: center; */
-    /* flex-shrink: 0; */
-
-    /* Prevent card from resizing on desktop */
-    /* max-width: 400px; */
-    /* min-width: 300px; */
-    /* max-height: 500px; */
-    /* min-height: 350px; */
-    margin: auto;
-}
-/* .error_message {
-    color: red;
-
-    bottom: -10px;
-    left: 0;
-    width: 100%;
     text-align: center;
-    font-size: 14px;
-} */
+    margin: 0 auto;
+    
+    /* Responsive behavior */
+    flex-shrink: 0;
+    
+    /* Border for better definition */
+    border: 1px solid var(--border-light);
+    
+    /* Subtle transition for interactive states */
+    transition: box-shadow var(--duration-normal) var(--ease-out);
+}
 
+.card:hover {
+    box-shadow: var(--shadow-xl);
+}
+
+/* Error message styling */
 .error_message {
-    color: red;
-    min-height: 20px; /* Always reserve space */
+    color: var(--color-error-600);
+    font-size: var(--text-sm);
     text-align: center;
-    font-size: 14px;
+    min-height: calc(var(--text-sm) * var(--leading-normal));
+    margin-top: var(--space-xs);
+    font-weight: var(--font-medium);
 }
 
-
+/* Form group styling */
 .form_group {
-    display: flex;             /* Enable Flexbox */
-    flex-direction: column;    /* Stack elements vertically */
-    justify-content: center;   /* Center vertically */
-    align-items: center;       /* Center horizontally */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-lg);
+    width: 100%;
+    max-width: var(--container-sm);
+    margin: 0 auto;
+    flex: 1;
     overflow-y: auto;
-    width: 70%;
-    margin: auto;
-    height: 100vh;             /* Full viewport height for vertical centering */
+    padding: var(--space-base) 0;
 }
 
-.form_group * {
-    margin: 10px;
-    width: calc(100% - 20px);
-    box-sizing: border-box;
+.form_group > * {
+    width: 100%;
+    max-width: var(--container-xs);
+}
+
+/* Card title styling */
+.card h1,
+.card h2,
+.card h3 {
+    color: var(--text-primary);
+    margin-bottom: var(--space-lg);
+    font-family: var(--font-primary);
+    font-weight: var(--font-bold);
+}
+
+.card h1 {
+    font-size: var(--text-3xl);
+}
+
+.card h2 {
+    font-size: var(--text-2xl);
+}
+
+.card h3 {
+    font-size: var(--text-xl);
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+    .card {
+        margin: var(--space-base);
+        padding: var(--space-xl);
+        max-width: none;
+        border-radius: var(--radius-lg);
+    }
+    
+    .card h1 {
+        font-size: var(--text-2xl);
+    }
+    
+    .card h2 {
+        font-size: var(--text-xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        margin: var(--space-sm);
+        padding: var(--space-lg);
+        min-height: auto;
+        border-radius: var(--radius-md);
+    }
+    
+    .form_group {
+        gap: var(--space-base);
+    }
 }

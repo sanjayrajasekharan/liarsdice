@@ -1,28 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Button from '../../components/Button/Button';
 import styles from './Landing.module.css';
 import { useGameState } from '../../store/gameStore';
 
 const LandingPage: React.FC = () => {
     const [titleEmoji, setTitleEmoji] = useState('🎲');
-    const location = useLocation();
+    const [isSpinning, setIsSpinning] = useState(false);
     const error = useGameState((state) => state.error);
 
+    const triggerSpin = (newEmoji: string) => {
+        if (isSpinning) return; // Prevent multiple animations
+        
+        setIsSpinning(true);
+        setTimeout(() => {
+            setTitleEmoji(newEmoji);
+            setTimeout(() => setIsSpinning(false), 500); // Match animation duration
+        }, 250); // Half way through the spin
+    };
+
     const handleMouseEnter = () => {
-        const emoji = document.querySelector('.title-emoji') as HTMLElement;
-        emoji.style.animation = 'none';  // Reset animation
-        emoji.offsetHeight;  // Trigger reflow
-        emoji.style.animation = 'spin 0.5s forwards';
-        setTimeout(() => setTitleEmoji('😈'), 250);
+        triggerSpin('😈');
     };
 
     const handleMouseLeave = () => {
-        const emoji = document.querySelector('.title-emoji') as HTMLElement;
-        emoji.style.animation = 'none';  // Reset animation
-        emoji.offsetHeight;  // Trigger reflow
-        emoji.style.animation = 'spin 0.5s forwards';
-        setTimeout(() => setTitleEmoji('🎲'), 250);
+        triggerSpin('🎲');
     };
 
     return (
@@ -30,7 +32,10 @@ const LandingPage: React.FC = () => {
             <div className={styles.card}>
             <div className={styles.form_group}>
                 <h1 className={styles.title}>
-                    <em>LIAR'S DICE</em>&nbsp;&nbsp;<span className="title-emoji">{titleEmoji}</span>
+                    <em>LIAR'S DICE</em>&nbsp;&nbsp;
+                    <span className={`${styles.titleEmoji} ${isSpinning ? styles.spin : ''}`}>
+                        {titleEmoji}
+                    </span>
                 </h1>
                 <div className={styles.button_container}>
                     <Link to="/create">
@@ -38,6 +43,15 @@ const LandingPage: React.FC = () => {
                     </Link>
                     <Link to="/join">
                         <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="Join Game" variant='black'/>
+                    </Link>
+                    <Link to="/mock">
+                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="🧪 Test UI" variant='black'/>
+                    </Link>
+                    <Link to="/game-new/TEST123">
+                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="✨ New UI" variant='black'/>
+                    </Link>
+                    <Link to="/game-new/TEST123">
+                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="✨ New UI" variant='black'/>
                     </Link>
                 </div>
                 <div className={styles.error_message}>{error || " "}</div>

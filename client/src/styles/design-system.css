@@ -1,0 +1,355 @@
+/**
+ * Design System - Liar's Dice Game
+ * A modern, scalable CSS design system using custom properties
+ */
+
+:root {
+  /* ========================================
+   * SPACING SYSTEM
+   * Based on a modular scale for consistent spacing
+   * ======================================== */
+  
+  /* Base unit (1rem = 16px by default) */
+  --space-unit: 1rem;
+  
+  /* Micro spacing */
+  --space-xs: calc(var(--space-unit) * 0.25);  /* 4px */
+  --space-sm: calc(var(--space-unit) * 0.5);   /* 8px */
+  --space-md: calc(var(--space-unit) * 0.75);  /* 12px */
+  
+  /* Standard spacing */
+  --space-base: var(--space-unit);             /* 16px */
+  --space-lg: calc(var(--space-unit) * 1.5);   /* 24px */
+  --space-xl: calc(var(--space-unit) * 2);     /* 32px */
+  --space-2xl: calc(var(--space-unit) * 2.5);  /* 40px */
+  --space-3xl: calc(var(--space-unit) * 3);    /* 48px */
+  --space-4xl: calc(var(--space-unit) * 4);    /* 64px */
+  --space-5xl: calc(var(--space-unit) * 6);    /* 96px */
+  
+  /* ========================================
+   * TYPOGRAPHY SYSTEM
+   * Harmonious type scale for readability
+   * ======================================== */
+  
+  /* Font families */
+  --font-primary: 'Crimson Text', serif;
+  --font-secondary: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Font sizes - Major Third scale (1.25) */
+  --text-xs: calc(var(--space-unit) * 0.75);   /* 12px */
+  --text-sm: calc(var(--space-unit) * 0.875);  /* 14px */
+  --text-base: var(--space-unit);              /* 16px */
+  --text-lg: calc(var(--space-unit) * 1.125);  /* 18px */
+  --text-xl: calc(var(--space-unit) * 1.25);   /* 20px */
+  --text-2xl: calc(var(--space-unit) * 1.5);   /* 24px */
+  --text-3xl: calc(var(--space-unit) * 1.875); /* 30px */
+  --text-4xl: calc(var(--space-unit) * 2.25);  /* 36px */
+  --text-5xl: calc(var(--space-unit) * 3);     /* 48px */
+  --text-6xl: calc(var(--space-unit) * 3.75);  /* 60px */
+  
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+  
+  /* Font weights */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  
+  /* ========================================
+   * COLOR SYSTEM
+   * Semantic color palette with dark/light mode support
+   * ======================================== */
+  
+  /* Brand colors */
+  --color-primary-50: #fef2f2;
+  --color-primary-100: #fee2e2;
+  --color-primary-200: #fecaca;
+  --color-primary-300: #fca5a5;
+  --color-primary-400: #f87171;
+  --color-primary-500: #ef4444;  /* Main brand red */
+  --color-primary-600: #dc2626;
+  --color-primary-700: #b91c1c;
+  --color-primary-800: #991b1b;
+  --color-primary-900: #7f1d1d;
+  
+  /* Neutral colors */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  
+  /* Semantic colors */
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  
+  --color-error-50: #fef2f2;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  
+  /* ========================================
+   * COMPONENT TOKENS
+   * High-level design tokens for consistent theming
+   * ======================================== */
+  
+  /* Surface colors */
+  --surface-primary: var(--color-neutral-50);
+  --surface-secondary: var(--color-neutral-100);
+  --surface-elevated: #ffffff;
+  --surface-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Text colors */
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-600);
+  --text-tertiary: var(--color-neutral-400);
+  --text-inverse: #ffffff;
+  
+  /* Border colors */
+  --border-light: var(--color-neutral-200);
+  --border-medium: var(--color-neutral-300);
+  --border-strong: var(--color-neutral-400);
+  
+  /* ========================================
+   * LAYOUT SYSTEM
+   * Consistent sizing and spacing for layouts
+   * ======================================== */
+  
+  /* Container widths */
+  --container-xs: 20rem;     /* 320px */
+  --container-sm: 24rem;     /* 384px */
+  --container-md: 32rem;     /* 512px */
+  --container-lg: 42rem;     /* 672px */
+  --container-xl: 48rem;     /* 768px */
+  --container-2xl: 56rem;    /* 896px */
+  --container-3xl: 72rem;    /* 1152px */
+  
+  /* Viewport units for responsive design */
+  --vh-small: 36rem;         /* Small screens */
+  --vh-medium: 48rem;        /* Medium screens */
+  --vh-large: 64rem;         /* Large screens */
+  
+  /* ========================================
+   * BORDER RADIUS SYSTEM
+   * Consistent corner rounding
+   * ======================================== */
+  
+  --radius-none: 0;
+  --radius-xs: calc(var(--space-unit) * 0.125);  /* 2px */
+  --radius-sm: calc(var(--space-unit) * 0.25);   /* 4px */
+  --radius-md: calc(var(--space-unit) * 0.375);  /* 6px */
+  --radius-lg: calc(var(--space-unit) * 0.5);    /* 8px */
+  --radius-xl: calc(var(--space-unit) * 0.75);   /* 12px */
+  --radius-2xl: calc(var(--space-unit) * 1);     /* 16px */
+  --radius-3xl: calc(var(--space-unit) * 1.5);   /* 24px */
+  --radius-full: 9999px;
+  
+  /* ========================================
+   * SHADOW SYSTEM
+   * Layered shadows for depth
+   * ======================================== */
+  
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  
+  /* ========================================
+   * ANIMATION SYSTEM
+   * Consistent timing and easing
+   * ======================================== */
+  
+  /* Duration */
+  --duration-instant: 0ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --duration-slower: 500ms;
+  
+  /* Easing curves */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* ========================================
+   * Z-INDEX SYSTEM
+   * Layering hierarchy
+   * ======================================== */
+  
+  --z-hide: -1;
+  --z-base: 0;
+  --z-docked: 10;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-banner: 1200;
+  --z-overlay: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+  --z-toast: 1700;
+}
+
+/* ========================================
+ * LIGHT MODE ENFORCED
+ * Force light theme regardless of user preference
+ * ======================================== */
+
+/* Force light mode by overriding any dark mode preferences */
+html {
+  color-scheme: light only;
+}
+
+/* Remove dark mode support - force light theme always */
+/*
+@media (prefers-color-scheme: dark) {
+  :root {
+    // Dark mode styles disabled - keeping light theme only
+  }
+}
+*/
+
+/* ========================================
+ * UTILITY CLASSES
+ * Common utility classes for rapid development
+ * ======================================== */
+
+/* Spacing utilities */
+.p-xs { padding: var(--space-xs); }
+.p-sm { padding: var(--space-sm); }
+.p-md { padding: var(--space-md); }
+.p-base { padding: var(--space-base); }
+.p-lg { padding: var(--space-lg); }
+.p-xl { padding: var(--space-xl); }
+.p-2xl { padding: var(--space-2xl); }
+.p-3xl { padding: var(--space-3xl); }
+
+.m-xs { margin: var(--space-xs); }
+.m-sm { margin: var(--space-sm); }
+.m-md { margin: var(--space-md); }
+.m-base { margin: var(--space-base); }
+.m-lg { margin: var(--space-lg); }
+.m-xl { margin: var(--space-xl); }
+.m-2xl { margin: var(--space-2xl); }
+.m-3xl { margin: var(--space-3xl); }
+
+/* Gap utilities for flexbox/grid */
+.gap-xs { gap: var(--space-xs); }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-base { gap: var(--space-base); }
+.gap-lg { gap: var(--space-lg); }
+.gap-xl { gap: var(--space-xl); }
+.gap-2xl { gap: var(--space-2xl); }
+
+/* Typography utilities */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+.text-5xl { font-size: var(--text-5xl); }
+.text-6xl { font-size: var(--text-6xl); }
+
+.font-light { font-weight: var(--font-light); }
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+
+.leading-tight { line-height: var(--leading-tight); }
+.leading-normal { line-height: var(--leading-normal); }
+.leading-relaxed { line-height: var(--leading-relaxed); }
+
+/* Color utilities */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-inverse { color: var(--text-inverse); }
+
+/* Border radius utilities */
+.rounded-none { border-radius: var(--radius-none); }
+.rounded-xs { border-radius: var(--radius-xs); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-2xl { border-radius: var(--radius-2xl); }
+.rounded-3xl { border-radius: var(--radius-3xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Shadow utilities */
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-2xl { box-shadow: var(--shadow-2xl); }
+.shadow-inner { box-shadow: var(--shadow-inner); }
+.shadow-none { box-shadow: none; }
+
+/* Layout utilities */
+.container-xs { max-width: var(--container-xs); }
+.container-sm { max-width: var(--container-sm); }
+.container-md { max-width: var(--container-md); }
+.container-lg { max-width: var(--container-lg); }
+.container-xl { max-width: var(--container-xl); }
+.container-2xl { max-width: var(--container-2xl); }
+.container-3xl { max-width: var(--container-3xl); }
+
+/* Flexbox utilities */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+
+/* Grid utilities */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* Position utilities */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+
+/* Overflow utilities */
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-scroll { overflow: scroll; }
+
+/* Transition utilities */
+.transition-fast { transition: all var(--duration-fast) var(--ease-out); }
+.transition-normal { transition: all var(--duration-normal) var(--ease-out); }
+.transition-slow { transition: all var(--duration-slow) var(--ease-out); }

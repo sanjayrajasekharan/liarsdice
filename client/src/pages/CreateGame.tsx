@@ -4,37 +4,25 @@ import { GameService } from '../services/gameService';
 import  Button from '../components/Button/Button';
 import Card from '../components/Card/Card';
 import { useGameState } from '../store/gameStore';
-interface CreateGameProps {
-    gameCode: string;
-    setGameCode: (code: string) => void;
-    playerName: string;
-    setPlayerName: (name: string) => void;
-    playerId: string;
-    setPlayerId: (id: string) => void;
-    isHost : boolean;
-    setIsHost: (isHost: boolean) => void;
-}
 
-const CreateGame: React.FC<CreateGameProps> = ({playerName, setPlayerName, playerId, setPlayerId, isHost, setIsHost }) => {
+const CreateGame: React.FC = () => {
     const navigate = useNavigate();
-    const [errorMessage, setErrorMessage] = useState(''); // State for error message
+    const [errorMessage, setErrorMessage] = useState('');
+    const [playerName, setPlayerName] = useState('');
 
-    const {gameCode} = useGameState();
+    const { gameCode } = useGameState();
 
-
-    // Function to get or create playerId
-    // Set playerId when the component mounts
     useEffect(() => {
         if (gameCode) {
             navigate(`/game/${gameCode}`);
         }
-    }, [gameCode]);
+    }, [gameCode, navigate]);
 
     const handleCreateGame = async () => {
         try {
-            GameService.createGame(playerName); // Call createGame function from GameService
+            await GameService.createGame(playerName);
         } catch (error) {
-            setErrorMessage('Failed to create game: ' + error); // Set error message on catch
+            setErrorMessage('Failed to create game: ' + error);
             console.error('Failed to create game:', error);
         }
     };

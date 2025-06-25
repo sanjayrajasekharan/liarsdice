@@ -1,50 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-// import 'index.css'; // Ensure to import the CSS file
 import Button from '../components/Button/Button';
 import Card from '../components/Card/Card';
-import { use } from 'framer-motion/client';
 import { GameService } from '../services/gameService';
+import { useGameState } from '../store/gameStore';
 
-interface JoinGameProps {
-    gameCode: string;
-    setGameCode: (code: string) => void;
-    playerName: string;
-    setPlayerName: (name: string) => void;
-    playerId: string;
-    setPlayerId: (id: string) => void;
-}
-
-const JoinGame: React.FC<JoinGameProps> = ({ gameCode, setGameCode, playerName, setPlayerName, playerId, setPlayerId }) => {
+const JoinGame: React.FC = () => {
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
+    const [gameCode, setGameCode] = useState('');
+    const [playerName, setPlayerName] = useState('');
     const location = useLocation();
     
+    const { gameCode: storeGameCode } = useGameState();
 
-    function getOrCreatePlayerId() {
-        let id = localStorage.getItem("playerId");
-        if (!id) {
-            id = `player-${Math.random().toString(36).substr(2, 9)}`;
-            localStorage.setItem("playerId", id);
+    useEffect(() => {
+        // Check if there's an error in location state
+        if (location.state?.error) {
+            setErrorMessage(location.state.error);
         }
-        return id;
-    }
+    }, [location.state]);
 
     useEffect(() => {
-        location.state?.error && setErrorMessage(useLocation().state.error);
-    }, [location]);
-
-    useEffect(() => {
-        const id = getOrCreatePlayerId();
-        setPlayerId(id);
-    }, [setPlayerId]);
+        // Navigate to game when gameCode is set in store
+        if (storeGameCode) {
+            navigate(`/game/${storeGameCode}`);
+        }
+    }, [storeGameCode, navigate]);
 
     const handleJoinGame = async () => {
         try {
-            // Call joinGame function from GameService
             await GameService.joinGame(gameCode, playerName);
             setErrorMessage('');
-            navigate(`/game/${gameCode}`);
         } catch (error) {
             setErrorMessage('Failed to join game: ' + (error instanceof Error ? error.message : String(error)));
             console.error('Failed to join game:', error);
@@ -63,7 +50,7 @@ const JoinGame: React.FC<JoinGameProps> = ({ gameCode, setGameCode, playerName, 
                             className="input-field"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                    handleJoinGame(); // Trigger the button press
+                                    handleJoinGame();
                                 }
                             }}
                         />
@@ -75,7 +62,7 @@ const JoinGame: React.FC<JoinGameProps> = ({ gameCode, setGameCode, playerName, 
                             className="input-field"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                    handleJoinGame(); // Trigger the button press
+                                    handleJoinGame();
                                 }
                             }}
                         />

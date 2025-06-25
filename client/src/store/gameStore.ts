@@ -1,72 +1,55 @@
 import { create } from "zustand";
-import {Claim} from "../../../shared/actions.ts";
+import { GameState as BackendGameState } from "../../../shared/types";
 
-interface Opponent {
-    name: string;
-    icon: string;
-    id: string;
-    remainingDice: number;
-    dice: number[];
-}
-
-interface Player {
-    readonly id: string;
-    readonly isHost: boolean;
-    readonly name: string;
-    remainingDice: number;
-    dice: number[];
-}
-
-interface GameState {
-    gameCode : string;
+// Frontend game store state
+interface GameStoreState {
+    // Connection state
+    gameCode: string;
     webSocket: WebSocket | null;
-    opponents: Opponent[];
-    claim: Claim;
-    turn: number;
-    player: Player | null;
-    error : undefined | string;
+    error: string | undefined;
+    
+    // Game state from backend
+    gameState: BackendGameState | null;
+    
+    // Local UI state
+    isRolling: boolean;
+    hasRolledThisRound: boolean;
+    
+    // Actions
     updateGameCode: (gameCode: string) => void;
-    updateOpponents: (newOpponents: Opponent[]) => void;
-    updateWebsocket: (ws: WebSocket) => void;
-    setPlayer: (id: string, name: string, isHost: boolean) => void;
-    updateClaim: (newClaim: Claim) => void;
-    updateTurn: (turn: number) => void;
-    updateError: (error: string) => void;
+    updateWebsocket: (ws: WebSocket | null) => void;
+    updateGameState: (gameState: BackendGameState) => void;
+    updateError: (error: string | undefined) => void;
+    setRolling: (isRolling: boolean) => void;
+    setHasRolled: (hasRolled: boolean) => void;
+    resetRoundState: () => void;
 }
 
-export const useGameState = create<GameState>((set) => ({
+export const useGameState = create<GameStoreState>((set) => ({
+    // Connection state
     error: undefined,
-    updateError: (error: string): void => set({ error }),
     gameCode: "",
-    updateGameCode: (newGameCode: string): void => set({ gameCode: newGameCode }),
     webSocket: null,
-    updateWebsocket: (ws: WebSocket): void => set({ webSocket: ws }),
-    opponents: [] as Opponent[],
-    updateOpponents: (newOpponents: Opponent[]): void =>
-        set({ opponents: newOpponents }),
-    claim: { value: 0, quantity: 0 },
-    updateClaim: (newClaim : Claim): void =>
-        set({ claim: newClaim }),
-    turn: 0,
-    updateTurn: (newTurn: number): void => set({ turn: newTurn }),
-    player: null,
-    setPlayer: (id: string, name: string, isHost: boolean) =>
-        set((state) => {
-            if (state.player) return state;
-            return {
-                player: {
-                    id: id,
-                    isHost,
-                    name,
-                    remainingDice: 6,
-                    dice: [],
-                },
-            };
-        }),
+    
+    // Game state
+    gameState: null,
+    
+    // Local UI state
+    isRolling: false,
+    hasRolledThisRound: false,
+    
+    // Actions
+    updateError: (error: string | undefined): void => set({ error }),
+    updateGameCode: (newGameCode: string): void => set({ gameCode: newGameCode }),
+    updateWebsocket: (ws: WebSocket | null): void => set({ webSocket: ws }),
+    updateGameState: (gameState: BackendGameState): void => set({ gameState }),
+    setRolling: (isRolling: boolean): void => set({ isRolling }),
+    setHasRolled: (hasRolled: boolean): void => set({ hasRolledThisRound: hasRolled }),
+    resetRoundState: (): void => set({ hasRolledThisRound: false, isRolling: false }),
 }));
 
-//debug
+//debug - commented out for production
 
-if (typeof window !== "undefined") {
-    (window as any).useGameState = useGameState;
-}
+// if (typeof window !== "undefined") {
+//     (window as any).useGameState = useGameState;
+// }
