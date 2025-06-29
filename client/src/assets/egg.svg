@@ -1,0 +1,5 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M32 8C22 8 14 18 14 32C14 46 22 56 32 56C42 56 50 46 50 32C50 18 42 8 32 8Z" fill="#fff" stroke="#171717" stroke-width="4"/>
+  <!-- Faint crack detail -->
+  <path d="M28 10L30 12L28 16L31 20 L24 18 L26 16 L22 12Z" stroke="#171717" stroke-width="1" fill="#171717" stroke-linecap="round"/>
+</svg>

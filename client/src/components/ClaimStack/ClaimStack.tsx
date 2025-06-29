@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, PanInfo } from "framer-motion";
+import clsx from "clsx";
 import styles from "./ClaimStack.module.css";
 
 import oneSvg from "../../assets/dice/one.svg?url";
@@ -8,6 +9,8 @@ import threeSvg from "../../assets/dice/three.svg?url";
 import fourSvg from "../../assets/dice/four.svg?url";
 import fiveSvg from "../../assets/dice/five.svg?url";
 import sixSvg from "../../assets/dice/six.svg?url";
+
+import reactLogo from "../../assets/react.svg"; 
 
 interface Claim {
     value: number;
@@ -38,7 +41,7 @@ const ClaimStack: React.FC<ClaimStackProps> = ({ claims }) => {
     const handleNext = React.useCallback(() => {
         setFocusedIndex((prev) => (prev < claims.length - 1 ? prev + 1 : prev));
     }, [claims.length]);
-    
+
     React.useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "ArrowUp") {
@@ -91,47 +94,56 @@ const ClaimStack: React.FC<ClaimStackProps> = ({ claims }) => {
             {/* Claims Stack */}
             <div className={styles.claimsWrapper}>
                 {visibleCards.map(({ claim, index, slot }) => {
+                    console.log(`Rendering claim  ${claim} with slot ${slot}`);
                     const isFocused = slot === 0;
                     const distanceFromFocus = Math.abs(slot);
-                    const minOffset = 5;
-                    const maxOffset = 15;
-                    const stackOffset = Math.max(
-                        minOffset,
-                        maxOffset - (claims.length - 2)
-                    );
+                    const stackOffset = 12;
                     const yOffset = slot * stackOffset;
                     const zIndex = claims.length - distanceFromFocus;
                     return (
                         <motion.div
                             key={`${claim.userName}-${claim.value}-${claim.quantity}-${index}`}
-                            className={`${styles.claimCard} ${isFocused ? styles.focusedCard : styles.stackedCard}`}
-                            style={{ zIndex }}
-                            initial={{ y: -40, opacity: 0 }}
+                            className={clsx(styles.claimCard, {
+                                [styles.focusedCard]: isFocused,
+                                [styles.stackedCard]: !isFocused
+                            })}
+                            initial={slot < 0 ? { y: 40, opacity: 0, zIndex: -1, scale: 0 } : { y: -40, opacity: 0, zIndex: -1, scale: 0 }}
                             animate={{
                                 y: `calc(${yOffset}px - 50%)`,
                                 scale: isFocused ? 1 : 0.95 - distanceFromFocus * 0.05,
-                                opacity: isFocused ? 1 : 0.8,
+                                // opacity: isFocused ? 1 : 0.8,
+                                opacity: 1,
+                                zIndex
                             }}
                             exit={{ opacity: 0, y: 40 }}
                             transition={{
-                                duration: 0.3,
-                                ease: "easeOut"
+                                default : {
+                                    duration: 0.3,
+                                    ease: "easeOut"
+                                },
+                                scale : { duration: 0.2, ease: "easeInOut" }
                             }}
                             onPan={isFocused ? handleSwipe : undefined}
                             onClick={() => handleCardClick(index)}
                         >
-                            <div className={styles.claim}>
-                                <span className={styles.quantity}>{claim.quantity} ×</span>
-                                {diceSvgs[claim.value] && (
-                                    <img
-                                        className={styles.dieImage}
-                                        src={diceSvgs[claim.value]}
-                                        alt={`Die showing ${claim.value}`}
-                                    />
-                                )}
+                            <div className={styles.user}>
+                                <div className={styles.userImage} style={{ backgroundImage: `url(${reactLogo})` }}> </div>
+                                <h3 className={styles.userName}>{claim.userName}</h3>
                             </div>
-                            <div className={styles.userName}>
-                                -- {claim.userName}
+
+                            <div className={styles.claim}>
+                                <div className={styles.claimQuantity}>
+                                    <div className={clsx(styles.claimQuantityValue, styles.value)}>
+                                        {claim.quantity}
+                                    </div>
+                                    <h4 className={clsx(styles.claimQuantityLabel, styles.label)}>Quantity</h4>
+                                </div>
+                                <div className={styles.claimDie}>
+                                    <div className={clsx(styles.claimDieValue, styles.value)}>
+                                        <img className={styles.dieImage} src={diceSvgs[claim.value]} alt={`Dice ${claim.value}`} />
+                                    </div>
+                                    <h4 className={clsx(styles.claimDieLabel, styles.label)}>Die</h4>
+                                </div>
                             </div>
                         </motion.div>
                     );
