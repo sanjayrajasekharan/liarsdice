@@ -6,49 +6,33 @@ import downArrow from "../../assets/down.svg";
 import xIcon from "../../assets/x.svg";
 import { motion } from "framer-motion";
 import { useGameState } from "../../store/gameStore";
+import oneSvg from '../../assets/dice/one.svg?url';
+import twoSvg from '../../assets/dice/two.svg?url';
+import threeSvg from '../../assets/dice/three.svg?url';
+import fourSvg from '../../assets/dice/four.svg?url';
+import fiveSvg from '../../assets/dice/five.svg?url';
+import sixSvg from '../../assets/dice/six.svg?url';
 
 type ClaimInputProps = {
+    currentDieValue: number;
+    currentCount: number;
     open: boolean;
     onClose: () => void;
     onSubmit: (diceValue: number, count: number) => void;
 };
 
-const dieFaces: Record<number, number[][]> = {
-    1: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 0, 0],
-    ],
-    2: [
-        [1, 0, 0],
-        [0, 0, 0],
-        [0, 0, 1],
-    ],
-    3: [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-    ],
-    4: [
-        [1, 0, 1],
-        [0, 0, 0],
-        [1, 0, 1],
-    ],
-    5: [
-        [1, 0, 1],
-        [0, 1, 0],
-        [1, 0, 1],
-    ],
-    6: [
-        [1, 0, 1],
-        [1, 0, 1],
-        [1, 0, 1],
-    ],
+const diceSvgs: Record<number, string> = {
+    1: oneSvg,
+    2: twoSvg,
+    3: threeSvg,
+    4: fourSvg,
+    5: fiveSvg,
+    6: sixSvg,
 };
 
-const ClaimInput: React.FC<ClaimInputProps> = ({ open, onClose, onSubmit }) => {
-    const [diceValue, setDiceValue] = useState(1);
-    const [count, setCount] = useState(1);
+const ClaimInput: React.FC<ClaimInputProps> = ({ open, currentDieValue, currentCount, onClose, onSubmit }) => {
+    const [diceValue, setDiceValue] = useState(currentDieValue);
+    const [count, setCount] = useState(currentCount + 1);
     const [error, setError] = useState("");
 
     const enum updateAction {
@@ -59,8 +43,6 @@ const ClaimInput: React.FC<ClaimInputProps> = ({ open, onClose, onSubmit }) => {
     }
 
     const updateClaim = (action: updateAction) => {
-        const currentDieValue = useGameState.getState().claim.value;
-        const currentCount = useGameState.getState().claim.quantity;
 
         switch (action) {
             case updateAction.incrementDie:
@@ -80,7 +62,15 @@ const ClaimInput: React.FC<ClaimInputProps> = ({ open, onClose, onSubmit }) => {
                 setCount((count) => count + 1);
                 break;
             case updateAction.decrementCount:
-                setCount((count) => (count == 1 ? count : count - 1));
+                setCount((count) => {
+                    if (diceValue <= currentDieValue) {
+                        return count > 1 + currentCount ? count - 1 : count;
+                    }
+                    else {
+                        return count > currentCount ? count - 1 : count;
+                    }
+                });
+
                 break;
         }
     };
@@ -149,25 +139,11 @@ const ClaimInput: React.FC<ClaimInputProps> = ({ open, onClose, onSubmit }) => {
                         </div>{" "}
                         {/* claim_input_container */}
                         <div className={styles.input_container}>
-                            <div className={styles.dice}>
-                                <div className={styles.diceFace}>
-                                    {dieFaces[diceValue].map(
-                                        (faceRow, faceRowIndex) =>
-                                            faceRow.map((dot, faceColIndex) => (
-                                                <div
-                                                    key={`${faceRowIndex}-${faceColIndex}`}
-                                                    className={`${styles.dot} ${
-                                                        dot
-                                                            ? styles.activeDot
-                                                            : ""
-                                                    }`}
-                                                />
-                                            ))
-                                    )}
-                                </div>{" "}
-                                {/* diceFace */}
-                            </div>{" "}
-                            {/* dice */}
+                                <img
+                                    src={diceSvgs[diceValue]}
+                                    alt={`Dice ${diceValue}`}
+                                    className={styles.dice}
+                                />
                             <div className={styles.dice_button_container}>
                                 <button
                                     className={styles.dice_button}

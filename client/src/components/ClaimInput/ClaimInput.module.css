@@ -1,43 +1,10 @@
 /* Dice scales relative to the container */
 .dice {
-    width: 45px; /* 1/6 of the container width */
-    aspect-ratio: 1 / 1; /* Keeps dice square */
-    background: white;
-    border: 2.5px solid black;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease-in-out;
-
+    height: var(--text-5xl); /* Adjust as needed */
+    width: var(--text-6xl); /* Maintain aspect ratio */
     /* top: 50%;
   left: 50%;
   transform-origin: center center; */
-}
-
-/* Dice face uses 3x3 grid */
-.diceFace {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    width: 90%;
-    height: 90%;
-    padding: 5%; /* Prevent dots from touching edges */
-}
-
-/* Dots scale with dice */
-.dot {
-    width: 50%; /* Larger dots relative to grid cell */
-    height: 50%;
-    border-radius: 50%;
-    margin: auto;
-    background-color: transparent;
-    transition: background-color 0.1s ease-in-out;
-}
-
-.activeDot {
-    background-color: black;
 }
 
 .dice_button img {
