@@ -1,0 +1,30 @@
+export enum ErrorCode {
+  // Game errors
+  GAME_NOT_FOUND = 'GAME_NOT_FOUND',
+  GAME_FULL = 'GAME_FULL',
+  GAME_ALREADY_STARTED = 'GAME_ALREADY_STARTED',
+  GAME_NOT_STARTED = 'GAME_NOT_STARTED',
+  
+  // Player errors
+  PLAYER_NOT_FOUND = 'PLAYER_NOT_FOUND',
+  PLAYER_ALREADY_EXISTS = 'PLAYER_ALREADY_EXISTS',
+  PLAYER_NOT_ACTIVE = 'PLAYER_NOT_ACTIVE',
+  
+  // Turn errors
+  INVALID_TURN = 'INVALID_TURN',
+  INVALID_BID = 'INVALID_BID',
+  INVALID_ACTION = 'INVALID_ACTION',
+  
+  // Auth errors
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  INVALID_TOKEN = 'INVALID_TOKEN',
+  
+  // Validation errors
+  INVALID_INPUT = 'INVALID_INPUT',
+  MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
+}
+
+export interface GameError {
+  code: ErrorCode;
+  details?: any;
+}
