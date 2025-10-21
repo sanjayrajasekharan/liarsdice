@@ -67,7 +67,6 @@ const JoinGame: React.FC = () => {
                             }}
                         />
                         <Button onClick={handleJoinGame} text="Join" variant='red'/>
-                        {errorMessage && <p className="error-message">{errorMessage}</p>}
                 </Card>
             </div>
         </div>

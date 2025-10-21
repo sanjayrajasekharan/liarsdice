@@ -18,8 +18,8 @@ export class Claim {
     getFaceValue(): number {
         return this.faceValue;
     }
-    validateAgainst(newClaim: Claim): boolean {
-        return (newClaim.getQuantity() > this.quantity) ||
-            (newClaim.getQuantity() === this.quantity && newClaim.getFaceValue() > this.faceValue);
+    validateAgainst(oldClaim: Claim): boolean {
+        return (oldClaim.getQuantity() < this.quantity) ||
+            (oldClaim.getQuantity() === this.quantity && oldClaim.getFaceValue() < this.faceValue);
     }
 }

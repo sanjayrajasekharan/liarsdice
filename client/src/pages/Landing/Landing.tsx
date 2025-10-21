@@ -45,13 +45,7 @@ const LandingPage: React.FC = () => {
                         <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="Join Game" variant='black'/>
                     </Link>
                     <Link to="/mock">
-                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="🧪 Test UI" variant='black'/>
-                    </Link>
-                    <Link to="/game-new/TEST123">
-                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="✨ New UI" variant='black'/>
-                    </Link>
-                    <Link to="/game-new/TEST123">
-                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="✨ New UI" variant='black'/>
+                        I<Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="🧪 Test New UI" variant='black'/>
                     </Link>
                 </div>
                 <div className={styles.error_message}>{error || " "}</div>

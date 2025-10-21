@@ -40,6 +40,7 @@ const PlayersDisplayMock: React.FC = () => {
             background: 'var(--surface-secondary)',
             padding: 'var(--space-lg) 0',
             boxSizing: 'border-box',
+            position: 'relative'
         }}>
             <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', flex: 1 }}>
                 <ClaimStack claims={claims} />
@@ -55,14 +56,14 @@ const PlayersDisplayMock: React.FC = () => {
                 </div>
             </div>
             <div style={{
+                position: 'absolute',
+                left: 0,
+                bottom: 0,
                 width: '100%',
                 maxWidth: 480,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 'var(--space-md)',
-                position: 'fixed',
-                left: 0,
-                bottom: 0,
                 padding: 'var(--space-lg) var(--space-base)',
                 background: 'var(--surface-secondary)',
                 boxShadow: '0 -4px 24px 0 rgba(0,0,0,0.08)',

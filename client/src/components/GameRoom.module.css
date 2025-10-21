@@ -1,0 +1,393 @@
+/* GameRoom - Mobile-First Design */
+
+/* Main containers */
+.container {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    background: var(--surface-primary);
+}
+
+.mobileGameContainer {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-primary);
+    padding: 0;
+    gap: 0;
+}
+
+/* Game Header */
+.gameHeader {
+    background: var(--surface-elevated);
+    padding: var(--space-lg) var(--space-base);
+    border-bottom: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+}
+
+.gameInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gameCode {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.turnIndicator {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    background: var(--color-primary-50);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-primary-200);
+}
+
+.status {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+}
+
+/* Current Bid Section */
+.currentBid {
+    background: var(--surface-elevated);
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-light);
+    text-align: center;
+}
+
+.currentBid h3 {
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+    font-weight: var(--font-medium);
+}
+
+.bidDisplay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.bidText {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-primary-600);
+    background: var(--color-primary-50);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-primary-200);
+}
+
+.bidder {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+}
+
+.noBid {
+    font-size: var(--text-lg);
+    color: var(--text-tertiary);
+    font-style: italic;
+    padding: var(--space-lg);
+}
+
+/* Your Dice Section - Most Important */
+.yourDice {
+    background: var(--surface-elevated);
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.yourDice h3 {
+    font-size: var(--text-xl);
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+    font-weight: var(--font-semibold);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.diceContainer {
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+    padding: var(--space-sm) 0;
+    margin: 0 calc(var(--space-base) * -1); /* Allow dice to extend to edges */
+}
+
+/* Other Players Section */
+.otherPlayers {
+    background: var(--surface-secondary);
+    padding: var(--space-lg);
+    flex: 1;
+    min-height: 0; /* Allow flex shrinking */
+}
+
+.otherPlayers h3 {
+    font-size: var(--text-lg);
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+    font-weight: var(--font-medium);
+}
+
+.playerGrid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.playerCard {
+    background: var(--surface-elevated);
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.playerCard.currentPlayer {
+    border-color: var(--color-primary-300);
+    background: var(--color-primary-50);
+    box-shadow: var(--shadow-sm);
+}
+
+.playerInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.playerIcon {
+    font-size: var(--text-lg);
+}
+
+.playerName {
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+}
+
+.turnBadge {
+    font-size: var(--text-sm);
+    background: var(--color-primary-100);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+}
+
+.diceCount {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--color-primary-600);
+}
+
+/* Action Zone - Bottom for thumb access */
+.actionZone {
+    background: var(--surface-elevated);
+    padding: var(--space-lg);
+    border-top: 1px solid var(--border-light);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-sticky);
+}
+
+.yourTurn {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.bidControls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.bidInputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-base);
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.inputGroup label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+}
+
+.bidSelect {
+    padding: var(--space-md);
+    font-size: var(--text-base);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+    min-height: calc(var(--space-3xl) + var(--space-xs)); /* Touch-friendly */
+}
+
+.waitingTurn {
+    text-align: center;
+    padding: var(--space-lg);
+}
+
+.waitingTurn p {
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+    font-style: italic;
+}
+
+/* Join Form */
+.joinForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    width: 100%;
+    max-width: var(--container-sm);
+}
+
+/* Lobby Player List */
+.playerList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.playerItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--surface-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+}
+
+.youBadge {
+    font-size: var(--text-xs);
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    font-weight: var(--font-medium);
+    margin-left: auto;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-lg);
+}
+
+/* Rolling Screen - Separate screen for dice rolling */
+.rollingScreen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+    text-align: center;
+    gap: var(--space-lg);
+    background: var(--surface-primary);
+}
+
+.rollingScreen h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.rollingScreen p {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 300px;
+}
+
+.rollAction {
+    margin-top: var(--space-base);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .gameHeader {
+        padding: var(--space-base);
+    }
+    
+    .gameInfo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-xs);
+    }
+    
+    .currentBid {
+        padding: var(--space-base);
+    }
+    
+    .bidText {
+        font-size: var(--text-xl);
+        padding: var(--space-sm) var(--space-base);
+    }
+    
+    .yourDice {
+        padding: var(--space-base);
+    }
+    
+    .otherPlayers {
+        padding: var(--space-base);
+    }
+    
+    .actionZone {
+        padding: var(--space-base);
+    }
+    
+    .bidInputs {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+    }
+}
+
+/* Landscape phone optimization */
+@media (max-height: 600px) and (orientation: landscape) {
+    .mobileGameContainer {
+        overflow-y: auto;
+    }
+    
+    .otherPlayers {
+        flex: 0 0 auto;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .yourDice {
+        padding: var(--space-base);
+    }
+    
+    .currentBid {
+        padding: var(--space-base);
+    }
+}

@@ -151,55 +151,37 @@
 .claimControls {
   display: flex;
   gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
   justify-content: center;
+  margin: var(--spacing-lg) 0;
 }
 
 .claimControl {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .controlLabel {
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .valueDisplay {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  background: var(--color-background);
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border);
 }
 
 .valueNumber {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  min-width: 3ch;
+  min-width: 2em;
   text-align: center;
-}
-
-.adjustButton {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  transition: background-color 0.2s ease;
-}
-
-.adjustButton:hover {
-  background: var(--color-background);
 }
 
 /* Action Buttons */
@@ -249,19 +231,187 @@
   transform: none !important;
 }
 
-/* Dice Values Display */
-.diceValues {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+/* Claim Banner */
+.claimBanner {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
   padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 0 30px rgba(31, 41, 55, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+  position: relative;
+  animation: claimGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes claimGlow {
+  0% {
+    box-shadow: 
+      0 8px 25px rgba(0, 0, 0, 0.15),
+      0 0 30px rgba(31, 41, 55, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  100% {
+    box-shadow: 
+      0 8px 25px rgba(0, 0, 0, 0.25),
+      0 0 40px rgba(31, 41, 55, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+.claimBanner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  border-radius: var(--border-radius-md);
+  pointer-events: none;
+}
+
+.claimBannerContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  position: relative;
+  z-index: 1;
+}
+
+.claimBannerText {
+  color: white;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.claimBannerDice {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+/* Creative Players Display */
+.playersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
 }
 
-.diceValuesTitle {
-  font-size: var(--font-size-md);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-md);
+.playerCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
   text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.playerCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+.playerCard.currentPlayer::before {
+  background: linear-gradient(90deg, #dc2626, #ef4444);
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+.currentPlayerIndicator {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.playerCardName {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-primary);
+}
+
+.playerCardDice {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-500);
+}
+
+.playerCardLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Claim Modal */
+.claimModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.claimModalContent {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.claimModalTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-text-primary);
+}
+
+.claimModalButtons {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+/* Test Controls */
+.testControls {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-md);
+  flex-wrap: wrap;
 }
 
 /* Responsive Design */

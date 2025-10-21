@@ -2,44 +2,28 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import styles from "./DiceRoll.module.css";
 
+// Import dice SVGs
+import oneSvg from "../../assets/dice/one.svg?url";
+import twoSvg from "../../assets/dice/two.svg?url";
+import threeSvg from "../../assets/dice/three.svg?url";
+import fourSvg from "../../assets/dice/four.svg?url";
+import fiveSvg from "../../assets/dice/five.svg?url";
+import sixSvg from "../../assets/dice/six.svg?url";
+
 interface DiceRollProps {
     diceValues: number[]; // The actual dice values from server
     isRolling?: boolean; // Whether to show rolling animation
     onRollComplete?: () => void; // Callback when roll animation finishes
 }
 
-// Standard die face dot patterns (3x3 grid)
-const dieFaces: Record<number, number[][]> = {
-    1: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 0, 0],
-    ],
-    2: [
-        [1, 0, 0],
-        [0, 0, 0],
-        [0, 0, 1],
-    ],
-    3: [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-    ],
-    4: [
-        [1, 0, 1],
-        [0, 0, 0],
-        [1, 0, 1],
-    ],
-    5: [
-        [1, 0, 1],
-        [0, 1, 0],
-        [1, 0, 1],
-    ],
-    6: [
-        [1, 0, 1],
-        [1, 0, 1],
-        [1, 0, 1],
-    ],
+// Dice SVG mapping
+const diceSvgs: Record<number, string> = {
+    1: oneSvg,
+    2: twoSvg,
+    3: threeSvg,
+    4: fourSvg,
+    5: fiveSvg,
+    6: sixSvg,
 };
 
 const DiceRoll: React.FC<DiceRollProps> = ({ 
@@ -107,20 +91,15 @@ const DiceRoll: React.FC<DiceRollProps> = ({
                     } // Keep the original subtle scale effect
                     transition={
                         isAnimating
-                            ? { duration: 0.2, repeat: Infinity }
+                            ? { duration: 0.3, repeat: Infinity }
                             : { duration: 0 }
                     }
                 >
-                    <div className={styles.diceFace}>
-                        {dieFaces[tempDiceValues[index] || 1].map((faceRow, faceRowIndex) =>
-                            faceRow.map((dot, faceColIndex) => (
-                                <div
-                                    key={`${faceRowIndex}-${faceColIndex}`}
-                                    className={`${styles.dot} ${dot ? styles.activeDot : ""}`}
-                                />
-                            ))
-                        )}
-                    </div>
+                    <img
+                        src={diceSvgs[tempDiceValues[index] || 1]}
+                        alt={`Die showing ${tempDiceValues[index] || 1}`}
+                        className={styles.diceSvg}
+                    />
                 </motion.div>
             ))}
         </div>

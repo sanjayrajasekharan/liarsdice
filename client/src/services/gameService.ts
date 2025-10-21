@@ -21,7 +21,8 @@ export class GameService {
 
         const playerId = this.getOrCreatePlayerId();
         
-        const response = await fetch(`${this.baseUrl}/create-game`, {
+
+        const request = {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -30,7 +31,11 @@ export class GameService {
                 hostId: playerId,
                 hostName: playerName,
             }),
-        });
+        };
+
+        console.log(request);
+
+        const response = await fetch(`${this.baseUrl}/games`, request);
 
         if (!response.ok) {
             const error = await response.json();
@@ -51,16 +56,18 @@ export class GameService {
 
         const playerId = this.getOrCreatePlayerId();
 
-        const response = await fetch(`${this.baseUrl}/join-game`, {
+        const apiUrl = `${this.baseUrl}/game/${gameCode}/players`;
+        const requestBody = {
+            playerId,
+            playerName,
+        };
+
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-                gameCode,
-                playerId,
-                playerName,
-            }),
+            body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {

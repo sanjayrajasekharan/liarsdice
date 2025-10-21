@@ -11,59 +11,21 @@
   border: 1px solid var(--border-light);
 } 
 
-/* Dice scales relative to the container */
-.dice {
-  width: calc(var(--space-unit) * 2.8);
-  aspect-ratio: 1 / 1;
-  background: var(--surface-elevated);
-  border: 2px solid var(--color-neutral-800);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-md);
-  transition: transform var(--duration-fast) var(--ease-out);
-  cursor: pointer;
-}
-
-.dice:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-lg);
-}
-
-.dice:active {
-  transform: scale(0.98);
-  transition: transform var(--duration-instant) var(--ease-linear);
-}
-
-/* Dice face uses 3x3 grid */
-.diceFace {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+/* Dice SVG styling */
+.diceSvg {
   width: 90%;
   height: 90%;
-  padding: 5%;
-}
-
-/* Dots scale with dice */
-.dot {
-  width: 50%;
-  height: 50%;
-  border-radius: var(--radius-full);
-  margin: auto;
-  background-color: transparent;
-  transition: background-color var(--duration-fast) var(--ease-out);
-}
-
-.activeDot {
-  background-color: var(--color-neutral-900);
+  display: block;
+  border: none;
+  outline: none;
+  background: transparent;
+  transition: transform var(--duration-fast) var(--ease-out);
 }
 
 /* Responsive dice sizing */
 @media (max-width: 640px) {
-  .dice {
-    width: calc(var(--space-unit) * 2.4);
+  .diceSvg {
+    width: calc(var(--space-unit) * 2.8);
   }
   
   .diceContainer {
@@ -73,7 +35,7 @@
 }
 
 @media (max-width: 480px) {
-  .dice {
-    width: calc(var(--space-unit) * 2);
+  .diceSvg {
+    width: calc(var(--space-unit) * 3.2);
   }
 }

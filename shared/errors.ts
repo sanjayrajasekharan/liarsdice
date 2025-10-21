@@ -22,6 +22,7 @@ export enum ErrorCode {
   // Validation errors
   INVALID_INPUT = 'INVALID_INPUT',
   MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
+  INVALID_CLAIM = "INVALID_CLAIM",
 }
 
 export interface GameError {

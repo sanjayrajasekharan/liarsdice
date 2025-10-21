@@ -3,3 +3,4 @@ packages:
   - 'client'
   - 'server'
   - 'shared'
+  - 'cli'
