@@ -8,7 +8,7 @@ export function Ok<T>(value: T): Result<T> {
   return { ok: true, value };
 }
 
-export function Err(code: ErrorCode, message: string, details?: any): Result<never> {
+export function Err(code: ErrorCode, details?: any): Result<never> {
   return { 
     ok: false, 
     error: { code, details } 

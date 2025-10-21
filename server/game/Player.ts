@@ -9,7 +9,7 @@ export class Player {
     private game: Game;
     private numberOfDice: number = 5;
     private dice: number[] = [];
-    
+
     constructor(id: string, name: string, game: Game, ws?: WebSocket) {
         this.id = id;
         this.name = name;
@@ -32,17 +32,23 @@ export class Player {
     }
     getWebSocket(): WebSocket | null {
         return this.ws;
- 
+
     }
 
-    rollDice(numDice: number): void {
+    rollDice(): void {
         this.dice = [];
-        for (let i = 0; i < numDice; i++) {
+        for (let i = 0; i < this.numberOfDice; i++) {
             this.dice.push(Math.floor(Math.random() * 6) + 1);
         }
     }
 
     getDiceCount(faceValue: number): number {
         return this.dice.filter(die => die === faceValue).length;
+    }
+
+    loseDie(): void {
+        // # TODO handle players losing
+        this.numberOfDice--;
+
     }
 }
