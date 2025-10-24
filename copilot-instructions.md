@@ -22,3 +22,20 @@ Liar's Dice is an online, link-sharing mulitplayer game implemented in this mono
 
 ## Important Notes
 - old-index.ts files are deprecated; just used to retain the old code for reference.
+
+## Server
+### Game
+- Game.ts: Core game logic, player management, turn handling, and game state transitions.
+- Player.ts: Player representation, including dice management and actions.
+- Claim.ts: Represents a player's claim in the game.
+
+The game directory contains the main logic for managing the game state, player actions, and game rules. It is seperate from the networking code to maintain a clear separation of concerns.
+
+### Networking
+#### REST
+/api/
+  - /games
+    - POST - Create a new game
+    - GET - Get game state
+    - /players
+        - POST - Add a new player to the game 
