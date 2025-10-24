@@ -13,6 +13,7 @@ export const ErrorCode = {
     GAME_IN_PROGRESS: 'GAME_IN_PROGRESS',
     NOT_ENOUGH_PLAYERS: 'NOT_ENOUGH_PLAYERS',
     PLAYER_ALREADY_EXISTS: 'PLAYER_ALREADY_EXISTS',
+    PLAYER_NOT_FOUND: 'PLAYER_NOT_FOUND',
     GAME_FULL: 'GAME_FULL',
     INVALID_GAME_STATE: 'INVALID_GAME_STATE',
 } as const;
@@ -31,4 +32,5 @@ export const errorMessages: Record<ErrorCode, string> = {
     [ErrorCode.PLAYER_ALREADY_EXISTS]: 'Player with this ID already exists in the game',
     [ErrorCode.GAME_FULL]: 'Game is full, cannot add more players',
     [ErrorCode.INVALID_GAME_STATE]: 'Game is not in a valid state for this action',
+    [ErrorCode.PLAYER_NOT_FOUND]: 'Player not found in the game',
 };
