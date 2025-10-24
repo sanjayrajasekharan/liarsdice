@@ -8,6 +8,7 @@ import {ErrorCode} from '../shared/errors'
 export class Store {
 private static connections: Record<string, Record<PlayerId, WebSocket>> = {};
 private static games: Record<GameCode, Game> = {};
+
     static addConnection(gameCode: string, playerId: PlayerId, ws: WebSocket): Result<void> {
         if (!this.connections[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);
@@ -15,6 +16,7 @@ private static games: Record<GameCode, Game> = {};
         this.connections[gameCode][playerId] = ws;
         return Ok(undefined);  
     }
+
     static getConnection(gameCode: string, playerId: PlayerId): Result<WebSocket> {
         if (!this.connections[gameCode])
             return Err(ErrorCode.GAME_NOT_FOUND);
@@ -22,6 +24,7 @@ private static games: Record<GameCode, Game> = {};
             return Err(ErrorCode.PLAYER_NOT_FOUND);
         return Ok(this.connections[gameCode][playerId]);
     }
+
     static removeConnection(gameCode: string, playerId: PlayerId): Result<void> {
         if (!this.connections[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);
@@ -32,16 +35,19 @@ private static games: Record<GameCode, Game> = {};
         delete this.connections[gameCode][playerId];
         return Ok(undefined);
     }
+
     static getConnectionsForGame(gameCode: string): Result<Record<PlayerId, WebSocket>> {
         if (!this.connections[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);
         }
         return Ok(this.connections[gameCode]);
     }
+
     static addGame(gameCode: GameCode, game: Game): void {
         this.games[gameCode] = game;
         this.connections[gameCode] = {};
     }
+
     static getGame(gameCode: GameCode): Result<Game> {
         const game = this.games[gameCode];
         if (!game) {
@@ -49,6 +55,7 @@ private static games: Record<GameCode, Game> = {};
         }
         return Ok(game);
     }
+    
     static removeGame(gameCode: GameCode): Result<void> {
         if (!this.games[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);

@@ -37,7 +37,7 @@ export class Game {
     }
 
     validateTurn(playerId: PlayerId): Result<void> {
-        if (this.stage !== GameStage.ROUND_ROBBIN) {
+        if (this.stage !== GameStage.ROUND_ROBIN) {
             return Err(ErrorCode.ROUND_NOT_ACTIVE);
         }
         const currentPlayerId = this.order[this.turnIndex];
@@ -100,7 +100,7 @@ export class Game {
         this.rollAllDice(); 
         this.claims = [];
 
-        this.stage = GameStage.ROUND_ROBBIN;
+        this.stage = GameStage.ROUND_ROBIN;
         
         return Ok(undefined);
     }
