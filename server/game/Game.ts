@@ -21,7 +21,7 @@ export class Game {
         private stage: GameStage = GameStage.PRE_GAME
     ) {}
 
-    public createPlayer(playerName: string, ws: WebSocket): Result<{ playerId: PlayerId; player: Player }> {
+    public createPlayer(playerName: string): Result<{ playerId: PlayerId; player: Player }> {
         if (this.players.size >= Game.MAX_PLAYERS) {
             return Err(ErrorCode.GAME_FULL);
         }
@@ -30,7 +30,7 @@ export class Game {
         }
 
         const playerId = uuidv4();
-        const player = new Player(playerId, playerName, this, ws);
+        const player = new Player(playerId, playerName, this);
         this.players.set(player.getId(), player);
         this.order.push(player.getId());
         return Ok({ playerId, player });
@@ -61,10 +61,11 @@ export class Game {
             );
         }
         this.claims.push(claim);
+        this.turnIndex = (this.turnIndex + 1) % this.order.length;
         return Ok(undefined);
     }
 
-    challenge(playerId: PlayerId): Result<{ winnerId: PlayerId; loserId: PlayerId }> {
+    challenge(playerId: PlayerId): Result<{ winnerId: PlayerId; loserId: PlayerId; loserOut: boolean }> {
         const turnValidation = this.validateTurn(playerId);
         if (!turnValidation.ok) {
             return turnValidation;
@@ -75,8 +76,13 @@ export class Game {
 
         const winnerId = this.countDice(faceValue) < quantity ? playerId : prevPlayerId;
         const loserId = winnerId === playerId ? prevPlayerId : playerId;
+        
+        this.players.get(loserId)?.loseDie();
+        this.turnIndex = this.order.indexOf(winnerId);
 
-        return Ok({ winnerId, loserId });
+        const loserOut = this.players.get(loserId)?.getNumberOfDice() === 0;
+
+        return Ok({ winnerId, loserId, loserOut });
     }
 
     private countDice(faceValue: number): number {

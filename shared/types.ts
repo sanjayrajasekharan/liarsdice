@@ -2,6 +2,7 @@
 // Type aliases for semantic clarity
 export type PlayerId = string;
 export type GameCode = string;
+export type DieFace = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const GameStage = {
   PRE_GAME: 'PRE_GAME',

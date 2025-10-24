@@ -1,25 +1,27 @@
-export class Claim {
-    private playerId: string;
-    private quantity: number;
-    private faceValue: number;
+import { DieFace, PlayerId } from '../../shared/types';
 
-    constructor(playerId: string, quantity: number, faceValue: number) {
+export class Claim {
+    private playerId: PlayerId;
+    private quantity: number;
+    private faceValue: DieFace;
+
+    constructor(playerId: string, quantity: number, faceValue: DieFace) {
         this.playerId = playerId;
         this.quantity = quantity;
         this.faceValue = faceValue;
     }
 
-    getPlayerId(): string {
+    getPlayerId(): PlayerId {
         return this.playerId;
     }
     getQuantity(): number {
         return this.quantity;
     }
-    getFaceValue(): number {
+    getFaceValue(): DieFace {
         return this.faceValue;
     }
     validateAgainst(oldClaim: Claim): boolean {
-        return (oldClaim.getQuantity() < this.quantity) ||
-            (oldClaim.getQuantity() === this.quantity && oldClaim.getFaceValue() < this.faceValue);
+        return (this.quantity > oldClaim.getQuantity()) ||
+            (this.quantity === oldClaim.getQuantity() && this.faceValue > oldClaim.getFaceValue());
     }
 }

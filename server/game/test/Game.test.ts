@@ -79,7 +79,7 @@ describe('Game', () => {
 
     describe('createPlayer', () => {
         it('should create a player and add to game', () => {
-            const result = game.createPlayer('Player1', null as any);
+            const result = game.createPlayer('Player1');
             
             expect(result.ok).to.be.true;
             if (result.ok) {
@@ -90,7 +90,7 @@ describe('Game', () => {
         });
 
         it('should add player to the game order', () => {
-            const result = game.createPlayer('Player1', null as any);
+            const result = game.createPlayer('Player1');
             
             if (result.ok) {
                 expect(game.getOrder()).to.include(result.value.playerId);
@@ -100,7 +100,7 @@ describe('Game', () => {
 
         it('should allow up to 6 players', () => {
             for (let i = 1; i <= 6; i++) {
-                const result = game.createPlayer(`Player${i}`, null as any);
+                const result = game.createPlayer(`Player${i}`);
                 expect(result.ok).to.be.true;
             }
             
@@ -110,10 +110,10 @@ describe('Game', () => {
         it('should reject 7th player', () => {
             // Add 6 players
             for (let i = 1; i <= 6; i++) {
-                game.createPlayer(`Player${i}`, null as any);
+                game.createPlayer(`Player${i}`);
             }
             
-            const result = game.createPlayer('Player7', null as any);
+            const result = game.createPlayer('Player7');
             
             expect(result.ok).to.be.false;
             if (!result.ok) {
@@ -122,13 +122,13 @@ describe('Game', () => {
         });
 
         it('should reject player creation when game is in progress', () => {
-            const player1Result = game.createPlayer('Player1', null as any);
-            const player2Result = game.createPlayer('Player2', null as any);
+            const player1Result = game.createPlayer('Player1');
+            const player2Result = game.createPlayer('Player2');
             
             if (player1Result.ok) {
                 game.startRound(player1Result.value.playerId);
                 
-                const result = game.createPlayer('Player3', null as any);
+                const result = game.createPlayer('Player3');
                 expect(result.ok).to.be.false;
                 if (!result.ok) {
                     expect(result.error.code).to.equal(ErrorCode.GAME_IN_PROGRESS);
@@ -139,7 +139,7 @@ describe('Game', () => {
 
     describe('startRound', () => {
         it('should start a round successfully', () => {
-            const playerResult = game.createPlayer('Player1', null as any);
+            const playerResult = game.createPlayer('Player1');
             if (!playerResult.ok) throw new Error('Failed to create player');
             
             const result = game.startRound(playerResult.value.playerId);
@@ -148,8 +148,8 @@ describe('Game', () => {
         });
 
         it('should set the turn index to the starting player', () => {
-            const player1Result = game.createPlayer('Player1', null as any);
-            const player2Result = game.createPlayer('Player2', null as any);
+            const player1Result = game.createPlayer('Player1');
+            const player2Result = game.createPlayer('Player2');
             
             if (player1Result.ok && player2Result.ok) {
                 game.startRound(player2Result.value.playerId);
@@ -161,7 +161,7 @@ describe('Game', () => {
         });
 
         it('should clear previous claims', () => {
-            const player1Result = game.createPlayer('Player1', null as any);
+            const player1Result = game.createPlayer('Player1');
             if (!player1Result.ok) throw new Error('Failed to create player');
             
             game.startRound(player1Result.value.playerId);
@@ -170,7 +170,7 @@ describe('Game', () => {
         });
 
         it('should reject starting round during ROUND_ROBBIN stage', () => {
-            const player1Result = game.createPlayer('Player1', null as any);
+            const player1Result = game.createPlayer('Player1');
             if (!player1Result.ok) throw new Error('Failed to create player');
             
             game.startRound(player1Result.value.playerId);
@@ -188,8 +188,8 @@ describe('Game', () => {
         let player2Id: string;
 
         beforeEach(() => {
-            const p1Result = game.createPlayer('Player1', null as any);
-            const p2Result = game.createPlayer('Player2', null as any);
+            const p1Result = game.createPlayer('Player1');
+            const p2Result = game.createPlayer('Player2');
             
             if (!p1Result.ok || !p2Result.ok) {
                 throw new Error('Failed to create players');
@@ -222,7 +222,7 @@ describe('Game', () => {
             if (!newGameResult.ok) throw new Error('Failed to create game');
             
             const newGame = newGameResult.value.game;
-            const playerResult = newGame.createPlayer('Player1', null as any);
+            const playerResult = newGame.createPlayer('Player1');
             if (!playerResult.ok) throw new Error('Failed to create player');
             
             const result = newGame.validateTurn(playerResult.value.playerId);
@@ -241,8 +241,8 @@ describe('Game', () => {
         let player2Id: string;
 
         beforeEach(() => {
-            const p1Result = game.createPlayer('Player1', null as any);
-            const p2Result = game.createPlayer('Player2', null as any);
+            const p1Result = game.createPlayer('Player1');
+            const p2Result = game.createPlayer('Player2');
             
             if (!p1Result.ok || !p2Result.ok) {
                 throw new Error('Failed to create players');
@@ -304,8 +304,8 @@ describe('Game', () => {
         let player2: Player;
 
         beforeEach(() => {
-            const p1Result = game.createPlayer('Player1', null as any);
-            const p2Result = game.createPlayer('Player2', null as any);
+            const p1Result = game.createPlayer('Player1');
+            const p2Result = game.createPlayer('Player2');
             
             if (!p1Result.ok || !p2Result.ok) {
                 throw new Error('Failed to create players');
@@ -395,9 +395,9 @@ describe('Game', () => {
     describe('game flow', () => {
         it('should handle a complete round flow', () => {
             // Create 3 players
-            const p1Result = game.createPlayer('Player1', null as any);
-            const p2Result = game.createPlayer('Player2', null as any);
-            const p3Result = game.createPlayer('Player3', null as any);
+            const p1Result = game.createPlayer('Player1');
+            const p2Result = game.createPlayer('Player2');
+            const p3Result = game.createPlayer('Player3');
             
             if (!p1Result.ok || !p2Result.ok || !p3Result.ok) {
                 throw new Error('Failed to create players');
@@ -429,3 +429,4 @@ describe('Game', () => {
         });
     });
 });
+

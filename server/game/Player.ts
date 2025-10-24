@@ -1,23 +1,22 @@
 import { Result } from '../../shared/Result';
+import { DieFace } from '../../shared/types';
 import { Claim } from './Claim';
 import { Game } from './Game';
 
 export class Player {
     private id: string;
     private name: string;
-    private ws: WebSocket | null;
     private game: Game;
-    private numberOfDice: number = 5;
+    private numberOfDice: number = 6;
     private dice: number[] = [];
 
-    constructor(id: string, name: string, game: Game, ws?: WebSocket) {
+    constructor(id: string, name: string, game: Game) {
         this.id = id;
         this.name = name;
         this.game = game;
-        this.ws = ws ? ws : null;
     }
 
-    makeClaim(quantity: number, faceValue: number): Result<void> {
+    makeClaim(quantity: number, faceValue: DieFace): Result<void> {
         return this.game.addClaim(new Claim(this.id, quantity, faceValue));
     }
 
@@ -27,12 +26,9 @@ export class Player {
     getName(): string {
         return this.name;
     }
-    setWebSocket(ws: WebSocket): void {
-        this.ws = ws;
-    }
-    getWebSocket(): WebSocket | null {
-        return this.ws;
 
+    getNumberOfDice(): number {
+        return this.numberOfDice;
     }
 
     rollDice(): void {
