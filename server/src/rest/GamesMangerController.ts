@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import { controller, httpGet, httpPost, request, requestBody, requestParam, response } from "inversify-express-utils";
 import { inject, injectable } from 'inversify';
 import { PlayerId } from '../../../shared/types';
-import GamesService from '../app/GamesService';
+import GamesManagerService from '../app/GamesMangerService';
 import { isErr } from '../../../shared/Result';
 
 @controller('/api/games')
 export default class GamesController {
-    constructor (@inject("GamesService") private gamesService: GamesService) { }
+    constructor (@inject("GamesService") private gamesService: GamesManagerService) { }
     @httpPost("/")
     private async createGame(@requestBody() body: { hostId: PlayerId }, @response() res: Response) {
         const createGameResult = await this.gamesService.createGame(body.hostId);

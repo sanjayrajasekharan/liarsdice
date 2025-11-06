@@ -5,7 +5,7 @@ import { GameCode, PlayerId } from "../../../shared/types";
 import { Game } from "../game/Game";
 
 @injectable()
-export default class GamesService {
+export default class GamesManagerService {
     constructor(@inject("Store") private store: Store) { }
 
     async createGame(hostId: PlayerId): Promise<Result<GameCode>> {
