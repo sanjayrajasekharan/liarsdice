@@ -5,7 +5,6 @@ import { PlayerId } from '../../../shared/types';
 import GamesService from '../app/GamesService';
 import { isErr } from '../../../shared/Result';
 
-@injectable()
 @controller('/api/games')
 export default class GamesController {
     constructor (@inject("GamesService") private gamesService: GamesService) { }

@@ -1,4 +1,4 @@
-export interface GameError {
+    export interface GameError {
     code: ErrorCode;
     details?: any;
 }

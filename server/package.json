@@ -32,7 +32,7 @@
     "pug": "^3.0.3",
     "random-words": "^2.0.1",
     "reflect-metadata": "^0.2.2",
-    "typescript-rest": "^3.0.4",
+    "socket.io": "^4.8.1",
     "uuid": "^10.0.0",
     "ws": "^8.18.0"
   },
@@ -42,6 +42,7 @@
     "@types/mocha": "^10.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.2",
+    "@types/socket.io": "^3.0.2",
     "@types/whatwg-url": "^13.0.0",
     "@types/ws": "^8.5.12",
     "chai": "^4.3.10",
