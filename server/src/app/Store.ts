@@ -44,9 +44,14 @@ private  games: Record<GameCode, Game> = {};
         return Ok(this.connections[gameCode]);
     }
 
-     addGame(gameCode: GameCode, game: Game): void {
+     addGame(game: Game): Result<void> {
+        const gameCode = game.getGameCode();
+        if (this.games[gameCode]) {
+            return Err(ErrorCode.GAME_ALREADY_EXISTS);
+        }
         this.games[gameCode] = game;
         this.connections[gameCode] = {};
+        return Ok(undefined);
     }
 
      getGame(gameCode: GameCode): Result<Game> {

@@ -2,24 +2,25 @@
 import { Player } from './Player';
 import { Claim } from './Claim';
 import { count, generate } from 'random-words';
-import { Result, Ok, Err} from '../../../shared/Result';
+import { Result, Ok, Err } from '../../../shared/Result';
 import { ErrorCode } from '../../../shared/errors';
 import { PlayerId, GameCode, GameStage } from '../../../shared/types';
 import { v4 as uuidv4 } from 'uuid';
+import { inject } from 'inversify';
+import Store from '../app/Store';
 
 export class Game {
     private static readonly MAX_PLAYERS = 6; // change to reed from shared config in future
-    private static games: Map<GameCode, Game> = new Map();
 
-    private constructor(
+    public constructor(
         private gameCode: GameCode,
-        private hostId: PlayerId, 
-        private players: Map<PlayerId, Player> = new Map(), 
+        private hostId: PlayerId,
+        private players: Map<PlayerId, Player> = new Map(),
         private order: PlayerId[] = [],
         private turnIndex: number = 0,
         private claims: Claim[] = [],
         private stage: GameStage = GameStage.PRE_GAME
-    ) {}
+    ) { }
 
     public createPlayer(playerName: string): Result<{ playerId: PlayerId; player: Player }> {
         if (this.players.size >= Game.MAX_PLAYERS) {
@@ -55,7 +56,7 @@ export class Game {
         const lastClaim = this.claims[this.claims.length - 1];
         // First claim of the round is always valid
         if (lastClaim && !claim.validateAgainst(lastClaim)) {
-            return Err(ErrorCode.INVALID_CLAIM, 
+            return Err(ErrorCode.INVALID_CLAIM,
                 // #TODO replace these string literals with templates
                 `Claim ${claim.getQuantity()} of ${claim.getFaceValue()} is not valid against ${lastClaim.getQuantity()} of ${lastClaim.getFaceValue()}`
             );
@@ -76,7 +77,7 @@ export class Game {
 
         const winnerId = this.countDice(faceValue) < quantity ? playerId : prevPlayerId;
         const loserId = winnerId === playerId ? prevPlayerId : playerId;
-        
+
         this.players.get(loserId)?.loseDie();
         this.turnIndex = this.order.indexOf(winnerId);
 
@@ -97,11 +98,11 @@ export class Game {
         }
 
         this.turnIndex = this.order.indexOf(startingPlayerId);
-        this.rollAllDice(); 
+        this.rollAllDice();
         this.claims = [];
 
         this.stage = GameStage.ROUND_ROBIN;
-        
+
         return Ok(undefined);
     }
 
@@ -135,33 +136,30 @@ export class Game {
         return this.claims;
     }
 
+    toJSON() {
+        return {
+            gameCode: this.gameCode,
+            host: this.players.get(this.hostId)?.getName(),
+            players: Array.from(this.order).map((playerId: PlayerId) => (
+                { name: this.players.get(playerId)?.getName(), 
+                  remainingDice: this.players.get(playerId)?.getNumberOfDice() 
+                })),
+            stage: this.stage,
+        };
+    }
+
     // Static
 
-    private static generateGameCode(): GameCode {
+    public static generateGameCode(): GameCode {
         let gameCode: GameCode;
-        do {
-            gameCode = generate({
-                exactly: 3,
-                maxLength: 5,
-                minLength: 4,
-                join: "-",
-                seed: Date.now().toString(),
-            });
-        } while (this.games.has(gameCode));
+        gameCode = generate({
+            exactly: 3,
+            maxLength: 5,
+            minLength: 4,
+            join: "-",
+            seed: Date.now().toString(),
+        });
 
         return gameCode;
-    }
-    static get(gameCode: GameCode): Game | undefined {
-        return this.games.get(gameCode);
-    }
-    static delete(gameCode: GameCode): void {
-        this.games.delete(gameCode);
-        // Additional cleanup such as notifying players, and dropping connections can be handled here.
-    }
-    static create(hostId: PlayerId): Result<{ gameCode: GameCode; game: Game }> {
-        const gameCode = this.generateGameCode();
-        const game = new Game(gameCode, hostId);
-        this.games.set(gameCode, game);
-        return Ok({ gameCode, game });
     }
 }

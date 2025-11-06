@@ -1,25 +1,39 @@
-import express, { Request, Response } from 'express';
-import { controller, httpGet, httpPost, request, requestParam, response } from "inversify-express-utils";
-import App from '../app/App';
-import { injectable } from 'inversify';
+import { Request, Response } from 'express';
+import { controller, httpGet, httpPost, request, requestBody, requestParam, response } from "inversify-express-utils";
+import { inject, injectable } from 'inversify';
+import { PlayerId } from '../../../shared/types';
+import GamesService from '../app/GamesService';
+import { isErr } from '../../../shared/Result';
 
 @injectable()
 @controller('/api/games')
 export default class GamesController {
+    constructor (@inject("GamesService") private gamesService: GamesService) { }
     @httpPost("/")
-    private async createGame(@request() req: Request, @response() res: Response) {
-        // Logic to create a new game
-        return res.status(201).json({ message: 'Game created' });
+    private async createGame(@requestBody() body: { hostId: PlayerId }, @response() res: Response) {
+        const createGameResult = await this.gamesService.createGame(body.hostId);
+        if (isErr(createGameResult)) {
+            return res.status(400).json({ error: createGameResult.error });
+        }
+        return res.status(201).json({ message: 'Game created', gameCode: createGameResult.value });
     }
 
     @httpPost("/:gameCode/players")
-    private async addPlayer(@requestParam("gameCode") gameCode: string, @request() req: Request, @response() res: Response) {
-        // Logic to add a player to the game
+    private async addPlayerToGame(@requestParam("gameCode") gameCode: string, @requestBody() req: { playerId: PlayerId }, @response() res: Response) {
+        const addPlayerResult = await this.gamesService.addPlayerToGame(gameCode, req.playerId);
+        if (isErr(addPlayerResult)) {
+            return res.status(400).json({ error: addPlayerResult.error });
+        }
         return res.status(201).json({ message: 'Player added', gameCode });
     }
 
     @httpGet("/:gameCode")
-    private async getGames(@requestParam("gameCode") gameCode: string, @response() res: Response) {
-        return res.status(200).json({ gameCode });
+    private async getGame(@requestParam("gameCode") gameCode: string, @response() res: Response) {
+        const getGameResult = await this.gamesService.getGame(gameCode);
+        if (isErr(getGameResult)) {
+            return res.status(404).json({ error: getGameResult.error });
+        }
+        let game = getGameResult.value;
+        return res.status(200).json({ game });
     }
 }
