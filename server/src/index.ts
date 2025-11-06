@@ -10,6 +10,7 @@ import { env } from 'process';
 import Store from './app/Store.js';
 import { buildSocketServer } from './ws/ws-utils/socket-builder.js';
 import { GameController } from './ws/GameController.js';
+import { Server as SocketServer } from 'socket.io';
 
 
 const container = new Container();
@@ -23,6 +24,6 @@ app.use(morgan('dev'));
 app.use(limiter);
 
 const server = http.createServer(app);
-buildSocketServer(container, server);
+const io = buildSocketServer(container, server);
 
 server.listen(env.PORT);

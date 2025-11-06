@@ -4,10 +4,8 @@ import { Claim } from './Claim';
 import { count, generate } from 'random-words';
 import { Result, Ok, Err } from '../../../shared/Result';
 import { ErrorCode } from '../../../shared/errors';
-import { PlayerId, GameCode, GameStage } from '../../../shared/types';
+import { PlayerId, GameCode, GameStage, ChallengeResult } from '../../../shared/types';
 import { v4 as uuidv4 } from 'uuid';
-import { inject } from 'inversify';
-import Store from '../app/Store';
 
 export class Game {
     private static readonly MAX_PLAYERS = 6; // change to reed from shared config in future
@@ -66,7 +64,7 @@ export class Game {
         return Ok(undefined);
     }
 
-    challenge(playerId: PlayerId): Result<{ winnerId: PlayerId; loserId: PlayerId; loserOut: boolean }> {
+    challenge(playerId: PlayerId): Result<ChallengeResult> {
         const turnValidation = this.validateTurn(playerId);
         if (!turnValidation.ok) {
             return turnValidation;
@@ -122,6 +120,14 @@ export class Game {
 
     getPlayers(): Map<PlayerId, Player> {
         return this.players;
+    }
+
+    getPlayer(playerId: PlayerId): Result<Player> {
+        const player = this.players.get(playerId);
+        if (!player) {
+            return Err(ErrorCode.PLAYER_NOT_FOUND);
+        }
+        return Ok(player);
     }
 
     getOrder(): PlayerId[] {

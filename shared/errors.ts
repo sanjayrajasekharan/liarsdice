@@ -1,4 +1,4 @@
-    export interface GameError {
+export interface GameError {
     code: ErrorCode;
     details?: any;
 }
@@ -36,3 +36,10 @@ export const errorMessages: Record<ErrorCode, string> = {
     [ErrorCode.INVALID_GAME_STATE]: 'Game is not in a valid state for this action',
     [ErrorCode.PLAYER_NOT_FOUND]: 'Player not found in the game',
 };
+
+export function errorMessage(error: GameError): string {
+    if (error.details) {
+        return `${errorMessages[error.code]}: ${JSON.stringify(error.details)}`;
+    }
+    return errorMessages[error.code];
+}

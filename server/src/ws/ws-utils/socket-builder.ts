@@ -26,6 +26,9 @@ export function buildSocketServer(
   const server = httpServer || createServer();
   const io = new Server(server, ioOptions);
 
+  // Bind the Socket.IO server to the container so controllers can inject it
+  container.bind<Server>('SocketServer').toConstantValue(io);
+
   const controllerCtors = getAllSocketControllerConstructors(container);
   log(`Discovered ${controllerCtors.length} socket controllers.`);
 

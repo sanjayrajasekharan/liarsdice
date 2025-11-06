@@ -1,6 +1,7 @@
 import { Action } from './actions';
 
 export type PlayerId = string;
+export type SocketId = string;
 export type GameCode = string;
 export type DieFace = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -12,6 +13,12 @@ export const GameStage = {
 } as const;
 
 export type GameStage = typeof GameStage[keyof typeof GameStage];
+
+export type ChallengeResult = {
+  winnerId: PlayerId;
+  loserId: PlayerId;
+  loserOut: boolean;
+};
 
 export type ClaimMessage = {
   action: Action.CLAIM;
