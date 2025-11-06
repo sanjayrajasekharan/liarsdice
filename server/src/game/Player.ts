@@ -1,5 +1,5 @@
-import { Result } from '../../shared/Result';
-import { DieFace } from '../../shared/types';
+import { Result } from '../../../shared/Result';
+import { DieFace } from '../../../shared/types';
 import { Claim } from './Claim';
 import { Game } from './Game';
 

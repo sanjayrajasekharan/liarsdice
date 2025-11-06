@@ -1,15 +1,16 @@
 import { WebSocket } from 'ws';
-import { PlayerId, GameCode } from '../shared/types';
-import { Game } from './game/Game';
-import { Result, Err, Ok } from '../shared/Result';
-import {ErrorCode} from '../shared/errors'
+import { PlayerId, GameCode } from '../../../shared/types';
+import { Game } from '../game/Game';
+import { Result, Err, Ok } from '../../../shared/Result';
+import {ErrorCode} from '../../../shared/errors'
+import { injectable } from 'inversify';
 
+@injectable()
+export default class Store {
+private  connections: Record<string, Record<PlayerId, WebSocket>> = {};
+private  games: Record<GameCode, Game> = {};
 
-export class Store {
-private static connections: Record<string, Record<PlayerId, WebSocket>> = {};
-private static games: Record<GameCode, Game> = {};
-
-    static addConnection(gameCode: string, playerId: PlayerId, ws: WebSocket): Result<void> {
+     addConnection(gameCode: string, playerId: PlayerId, ws: WebSocket): Result<void> {
         if (!this.connections[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);
         }
@@ -17,7 +18,7 @@ private static games: Record<GameCode, Game> = {};
         return Ok(undefined);  
     }
 
-    static getConnection(gameCode: string, playerId: PlayerId): Result<WebSocket> {
+     getConnection(gameCode: string, playerId: PlayerId): Result<WebSocket> {
         if (!this.connections[gameCode])
             return Err(ErrorCode.GAME_NOT_FOUND);
         if (!this.connections[gameCode][playerId])
@@ -25,7 +26,7 @@ private static games: Record<GameCode, Game> = {};
         return Ok(this.connections[gameCode][playerId]);
     }
 
-    static removeConnection(gameCode: string, playerId: PlayerId): Result<void> {
+     removeConnection(gameCode: string, playerId: PlayerId): Result<void> {
         if (!this.connections[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);
         }
@@ -36,19 +37,19 @@ private static games: Record<GameCode, Game> = {};
         return Ok(undefined);
     }
 
-    static getConnectionsForGame(gameCode: string): Result<Record<PlayerId, WebSocket>> {
+     getConnectionsForGame(gameCode: string): Result<Record<PlayerId, WebSocket>> {
         if (!this.connections[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);
         }
         return Ok(this.connections[gameCode]);
     }
 
-    static addGame(gameCode: GameCode, game: Game): void {
+     addGame(gameCode: GameCode, game: Game): void {
         this.games[gameCode] = game;
         this.connections[gameCode] = {};
     }
 
-    static getGame(gameCode: GameCode): Result<Game> {
+     getGame(gameCode: GameCode): Result<Game> {
         const game = this.games[gameCode];
         if (!game) {
             return Err(ErrorCode.GAME_NOT_FOUND);
@@ -56,7 +57,7 @@ private static games: Record<GameCode, Game> = {};
         return Ok(game);
     }
     
-    static removeGame(gameCode: GameCode): Result<void> {
+     removeGame(gameCode: GameCode): Result<void> {
         if (!this.games[gameCode]) {
             return Err(ErrorCode.GAME_NOT_FOUND);
         }

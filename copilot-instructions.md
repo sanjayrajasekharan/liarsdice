@@ -31,11 +31,43 @@ Liar's Dice is an online, link-sharing mulitplayer game implemented in this mono
 
 The game directory contains the main logic for managing the game state, player actions, and game rules. It is seperate from the networking code to maintain a clear separation of concerns.
 
-### Networking
-#### REST
+### REST
+- index.ts : Entrypoint for REST API server.
+- middleware/
+  - limiter.ts: Rate limiting middleware to prevent abuse.
+- routes/
+  - games.ts: RESTful API endpoints for game management.
+
+When a player joins or creates a game they must recieve a JWT token that will be used to authenticate their requests over the WebSocket connection.
+
+#### Routes
 /api/
   - /games
     - POST - Create a new game
     - GET - Get game state
     - /players
         - POST - Add a new player to the game 
+
+
+### WebSocket
+
+
+Game --> players, connections --> GameID --> {playerID: ws}
+
+
+Connections:
+{
+    "apple-bannana-cherry": {
+        "player1": WebSocket,
+        "player2": WebSocket
+    },
+}
+
+Games : 
+{
+    "apple-bannana-cherry": Game,
+    "dog-cat-mouse": Game
+}
+
+Need to figure out how to handle outbound messages
+Clean up closed connections

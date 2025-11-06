@@ -1,4 +1,4 @@
-import { DieFace, PlayerId } from '../../shared/types';
+import { DieFace, PlayerId } from '../../../shared/types';
 
 export class Claim {
     private playerId: PlayerId;

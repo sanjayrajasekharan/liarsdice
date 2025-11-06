@@ -1,6 +1,7 @@
-import { Action } from '../../shared/actions.js';
+import WebSocket from 'ws';
+import { Action } from '../../../shared/actions.js';
 
-export class Router {
+export default class Router {
     static connect(ws: WebSocket) {
         // Connnection logic here
     }

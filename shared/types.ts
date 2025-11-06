@@ -27,4 +27,8 @@ export type StartGameMessage = {
   action: Action.START_GAME;
 };
 
-export type PlayerMessage = ClaimMessage | ChallengeMessage | StartGameMessage;
+export type StartRoundMessage = {
+  action: Action.START_ROUND;
+};
+
+export type PlayerMessage = ClaimMessage | ChallengeMessage | StartGameMessage | StartRoundMessage;
