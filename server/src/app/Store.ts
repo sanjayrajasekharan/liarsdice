@@ -1,7 +1,7 @@
-import { PlayerId, GameCode, SocketId } from '../../../shared/types';
-import { Game } from '../game/Game';
-import { Result, Err, Ok } from '../../../shared/Result';
-import {ErrorCode} from '../../../shared/errors'
+import { PlayerId, GameCode, SocketId } from 'shared/types.js';
+import { Game } from '@game/Game.js';
+import { Result, Err, Ok } from 'shared/Result.js';
+import {ErrorCode} from 'shared/errors.js'
 import { injectable } from 'inversify';
 
 @injectable()

@@ -1,7 +1,7 @@
-import { Result } from '../../../shared/Result';
-import { DieFace } from '../../../shared/types';
-import { Claim } from './Claim';
-import { Game } from './Game';
+import { Result } from 'shared/Result.js';
+import { DieFace } from 'shared/types.js';
+import { Claim } from './Claim.js';
+import { Game } from './Game.js';
 
 export class Player {
     private id: string;

@@ -1,10 +1,10 @@
 // class that manages the game state and logic
-import { Player } from './Player';
-import { Claim } from './Claim';
+import { Player } from './Player.js';
+import { Claim } from './Claim.js';
 import { count, generate } from 'random-words';
-import { Result, Ok, Err } from '../../../shared/Result';
-import { ErrorCode } from '../../../shared/errors';
-import { PlayerId, GameCode, GameStage, ChallengeResult } from '../../../shared/types';
+import { Result, Ok, Err } from 'shared/Result.js';
+import { ErrorCode } from 'shared/errors.js';
+import { PlayerId, GameCode, GameStage, ChallengeResult } from 'shared/types.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class Game {

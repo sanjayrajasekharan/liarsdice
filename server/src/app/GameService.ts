@@ -1,9 +1,9 @@
 import { inject, injectable } from "inversify";
 import Store from "./Store";
-import { Result, Ok, Err, isErr } from "../../../shared/Result";
-import { ChallengeResult, DieFace, GameCode, PlayerId, SocketId } from "../../../shared/types";
-import { Claim } from "../game/Claim";
-import { Player } from "../game/Player";
+import { Result, Ok, Err, isErr } from "shared/Result";
+import { ChallengeResult, DieFace, GameCode, PlayerId, SocketId } from "shared/types";
+import { Claim } from "@game/Claim";
+import { Player } from "@game/Player";
 
 @injectable()
 export default class GameService {

@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { verifyPlayerToken, TokenPayload } from '../../auth/utils';
+import { verifyPlayerToken, TokenPayload } from '@auth/utils.js';
 
 /**
  * Middleware to verify the player token from socket handshake

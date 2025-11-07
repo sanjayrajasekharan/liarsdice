@@ -2,18 +2,18 @@ import http from 'http';
 import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
-import limiter from './rest/middleware/limiter.js';
+import limiter from '@rest/middleware/limiter';
 
 import { Container } from 'inversify';
 import { InversifyExpressServer, TYPE } from 'inversify-express-utils';
 import { env } from 'process';
-import Store from './app/Store.js';
-import GameService from './app/GameService.js';
-import GamesManagerService from './app/GamesMangerService.js';
-import { buildSocketServer } from './sockets/socket-utils/socket-builder.js';
-import { GameController } from './sockets/GameController.js';
+import Store from '@app/Store';
+import GameService from '@app/GameService';
+import GamesManagerService from '@app/GamesMangerService';
+import { buildSocketServer } from '@sockets/socket-utils/socket-builder';
+import { GameController } from '@sockets/GameController';
 import { Server as SocketServer } from 'socket.io';
-import GamesManagerController from './rest/GamesMangerController.js';
+import GamesManagerController from '@rest/GamesMangerController';
 
 const container = new Container();
 container.bind(Store).toSelf().inSingletonScope();

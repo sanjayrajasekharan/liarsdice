@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { Player } from '../Player.js';
 import { Game } from '../Game.js';
 import { Claim } from '../Claim.js';
-import { GameStage } from '../../../../shared/types.js';
+import { GameStage } from 'shared/types.js';
 
 const STARTING_DICE_COUNT = 6;
 

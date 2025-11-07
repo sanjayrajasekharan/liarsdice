@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import { Game } from '../Game.js';
 import { Player } from '../Player.js';
 import { Claim } from '../Claim.js';
-import { ErrorCode } from '../../../../shared/errors.js';
-import { GameStage } from '../../../../shared/types.js';
+import { ErrorCode } from 'shared/errors.js';
+import { GameStage } from 'shared/types.js';
 
 describe('Game', () => {
     let game: Game;

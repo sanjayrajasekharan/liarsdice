@@ -1,15 +1,15 @@
-import { Action } from "../../../shared/actions";
-import { StateChange } from "../../../shared/states";
-import { onConnect, socketController, event, onDisconnect } from "./socket-utils/main";
+import { Action } from "shared/actions";
+import { StateChange } from "shared/states";
+import { onConnect, socketController, event, onDisconnect } from "@sockets/socket-utils/main";
 import { Socket, Server as SocketServer } from "socket.io";
 import { inject } from "inversify";
-import GameService from "../app/GameService";
+import GameService from "@app/GameService";
 import {
     ChallengeMadeMessage, ClaimMadeMessage, DiceRolledMessage, DieFace, GameCode, GameStartedMessage, PlayerId, PlayerLeftMessage, RoundStartedMessage, ServerMessage
-} from "../../../shared/types";
-import { isErr } from "../../../shared/Result";
-import { errorMessage } from "../../../shared/errors";
-import { authMiddleware } from "./middleware/authMiddleware";
+} from "shared/types";
+import { isErr } from "shared/Result";
+import { errorMessage } from "shared/errors";
+import { authMiddleware } from "@sockets/middleware/authMiddleware";
 
 @socketController(undefined, authMiddleware)
 export class GameController {
