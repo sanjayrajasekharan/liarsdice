@@ -10,8 +10,8 @@ import { generate } from 'random-words';
 
 // TODO: Make sure playerId is generated server-side and not passed from client
 @controller('/api/games')
-export default class GamesController {
-    constructor (@inject("GamesService") private gamesService: GamesManagerService) { }
+export default class GamesManagerController {
+    constructor (@inject("GamesManagerService") private gamesService: GamesManagerService) { }
     @httpPost("/")
     private async createGame(@requestBody() body: { hostName: string }, @response() res: Response) {
         const createGameResult = await this.gamesService.createGame(body.hostName);

@@ -58,6 +58,19 @@ export function buildSocketServer(
   io.on('connection', (socket: Socket) => {
     log(`Socket connected: ${socket.id}`);
 
+    // Log all incoming messages
+    // TODO: Remove before deploy
+    socket.onAny((eventName, ...args) => {
+      console.log(`📨 [INCOMING] Socket: ${socket.id} | Event: ${eventName} | Data:`, JSON.stringify(args, null, 2));
+    });
+
+    // Log all outgoing messages
+    const originalEmit = socket.emit.bind(socket);
+    socket.emit = function(eventName: string, ...args: any[]) {
+      console.log(`📤 [OUTGOING] Socket: ${socket.id} | Event: ${eventName} | Data:`, JSON.stringify(args, null, 2));
+      return originalEmit(eventName, ...args);
+    };
+
     controllerInfos.forEach(info => {
       const { ctor, meta, events } = info;
       // Resolve instance from container if bound; fallback to new

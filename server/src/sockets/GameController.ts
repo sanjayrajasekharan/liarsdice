@@ -1,5 +1,6 @@
 import { Action } from "../../../shared/actions";
-import { onConnect, socketController, event, onDisconnect } from "./ws-utils/main";
+import { StateChange } from "../../../shared/states";
+import { onConnect, socketController, event, onDisconnect } from "./socket-utils/main";
 import { Socket, Server as SocketServer } from "socket.io";
 import { verifyPlayerToken } from "../auth/utils";
 import { inject } from "inversify";
@@ -8,11 +9,16 @@ import { DieFace, GameCode, PlayerId } from "../../../shared/types";
 import { isErr } from "../../../shared/Result";
 import { errorMessage } from "../../../shared/errors";
 import Store from "../app/Store";
+import SocketController from "./socket-utils/SocketController";
 
 @socketController()
-export class GameController {
-    constructor(@inject("GameService") private gameService: GameService, @inject("SocketServer") private io: SocketServer) {}
+export class GameController extends SocketController {
+    constructor(@inject("GameService") private gameService: GameService, @inject("SocketServer") private io: SocketServer) {
+        super();
+    }
 
+    // TODO: need to send joining and disconnecting players during pre game stage   
+    // TODO: need to all players of state change
     @onConnect()
     handleConnect(socket: Socket) {
         const token = socket.handshake.query.token;
@@ -46,21 +52,24 @@ export class GameController {
         if (isErr(challengeResult)) {
             throw new Error(errorMessage(challengeResult.error));
         }
-        this.io.to(data.gameCode).emit(Action.CHALLENGE, challengeResult.value);
+        this.io.to(data.gameCode).emit(StateChange.CHALLENGE_MADE, challengeResult.value);
+
     }
 
     // TODO: handle errors better
     @event(Action.START_GAME)
     handleStartGame(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId}) {
+        console.log("Start game event received");
         const startGameResult = this.gameService.startGame(data.gameCode, data.playerId); 
         if (isErr(startGameResult)) {
+            console.log("Error starting game:", startGameResult.error);
             throw new Error(errorMessage(startGameResult.error));
         }
         const {startingPlayerId, dice} = startGameResult.value;
-        this.io.to(data.gameCode).emit(Action.START_GAME, { startingPlayerId });
-        
+        this.io.to(data.gameCode).emit(StateChange.GAME_STARTED, { startingPlayerId });
+        console.log(JSON.stringify(dice));
         for (const [playerId, playerDice] of Object.entries(dice)) {
-            this.io.to(playerId).emit(Action.DICE_ROLL, { dice: playerDice });
+            this.io.to(playerId).emit(StateChange.DICE_ROLLED, { dice: playerDice });
         }
     }
 
@@ -74,7 +83,7 @@ export class GameController {
         this.io.to(data.gameCode).emit(Action.START_ROUND, { startingPlayerId });
         
         for (const [playerId, playerDice] of Object.entries(dice)) {
-            this.io.to(playerId).emit(Action.DICE_ROLL, { dice: playerDice });
+            this.io.to(playerId).emit(StateChange.DICE_ROLLED, { dice: playerDice });
         }
     }
 }

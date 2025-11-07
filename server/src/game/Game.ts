@@ -91,6 +91,11 @@ export class Game {
 
         const loserOut = this.players.get(loserId)?.getNumberOfDice() === 0;
 
+        if (loserOut) {
+            this.order = this.order.filter(id => id !== loserId);
+        }
+
+
         return Ok({ winnerId, loserId, loserOut });
     }
 
