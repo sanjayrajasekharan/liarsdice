@@ -11,11 +11,11 @@ export interface TokenPayload {
     exp?: number;
 }
 
-export function generatePlayerToken(playerId: string, gameCode: string, playerName: string): string {
+export function generatePlayerToken(playerId: string, playerName: string, gameCode: string): string {
     const payload: TokenPayload = {
         playerId,
+        playerName,
         gameCode,
-        playerName
     };
     return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
 }

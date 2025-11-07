@@ -3,27 +3,11 @@ import Store from "./Store";
 import { Result, Ok, Err, isErr } from "../../../shared/Result";
 import { ErrorCode } from "../../../shared/errors";
 import { ChallengeResult, DieFace, GameCode, PlayerId, SocketId } from "../../../shared/types";
-import { start } from "repl";
 import { Claim } from "../game/Claim";
 
 @injectable()
 export default class GameService {
     constructor(@inject("Store") private store: Store) { }
-
-    addPlayerConnection(playerId: PlayerId, gameCode: GameCode, socketId: SocketId): Result<void> {
-        const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
-        }
-        const game = gameResult.value;
-        const playerResult = game.getPlayer(playerId);
-        if (isErr(playerResult)) {
-            return Err(playerResult.error);
-        }
-
-        this.store.addConnection(playerId, gameCode, socketId);
-        return Ok(undefined);
-    }
 
     makeClaim(gameCode: GameCode, playerId: PlayerId, faceValue: DieFace, quantity: number): Result<void> {
         const gameResult = this.store.getGame(gameCode);
@@ -67,7 +51,4 @@ export default class GameService {
     }
 
     startGame = this.startRound;
-
-
-
 }

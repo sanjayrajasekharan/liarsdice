@@ -10,15 +10,21 @@ import { v4 as uuidv4 } from 'uuid';
 export class Game {
     private static readonly MAX_PLAYERS = 6; // change to reed from shared config in future
 
-    public constructor(
+    private constructor(
         private gameCode: GameCode,
         private hostId: PlayerId,
+        private hostName: string,
         private players: Map<PlayerId, Player> = new Map(),
         private order: PlayerId[] = [],
         private turnIndex: number = 0,
         private claims: Claim[] = [],
         private stage: GameStage = GameStage.PRE_GAME
-    ) { }
+    ) { 
+        const hostPlayer = new Player(hostId, hostName, this);
+        this.players.set(hostId, hostPlayer);
+        this.order.push(hostId);
+    }
+
 
     public createPlayer(playerName: string): Result<{ playerId: PlayerId; player: Player }> {
         if (this.players.size >= Game.MAX_PLAYERS) {
@@ -28,7 +34,7 @@ export class Game {
             return Err(ErrorCode.GAME_IN_PROGRESS);
         }
 
-        const playerId = uuidv4();
+        const playerId = Game.generatePlayerId();
         const player = new Player(playerId, playerName, this);
         this.players.set(player.getId(), player);
         this.order.push(player.getId());
@@ -168,4 +174,11 @@ export class Game {
 
         return gameCode;
     }
+
+    static generatePlayerId = uuidv4;
+
+    public static createGame(gameCode: GameCode, hostName: string): Game {
+        return new Game(gameCode, this.generatePlayerId(), hostName);
+    }
+
 }
