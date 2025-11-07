@@ -23,6 +23,19 @@ export function buildSocketServer(
   const server = httpServer || createServer();
   const io = new Server(server, ioOptions);
 
+  if (verbose) {
+    const originalTo = io.to.bind(io);
+    io.to = function(room: string | string[]) {
+      const namespace = originalTo(room);
+      const originalEmit = namespace.emit.bind(namespace);
+      namespace.emit = function(eventName: string, ...args: any[]) {
+        log(`[OUTGOING BROADCAST] Room: ${room} | Event: ${eventName} | Data: ${JSON.stringify(args, null, 2)}`);
+        return originalEmit(eventName, ...args);
+      };
+      return namespace;
+    };
+  }
+
   container.bind(Server).toConstantValue(io);
 
   const controllerCtors = getAllSocketControllerConstructors(container);
@@ -103,7 +116,6 @@ export function buildSocketServer(
           };
 
           socket.on(meta?.namespace ? `${meta.namespace}:${finalEventName}` : finalEventName, handlerWrapper);
-          log(`Registered event "${finalEventName}" for controller ${ctor.name}`);
         });
       });
     });
@@ -114,7 +126,7 @@ export function buildSocketServer(
 
 function runMiddlewareChain(
   socket: Socket,
-  middleware: ((socket: Socket, next: (err?: any) => void) => void)[],
+  middleware: ((socket: Socket, next: (err?: any) => void) => void | Promise<void>)[],
   done: (err?: any) => void
 ) {
   let idx = 0;
@@ -123,7 +135,11 @@ function runMiddlewareChain(
     if (idx >= middleware.length) return done();
     const fn = middleware[idx++];
     try {
-      fn(socket, next);
+      const result = fn(socket, next);
+      // If the middleware returns a Promise, handle rejection
+      if (result && typeof result.then === 'function') {
+        result.catch((e) => done(e));
+      }
     } catch (e) {
       done(e);
     }

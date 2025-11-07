@@ -14,18 +14,30 @@ import { authMiddleware } from "@sockets/middleware/authMiddleware";
 @socketController(undefined, authMiddleware)
 export class GameController {
     constructor(@inject(GameService) private gameService: GameService, @inject(SocketServer) private io: SocketServer) { }
+
+    // TODO: have to send game state on connect
+    // TODO: have to deny connections for games that don't exist
     @onConnect()
     handleConnect(socket: Socket) {
         const playerId: PlayerId = socket.data.playerId!;
         const gameCode: GameCode = socket.data.gameCode!;
+        const playerName: string = socket.data.playerName!;
 
         socket.join(gameCode);
         socket.join(playerId);
 
         const playerMessage: ServerMessage = {
             type: StateChange.PLAYER_JOINED,
-            playerId: playerId
+            playerId: playerId,
+            playerName: playerName
         };
+
+        const gameStateResult = this.gameService.getGameState(gameCode);
+        if (isErr(gameStateResult)) {
+            throw new Error(errorMessage(gameStateResult.error));
+        }
+        const gameState = gameStateResult.value;
+        this.io.to(playerId).emit(StateChange.GAME_STATE, gameState);
         this.io.to(gameCode).emit(StateChange.PLAYER_JOINED, playerMessage);
     }
 
@@ -40,6 +52,8 @@ export class GameController {
             type: StateChange.PLAYER_LEFT,
             playerId: playerId
         };
+
+        this.gameService.handleDisconnect(gameCode, playerId);
         this.io.to(gameCode).emit(StateChange.PLAYER_LEFT, playerMessage);
     }
 
@@ -53,11 +67,17 @@ export class GameController {
             throw new Error(errorMessage(claimResult.error));
         }
 
+        const nextPlayerResult = this.gameService.getCurrentPlayer(gameCode);
+        if (isErr(nextPlayerResult)) {
+            throw new Error(errorMessage(nextPlayerResult.error));
+        }
         const claimMessage: ClaimMadeMessage = {
             type: StateChange.CLAIM_MADE,
             playerId: playerId,
             faceValue: data.faceValue,
-            quantity: data.quantity
+            quantity: data.quantity,
+            nextPlayerId: nextPlayerResult.value
+
         };
         this.io.to(gameCode).emit(StateChange.CLAIM_MADE, claimMessage);
     }

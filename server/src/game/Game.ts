@@ -1,10 +1,10 @@
 // class that manages the game state and logic
 import { Player } from './Player.js';
 import { Claim } from './Claim.js';
-import { count, generate } from 'random-words';
+import { generate } from 'random-words';
 import { Result, Ok, Err } from 'shared/Result.js';
 import { ErrorCode } from 'shared/errors.js';
-import { PlayerId, GameCode, GameStage, ChallengeResult } from 'shared/types.js';
+import { PlayerId, GameCode, GameStage, ChallengeResult, GameState } from 'shared/types.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class Game {
@@ -18,7 +18,9 @@ export class Game {
         private order: PlayerId[] = [],
         private turnIndex: number = 0,
         private claims: Claim[] = [],
-        private stage: GameStage = GameStage.PRE_GAME
+        private stage: GameStage = GameStage.PRE_GAME,
+        private createdAt: Date = new Date(),
+        private lastActivityAt: Date = new Date()
     ) { 
         const hostPlayer = new Player(hostId, hostName, this);
         this.players.set(hostId, hostPlayer);
@@ -95,8 +97,13 @@ export class Game {
             this.order = this.order.filter(id => id !== loserId);
         }
 
+        this.stage = GameStage.POST_ROUND;
+        const gameOver = this.order.length === 1;
+        if (gameOver) {
+            this.stage = GameStage.POST_GAME;
+        }
 
-        return Ok({ winnerId, loserId, loserOut });
+        return Ok({ winnerId, loserId, loserOut, gameOver });
     }
 
     private countDice(faceValue: number): number {
@@ -125,6 +132,10 @@ export class Game {
         if (this.stage !== GameStage.PRE_GAME) {
             return Err(ErrorCode.GAME_IN_PROGRESS);
         }
+        if (this.players.size < 2) {
+            return Err(ErrorCode.NOT_ENOUGH_PLAYERS);
+        }
+
         this.turnIndex = Math.floor(Math.random() * this.players.size);
 
         this.rollAllDice();
@@ -161,6 +172,19 @@ export class Game {
         return Ok(player);
     }
 
+    removePlayer(playerId: PlayerId): Result<void> {
+        if (!this.players.has(playerId)) {
+            return Err(ErrorCode.PLAYER_NOT_FOUND);
+        }
+        this.players.delete(playerId);
+        this.order = this.order.filter(id => id !== playerId);
+        return Ok(undefined);
+    }
+
+    getStage(): GameStage {
+        return this.stage;
+    }
+
     getOrder(): PlayerId[] {
         return this.order;
     }
@@ -173,16 +197,41 @@ export class Game {
         return this.claims;
     }
 
-    toJSON() {
+    toJSON() : GameState{
+        const playersRecord: Record<PlayerId, { name: string ; remainingDice: number }> = {};
+        
+        this.players.forEach((player, playerId) => {
+            playersRecord[playerId] = {
+                name: player.getName(),
+                remainingDice: player.getNumberOfDice()
+            };
+        });
+
         return {
             gameCode: this.gameCode,
             host: this.players.get(this.hostId)?.getName(),
-            players: Array.from(this.order).map((playerId: PlayerId) => (
-                { name: this.players.get(playerId)?.getName(), 
-                  remainingDice: this.players.get(playerId)?.getNumberOfDice() 
-                })),
+            players: playersRecord,
+            order: this.order,
             stage: this.stage,
         };
+    }
+
+    // Activity tracking
+
+    public updateActivity(): void {
+        this.lastActivityAt = new Date();
+    }
+
+    public getLastActivityAt(): Date {
+        return this.lastActivityAt;
+    }
+
+    public getCreatedAt(): Date {
+        return this.createdAt;
+    }
+
+    public getInactivityMs(): number {
+        return Date.now() - this.lastActivityAt.getTime();
     }
 
     // Static

@@ -20,5 +20,6 @@ export function authMiddleware(socket: Socket, next: (err?: any) => void) {
 
     socket.data.playerId = payload.playerId;
     socket.data.gameCode = payload.gameCode;
+    socket.data.playerName = payload.playerName;
     next();
 }

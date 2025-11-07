@@ -12,7 +12,6 @@ import GameService from '@app/GameService';
 import GamesManagerService from '@app/GamesMangerService';
 import { buildSocketServer } from '@sockets/socket-utils/socket-builder';
 import { GameController } from '@sockets/GameController';
-import { Server as SocketServer } from 'socket.io';
 import GamesManagerController from '@rest/GamesMangerController';
 
 const container = new Container();
@@ -34,13 +33,16 @@ const app = new InversifyExpressServer(container)
     .build();
 console.log("Express app built.");
 const server = http.createServer(app);
-const io = buildSocketServer(container, server, {
+
+// TODO: maybe make this neater
+buildSocketServer(container, server, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST']
     }},
      {
-        log: console.log
+        log: console.log,
+        verbose: true
     }
 );
 
@@ -48,3 +50,15 @@ const PORT = env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🎲 Liar's Dice Server running on http://localhost:${PORT}`);
 });
+
+// Periodic cleanup of stale games (every 15 minutes)
+const CLEANUP_INTERVAL_MS = 15 * 60 * 1000;
+setInterval(() => {
+    const store = container.get(Store);
+    const cleanedCount = store.cleanupStaleGames();
+    if (cleanedCount > 0) {
+        console.log(`🧹 Periodic cleanup: removed ${cleanedCount} stale game(s)`);
+    }
+}, CLEANUP_INTERVAL_MS);
+
+console.log(`🕐 Stale game cleanup scheduled every ${CLEANUP_INTERVAL_MS / 60000} minutes`);

@@ -16,7 +16,7 @@ export default class GamesManagerController {
             return res.status(400).json({ error: createGameResult.error });
         }
         const { gameCode, hostId } = createGameResult.value;
-        return res.status(201).json({ message: 'Game created', gameCode, token: generatePlayerToken(hostId, body.hostName, gameCode) });
+        return res.status(201).json({ message: 'Game created', gameCode, playerId: hostId, token: generatePlayerToken(hostId, body.hostName, gameCode) });
     }
 
     @httpPost("/:gameCode/players")
@@ -27,7 +27,7 @@ export default class GamesManagerController {
         }
         const playerId = addPlayerResult.value;
         const token = generatePlayerToken(playerId, req.playerName, gameCode);
-        return res.status(201).json({ message: 'Player added', gameCode, token });
+        return res.status(201).json({ message: 'Player added', gameCode, playerId, token });
     }
 
     @httpGet("/:gameCode")
