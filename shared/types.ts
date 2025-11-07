@@ -1,4 +1,5 @@
 import { Action } from './actions';
+import { StateChange } from './states';
 
 export type PlayerId = string;
 export type SocketId = string;
@@ -39,3 +40,50 @@ export type StartRoundMessage = {
 };
 
 export type PlayerMessage = ClaimMessage | ChallengeMessage | StartGameMessage | StartRoundMessage;
+  
+
+export type PlayerJoinedMessage = {
+    type: StateChange.PLAYER_JOINED;
+    playerId: PlayerId;
+};
+
+export type PlayerLeftMessage =  {
+    type: StateChange.PLAYER_LEFT;
+    playerId: PlayerId;
+};
+
+export type GameStartedMessage =   {
+    type: StateChange.GAME_STARTED;
+    startingPlayerId: PlayerId;
+};
+export type RoundStartedMessage =   {
+    type: StateChange.ROUND_STARTED;
+    startingPlayerId: PlayerId;
+};
+
+export type DiceRolledMessage =   {
+    type: StateChange.DICE_ROLLED;
+    dice: DieFace[];
+};
+
+export type ClaimMadeMessage =  {
+    type: StateChange.CLAIM_MADE;
+    playerId: PlayerId;
+    faceValue: DieFace;
+    quantity: number;
+}
+
+export type ChallengeMadeMessage =  {
+    type: StateChange.CHALLENGE_MADE;
+    winnerId: PlayerId;
+    loserId: PlayerId;
+    loserOut: boolean;
+};
+
+export type GameEndedMessage = {
+    type: StateChange.GAME_ENDED;
+    winnerId: PlayerId;
+};
+
+export type ServerMessage = PlayerJoinedMessage | PlayerLeftMessage | GameStartedMessage | RoundStartedMessage | 
+                            DiceRolledMessage | ClaimMadeMessage | ChallengeMadeMessage | GameEndedMessage;

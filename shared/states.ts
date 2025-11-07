@@ -1,3 +1,5 @@
+import { ChallengeResult, DieFace, GameCode, PlayerId } from "./types";
+
 export enum GameStage {
     PRE_GAME = 'PRE_GAME',
     DICE_ROLLING = 'DICE_ROLLING',
@@ -7,13 +9,10 @@ export enum GameStage {
 }
 
 export enum StateChange {
-    YOU_JOINED = "YOU_JOINED",
     PLAYER_JOINED = "PLAYER_JOINED",
     PLAYER_LEFT = "PLAYER_LEFT",
     GAME_STARTED = "GAME_STARTED",
     ROUND_STARTED = "ROUND_STARTED",
-    ROUND_ENDED = "ROUND_ENDED",
-    DICE_ROLLING_STARTED = "DICE_ROLLING_STARTED",
     DICE_ROLLED = "DICE_ROLLED",
     CLAIM_MADE = "CLAIM_MADE",
     CHALLENGE_MADE = "CHALLENGE_MADE",
