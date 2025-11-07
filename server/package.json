@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/server/index.js",
-    "dev": "nodemon index.ts",
+    "dev": "nodemon --watch src --exec tsx src/index.ts",
     "test": "mocha",
     "test:watch": "mocha --watch"
   },
@@ -22,7 +22,7 @@
     "express": "^4.21.1",
     "express-rate-limit": "^7.5.1",
     "http-errors": "~1.6.3",
-    "inversify": "^7.6.1",
+    "inversify": "^6.2.2",
     "inversify-express-utils": "^6.5.0",
     "jade": "^0.29.0",
     "jsonwebtoken": "^9.0.2",
