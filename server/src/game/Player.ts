@@ -8,7 +8,7 @@ export class Player {
     private name: string;
     private game: Game;
     private numberOfDice: number = 6;
-    private dice: number[] = [];
+    private dice: DieFace[] = [];
 
     constructor(id: string, name: string, game: Game) {
         this.id = id;
@@ -34,12 +34,16 @@ export class Player {
     rollDice(): void {
         this.dice = [];
         for (let i = 0; i < this.numberOfDice; i++) {
-            this.dice.push(Math.floor(Math.random() * 6) + 1);
+            this.dice.push((Math.floor(Math.random() * 6) + 1) as DieFace);
         }
     }
 
     getDiceCount(faceValue: number): number {
         return this.dice.filter(die => die === faceValue).length;
+    }
+
+    getDice(): DieFace[] {
+        return this.dice;
     }
 
     loseDie(): void {

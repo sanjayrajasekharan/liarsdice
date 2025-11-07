@@ -8,73 +8,12 @@ import { GameStage } from '../../../../shared/types.js';
 describe('Game', () => {
     let game: Game;
     let gameCode: string;
-    let hostId: string;
+    let hostName: string;
 
     beforeEach(() => {
-        hostId = 'host-player-id';
-        const result = Game.create(hostId);
-        if (!result.ok) throw new Error('Failed to create game');
-        
-        game = result.value.game;
-        gameCode = result.value.gameCode;
-    });
-
-    afterEach(() => {
-        // Clean up the game after each test
-        Game.delete(gameCode);
-    });
-
-    describe('Game.create', () => {
-        it('should create a new game with a unique game code', () => {
-            const result = Game.create('host-id');
-            
-            expect(result.ok).to.be.true;
-            if (result.ok) {
-                expect(result.value.gameCode).to.be.a('string');
-                expect(result.value.game).to.be.instanceOf(Game);
-                Game.delete(result.value.gameCode);
-            }
-        });
-
-        it('should create games with different codes', () => {
-            const result1 = Game.create('host1');
-            const result2 = Game.create('host2');
-            
-            expect(result1.ok).to.be.true;
-            expect(result2.ok).to.be.true;
-            
-            if (result1.ok && result2.ok) {
-                expect(result1.value.gameCode).to.not.equal(result2.value.gameCode);
-                Game.delete(result1.value.gameCode);
-                Game.delete(result2.value.gameCode);
-            }
-        });
-    });
-
-    describe('Game.get', () => {
-        it('should retrieve a game by game code', () => {
-            const retrievedGame = Game.get(gameCode);
-            
-            expect(retrievedGame).to.equal(game);
-        });
-
-        it('should return undefined for non-existent game code', () => {
-            const retrievedGame = Game.get('non-existent-code');
-            
-            expect(retrievedGame).to.be.undefined;
-        });
-    });
-
-    describe('Game.delete', () => {
-        it('should remove a game from the games map', () => {
-            const tempResult = Game.create('temp-host');
-            if (!tempResult.ok) throw new Error('Failed to create temp game');
-            
-            const tempCode = tempResult.value.gameCode;
-            Game.delete(tempCode);
-            
-            expect(Game.get(tempCode)).to.be.undefined;
-        });
+        hostName = 'Host';
+        gameCode = Game.generateGameCode();
+        game = Game.createGame(gameCode, hostName);
     });
 
     describe('createPlayer', () => {
@@ -98,8 +37,9 @@ describe('Game', () => {
             }
         });
 
-        it('should allow up to 6 players', () => {
-            for (let i = 1; i <= 6; i++) {
+        it('should allow up to 6 players including host', () => {
+            // Host is already player 1, add 5 more players
+            for (let i = 2; i <= 6; i++) {
                 const result = game.createPlayer(`Player${i}`);
                 expect(result.ok).to.be.true;
             }
@@ -108,8 +48,8 @@ describe('Game', () => {
         });
 
         it('should reject 7th player', () => {
-            // Add 6 players
-            for (let i = 1; i <= 6; i++) {
+            // Host is player 1, add 5 more to reach max
+            for (let i = 2; i <= 6; i++) {
                 game.createPlayer(`Player${i}`);
             }
             
@@ -137,48 +77,59 @@ describe('Game', () => {
         });
     });
 
-    describe('startRound', () => {
-        it('should start a round successfully', () => {
+    describe('startGame', () => {
+        it('should start a game successfully', () => {
             const playerResult = game.createPlayer('Player1');
             if (!playerResult.ok) throw new Error('Failed to create player');
             
-            const result = game.startRound(playerResult.value.playerId);
+            const result = game.startGame(game.getHostId());
             
             expect(result.ok).to.be.true;
         });
 
-        it('should set the turn index to the starting player', () => {
-            const player1Result = game.createPlayer('Player1');
-            const player2Result = game.createPlayer('Player2');
-            
-            if (player1Result.ok && player2Result.ok) {
-                game.startRound(player2Result.value.playerId);
-                
-                const turnIndex = game.getTurnIndex();
-                const currentPlayerId = game.getOrder()[turnIndex];
-                expect(currentPlayerId).to.equal(player2Result.value.playerId);
-            }
-        });
-
-        it('should clear previous claims', () => {
+        it('should transition from PRE_GAME to ROUND_ROBIN stage', () => {
             const player1Result = game.createPlayer('Player1');
             if (!player1Result.ok) throw new Error('Failed to create player');
             
-            game.startRound(player1Result.value.playerId);
+            game.startGame(game.getHostId());
+            
+            // Game should now be in ROUND_ROBIN stage - verify by checking if validateTurn works
+            const currentPlayerId = game.getOrder()[game.getTurnIndex()];
+            const validateResult = game.validateTurn(currentPlayerId);
+            expect(validateResult.ok).to.be.true;
+        });
+
+        it('should clear previous claims when starting', () => {
+            const player1Result = game.createPlayer('Player1');
+            if (!player1Result.ok) throw new Error('Failed to create player');
+            
+            game.startGame(game.getHostId());
             
             expect(game.getClaims()).to.be.an('array').that.is.empty;
         });
 
-        it('should reject starting round during ROUND_ROBBIN stage', () => {
-            const player1Result = game.createPlayer('Player1');
-            if (!player1Result.ok) throw new Error('Failed to create player');
+        it('should only allow host to start the game', () => {
+            const playerResult = game.createPlayer('Player1');
+            if (!playerResult.ok) throw new Error('Failed to create player');
             
-            game.startRound(player1Result.value.playerId);
-            const result = game.startRound(player1Result.value.playerId);
+            const result = game.startGame(playerResult.value.playerId);
             
             expect(result.ok).to.be.false;
             if (!result.ok) {
-                expect(result.error.code).to.equal(ErrorCode.INVALID_GAME_STATE);
+                expect(result.error.code).to.equal(ErrorCode.UNAUTHORIZED);
+            }
+        });
+
+        it('should reject starting game during ROUND_ROBIN stage', () => {
+            const player1Result = game.createPlayer('Player1');
+            if (!player1Result.ok) throw new Error('Failed to create player');
+            
+            game.startGame(game.getHostId());
+            const result = game.startGame(game.getHostId());
+            
+            expect(result.ok).to.be.false;
+            if (!result.ok) {
+                expect(result.error.code).to.equal(ErrorCode.GAME_IN_PROGRESS);
             }
         });
     });
@@ -198,17 +149,20 @@ describe('Game', () => {
             player1Id = p1Result.value.playerId;
             player2Id = p2Result.value.playerId;
             
-            game.startRound(player1Id);
+            game.startGame(game.getHostId());
         });
 
         it('should validate correct turn', () => {
-            const result = game.validateTurn(player1Id);
+            const currentPlayerId = game.getOrder()[game.getTurnIndex()];
+            const result = game.validateTurn(currentPlayerId);
             
             expect(result.ok).to.be.true;
         });
 
         it('should reject out of turn action', () => {
-            const result = game.validateTurn(player2Id);
+            const currentPlayerId = game.getOrder()[game.getTurnIndex()];
+            const otherPlayerId = currentPlayerId === player1Id ? player2Id : player1Id;
+            const result = game.validateTurn(otherPlayerId);
             
             expect(result.ok).to.be.false;
             if (!result.ok) {
@@ -217,11 +171,7 @@ describe('Game', () => {
         });
 
         it('should reject turn validation when round is not active', () => {
-            Game.delete(gameCode);
-            const newGameResult = Game.create(hostId);
-            if (!newGameResult.ok) throw new Error('Failed to create game');
-            
-            const newGame = newGameResult.value.game;
+            const newGame = Game.createGame(Game.generateGameCode(), 'NewHost');
             const playerResult = newGame.createPlayer('Player1');
             if (!playerResult.ok) throw new Error('Failed to create player');
             
@@ -231,8 +181,6 @@ describe('Game', () => {
             if (!result.ok) {
                 expect(result.error.code).to.equal(ErrorCode.ROUND_NOT_ACTIVE);
             }
-            
-            Game.delete(newGameResult.value.gameCode);
         });
     });
 
@@ -251,22 +199,28 @@ describe('Game', () => {
             player1Id = p1Result.value.playerId;
             player2Id = p2Result.value.playerId;
             
-            game.startRound(player1Id);
+            game.startGame(game.getHostId());
         });
 
-        it('should add a valid first claim', () => {
-            const claim = new Claim(player1Id, 2, 3);
+        it('should add a valid first claim and advance turn', () => {
+            const currentPlayerId = game.getOrder()[game.getTurnIndex()];
+            const claim = new Claim(currentPlayerId, 2, 3);
+            const initialTurnIndex = game.getTurnIndex();
+            
             const result = game.addClaim(claim);
             
             expect(result.ok).to.be.true;
             expect(game.getClaims()).to.have.lengthOf(1);
+            expect(game.getTurnIndex()).to.not.equal(initialTurnIndex);
         });
 
-        it('should add a valid increasing claim', () => {
-            const claim1 = new Claim(player1Id, 2, 3);
+        it('should add a valid increasing claim and continue turn rotation', () => {
+            const player1 = game.getOrder()[game.getTurnIndex()];
+            const claim1 = new Claim(player1, 2, 3);
             game.addClaim(claim1);
             
-            const claim2 = new Claim(player2Id, 3, 3);
+            const player2 = game.getOrder()[game.getTurnIndex()];
+            const claim2 = new Claim(player2, 3, 3);
             const result = game.addClaim(claim2);
             
             expect(result.ok).to.be.true;
@@ -274,10 +228,12 @@ describe('Game', () => {
         });
 
         it('should reject invalid claim (lower quantity)', () => {
-            const claim1 = new Claim(player1Id, 5, 3);
+            const player1 = game.getOrder()[game.getTurnIndex()];
+            const claim1 = new Claim(player1, 5, 3);
             game.addClaim(claim1);
             
-            const claim2 = new Claim(player2Id, 4, 4);
+            const player2 = game.getOrder()[game.getTurnIndex()];
+            const claim2 = new Claim(player2, 4, 4);
             const result = game.addClaim(claim2);
             
             expect(result.ok).to.be.false;
@@ -287,7 +243,10 @@ describe('Game', () => {
         });
 
         it('should reject out of turn claim', () => {
-            const claim = new Claim(player2Id, 2, 3);
+            const currentPlayer = game.getOrder()[game.getTurnIndex()];
+            const otherPlayer = game.getOrder().find(id => id !== currentPlayer)!;
+            
+            const claim = new Claim(otherPlayer, 2, 3);
             const result = game.addClaim(claim);
             
             expect(result.ok).to.be.false;
@@ -316,116 +275,136 @@ describe('Game', () => {
             player1 = p1Result.value.player;
             player2 = p2Result.value.player;
             
-            game.startRound(player1Id);
+            game.startGame(game.getHostId());
         });
 
-        it('should require at least one claim before challenging', () => {
-            const result = game.challenge(player2Id);
+        it('should handle challenge and determine winner/loser', () => {
+            // Make a claim first
+            const claimingPlayer = game.getOrder()[game.getTurnIndex()];
+            const claim = new Claim(claimingPlayer, 2, 3);
+            game.addClaim(claim);
             
-            // Challenge should fail without claims
-            expect(result.ok).to.be.false;
+            const challengingPlayer = game.getOrder()[game.getTurnIndex()];
+            const result = game.challenge(challengingPlayer);
+            
+            // Challenge should succeed with a claim present
+            expect(result.ok).to.be.true;
+            if (result.ok) {
+                expect(result.value).to.have.property('winnerId');
+                expect(result.value).to.have.property('loserId');
+            }
         });
 
         it('should determine winner and loser based on claim accuracy', () => {
-            // Force specific dice rolls for predictable test
             // Player 1 makes a claim
-            const claim = new Claim(player1Id, 2, 3);
+            const claimingPlayer = game.getOrder()[game.getTurnIndex()];
+            const claim = new Claim(claimingPlayer, 2, 3);
             game.addClaim(claim);
             
-            // Player 2 challenges
-            const result = game.challenge(player2Id);
+            // Next player challenges
+            const challengingPlayer = game.getOrder()[game.getTurnIndex()];
+            const result = game.challenge(challengingPlayer);
             
             expect(result.ok).to.be.true;
             if (result.ok) {
-                expect(result.value.winnerId).to.be.oneOf([player1Id, player2Id]);
-                expect(result.value.loserId).to.be.oneOf([player1Id, player2Id]);
+                expect(result.value.winnerId).to.be.oneOf([claimingPlayer, challengingPlayer]);
+                expect(result.value.loserId).to.be.oneOf([claimingPlayer, challengingPlayer]);
                 expect(result.value.winnerId).to.not.equal(result.value.loserId);
+                expect(result.value.loserOut).to.be.a('boolean');
             }
         });
 
         it('should reject challenge when not player\'s turn', () => {
-            const claim = new Claim(player1Id, 2, 3);
+            const claimingPlayer = game.getOrder()[game.getTurnIndex()];
+            const claim = new Claim(claimingPlayer, 2, 3);
             game.addClaim(claim);
             
-            // Still player 1's turn, player 1 cannot challenge their own claim
-            const result = game.challenge(player1Id);
+            // Wrong player tries to challenge
+            const wrongPlayer = game.getOrder().find((id, idx) => idx !== game.getTurnIndex())!;
+            const result = game.challenge(wrongPlayer);
             
             expect(result.ok).to.be.false;
             if (!result.ok) {
                 expect(result.error.code).to.equal(ErrorCode.OUT_OF_TURN);
             }
         });
-    });
 
-    describe('getters', () => {
-        it('should return correct game code', () => {
-            expect(game.getGameCode()).to.equal(gameCode);
-        });
-
-        it('should return correct host ID', () => {
-            expect(game.getHostId()).to.equal(hostId);
-        });
-
-        it('should return players map', () => {
-            const players = game.getPlayers();
+        it('should set turn to winner after challenge', () => {
+            const claimingPlayer = game.getOrder()[game.getTurnIndex()];
+            const claim = new Claim(claimingPlayer, 2, 3);
+            game.addClaim(claim);
             
-            expect(players).to.be.instanceOf(Map);
-        });
-
-        it('should return player order array', () => {
-            const order = game.getOrder();
+            const challengingPlayer = game.getOrder()[game.getTurnIndex()];
+            const result = game.challenge(challengingPlayer);
             
-            expect(order).to.be.an('array');
-        });
-
-        it('should return turn index', () => {
-            const turnIndex = game.getTurnIndex();
-            
-            expect(turnIndex).to.be.a('number');
-            expect(turnIndex).to.equal(0);
-        });
-
-        it('should return claims array', () => {
-            const claims = game.getClaims();
-            
-            expect(claims).to.be.an('array');
+            expect(result.ok).to.be.true;
+            if (result.ok) {
+                const currentPlayer = game.getOrder()[game.getTurnIndex()];
+                expect(currentPlayer).to.equal(result.value.winnerId);
+            }
         });
     });
 
     describe('game flow', () => {
-        it('should handle a complete round flow', () => {
-            // Create 3 players
+        it('should handle a complete round flow with stage transitions', () => {
+            // Create 2 additional players (host is already player 1)
             const p1Result = game.createPlayer('Player1');
             const p2Result = game.createPlayer('Player2');
-            const p3Result = game.createPlayer('Player3');
             
-            if (!p1Result.ok || !p2Result.ok || !p3Result.ok) {
+            if (!p1Result.ok || !p2Result.ok) {
                 throw new Error('Failed to create players');
             }
             
-            const player1Id = p1Result.value.playerId;
-            const player2Id = p2Result.value.playerId;
-            const player3Id = p3Result.value.playerId;
-            
-            // Start round
-            const startResult = game.startRound(player1Id);
+            // Start game - transitions to ROUND_ROBIN
+            const startResult = game.startGame(game.getHostId());
             expect(startResult.ok).to.be.true;
             
-            // Player 1 makes a claim
-            const claim1 = new Claim(player1Id, 2, 3);
+            // First player makes a claim
+            const firstPlayer = game.getOrder()[game.getTurnIndex()];
+            const claim1 = new Claim(firstPlayer, 2, 3);
             const claim1Result = game.addClaim(claim1);
             expect(claim1Result.ok).to.be.true;
             
-            // Player 2 makes a higher claim
-            const claim2 = new Claim(player2Id, 3, 3);
+            // Second player makes a higher claim
+            const secondPlayer = game.getOrder()[game.getTurnIndex()];
+            const claim2 = new Claim(secondPlayer, 3, 3);
             const claim2Result = game.addClaim(claim2);
             expect(claim2Result.ok).to.be.true;
             
-            // Player 3 challenges
-            const challengeResult = game.challenge(player3Id);
+            // Third player challenges
+            const thirdPlayer = game.getOrder()[game.getTurnIndex()];
+            const challengeResult = game.challenge(thirdPlayer);
             expect(challengeResult.ok).to.be.true;
             
+            // Verify claims were tracked
             expect(game.getClaims()).to.have.lengthOf(2);
+            
+            // Verify challenge result structure
+            if (challengeResult.ok) {
+                expect(challengeResult.value).to.have.property('winnerId');
+                expect(challengeResult.value).to.have.property('loserId');
+                expect(challengeResult.value).to.have.property('loserOut');
+            }
+        });
+        
+        it('should handle turn rotation correctly through multiple claims', () => {
+            game.createPlayer('Player1');
+            game.createPlayer('Player2');
+            
+            game.startGame(game.getHostId());
+            
+            const initialPlayer = game.getOrder()[game.getTurnIndex()];
+            const claim1 = new Claim(initialPlayer, 2, 3);
+            game.addClaim(claim1);
+            
+            const secondPlayer = game.getOrder()[game.getTurnIndex()];
+            expect(secondPlayer).to.not.equal(initialPlayer);
+            
+            const claim2 = new Claim(secondPlayer, 3, 3);
+            game.addClaim(claim2);
+            
+            const thirdPlayer = game.getOrder()[game.getTurnIndex()];
+            expect(thirdPlayer).to.not.equal(secondPlayer);
         });
     });
 });

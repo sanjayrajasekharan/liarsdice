@@ -76,6 +76,10 @@ export class Game {
             return turnValidation;
         }
 
+        if (this.claims.length === 0) {
+            return Err(ErrorCode.INVALID_CHALLENGE, 'No claim to challenge');
+        }
+
         const lastClaim = this.claims[this.claims.length - 1];
         const [quantity, faceValue, prevPlayerId] = [lastClaim.getQuantity(), lastClaim.getFaceValue(), lastClaim.getPlayerId()];
 
@@ -96,18 +100,34 @@ export class Game {
         }, 0);
     }
 
-    startRound(startingPlayerId: PlayerId): Result<void> {
+    startRound(initiator: PlayerId): Result<PlayerId> {
         if (this.stage !== GameStage.PRE_GAME && this.stage !== GameStage.POST_ROUND) {
             return Err(ErrorCode.INVALID_GAME_STATE);
         }
 
-        this.turnIndex = this.order.indexOf(startingPlayerId);
         this.rollAllDice();
         this.claims = [];
 
         this.stage = GameStage.ROUND_ROBIN;
 
-        return Ok(undefined);
+        return Ok(this.order[this.turnIndex]);
+    }
+
+    startGame(initiator: PlayerId): Result<PlayerId> {
+        if (initiator !== this.hostId) {
+            return Err(ErrorCode.UNAUTHORIZED);
+        }
+        if (this.stage !== GameStage.PRE_GAME) {
+            return Err(ErrorCode.GAME_IN_PROGRESS);
+        }
+        this.turnIndex = Math.floor(Math.random() * this.players.size);
+
+        this.rollAllDice();
+        this.claims = [];
+
+        this.stage = GameStage.ROUND_ROBIN;
+
+        return Ok(this.order[this.turnIndex]);
     }
 
     private rollAllDice(): void {

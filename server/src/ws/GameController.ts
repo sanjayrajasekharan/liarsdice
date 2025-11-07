@@ -7,6 +7,7 @@ import GameService from "../app/GameService";
 import { DieFace, GameCode, PlayerId } from "../../../shared/types";
 import { isErr } from "../../../shared/Result";
 import { errorMessage } from "../../../shared/errors";
+import Store from "../app/Store";
 
 @socketController()
 export class GameController {
@@ -32,7 +33,6 @@ export class GameController {
 
     @event(Action.CLAIM)
     handleClaim(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId, faceValue: DieFace, quantity: number}) {
-        // Handle claim action
         const claimResult = this.gameService.makeClaim(data.gameCode, data.playerId, data.faceValue, data.quantity);
         if (isErr(claimResult)) {
             throw new Error(errorMessage(claimResult.error));
@@ -42,7 +42,6 @@ export class GameController {
 
     @event(Action.CHALLENGE)
     handleChallenge(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId}) {
-        // Handle challenge action
         const challengeResult = this.gameService.makeChallenge(data.gameCode, data.playerId);
         if (isErr(challengeResult)) {
             throw new Error(errorMessage(challengeResult.error));
@@ -52,18 +51,30 @@ export class GameController {
 
     // TODO: handle errors better
     @event(Action.START_GAME)
-    handleStartGame(socket: Socket, data: {gameCode: GameCode, startingPlayerId: PlayerId}) {
-        const startGameResult = this.gameService.startGame(data.gameCode, data.startingPlayerId); 
+    handleStartGame(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId}) {
+        const startGameResult = this.gameService.startGame(data.gameCode, data.playerId); 
         if (isErr(startGameResult)) {
             throw new Error(errorMessage(startGameResult.error));
         }
+        const {startingPlayerId, dice} = startGameResult.value;
+        this.io.to(data.gameCode).emit(Action.START_GAME, { startingPlayerId });
+        
+        for (const [playerId, playerDice] of Object.entries(dice)) {
+            this.io.to(playerId).emit(Action.DICE_ROLL, { dice: playerDice });
+        }
     }
-    
+
     @event(Action.START_ROUND)
-    handleStartRound(socket: Socket, data: any) {
-        const startRoundResult = this.gameService.startRound(data.gameCode, data.startingPlayerId);
+    handleStartRound(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId}) {
+        const startRoundResult = this.gameService.startRound(data.gameCode, data.playerId);
         if (isErr(startRoundResult)) {
             throw new Error(errorMessage(startRoundResult.error));
+        }
+        const {startingPlayerId, dice} = startRoundResult.value;
+        this.io.to(data.gameCode).emit(Action.START_ROUND, { startingPlayerId });
+        
+        for (const [playerId, playerDice] of Object.entries(dice)) {
+            this.io.to(playerId).emit(Action.DICE_ROLL, { dice: playerDice });
         }
     }
 }

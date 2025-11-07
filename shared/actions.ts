@@ -3,4 +3,5 @@ export enum Action {
     CHALLENGE = 'CHALLENGE',
     START_GAME = 'START_GAME',
     START_ROUND = 'START_ROUND',
+    DICE_ROLL = 'DICE_ROLL',
 }

@@ -12,9 +12,8 @@ describe('Player', () => {
 
     beforeEach(() => {
         // Create a game and player for testing
-        const gameResult = Game.create('host-id');
-        if (!gameResult.ok) throw new Error('Failed to create game');
-        game = gameResult.value.game;
+        const gameCode = Game.generateGameCode();
+        game = Game.createGame(gameCode, 'Host');
         
         const playerResult = game.createPlayer('TestPlayer');
         if (!playerResult.ok) throw new Error('Failed to create player');

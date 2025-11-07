@@ -1,9 +1,9 @@
 import { inject, injectable } from "inversify";
 import Store from "./Store";
 import { Result, Ok, Err, isErr } from "../../../shared/Result";
-import { ErrorCode } from "../../../shared/errors";
 import { ChallengeResult, DieFace, GameCode, PlayerId, SocketId } from "../../../shared/types";
 import { Claim } from "../game/Claim";
+import { Player } from "../game/Player";
 
 @injectable()
 export default class GameService {
@@ -38,16 +38,21 @@ export default class GameService {
         return Ok(challengeResult.value);
     }
 
-    startRound(gameCode: GameCode, startingPlayerId: PlayerId): Result<void> {
+    startRound(gameCode: GameCode, initiator: PlayerId): Result<{startingPlayerId:PlayerId, dice: Record<PlayerId, DieFace[]>}> {
         const gameResult = this.store.getGame(gameCode);
         if (isErr(gameResult)) {
             return Err(gameResult.error);
         }
         const game = gameResult.value;
-        if (game.getHostId() !== startingPlayerId) {
-            return Err(ErrorCode.UNAUTHORIZED);
+        const startGameResult = game.startRound(initiator);
+        if (isErr(startGameResult)) {
+            return Err(startGameResult.error);
         }
-        return game.startRound(startingPlayerId);
+        
+        const dice = Object.fromEntries(
+            Array.from(game.getPlayers().values()).map(player => [player.getId(), player.getDice()])
+        ) as Record<PlayerId, DieFace[]>;
+        return Ok({ startingPlayerId: startGameResult.value, dice });
     }
 
     startGame = this.startRound;
