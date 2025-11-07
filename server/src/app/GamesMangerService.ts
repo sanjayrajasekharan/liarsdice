@@ -6,7 +6,7 @@ import { Game } from "../game/Game";
 
 @injectable()
 export default class GamesManagerService {
-    constructor(@inject("Store") private store: Store) { }
+    constructor(@inject(Store) private store: Store) { }
 
     async createGame(hostName: string): Promise<Result<{gameCode: GameCode, hostId: PlayerId}>> {
         let gameCode: GameCode;

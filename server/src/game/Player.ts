@@ -47,7 +47,6 @@ export class Player {
     }
 
     loseDie(): void {
-        // # TODO handle players losing
         this.numberOfDice--;
 
     }

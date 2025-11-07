@@ -16,14 +16,14 @@ import { Server as SocketServer } from 'socket.io';
 import GamesManagerController from './rest/GamesMangerController.js';
 
 const container = new Container();
-container.bind<Store>('Store').to(Store).inSingletonScope();
-container.bind<GameService>('GameService').to(GameService).inSingletonScope();
-// Bind GameController by class, not string, so socket-builder can resolve it
-container.bind<GameController>(GameController).toSelf().inSingletonScope();
+container.bind(Store).toSelf().inSingletonScope();
+container.bind(GameService).toSelf().inSingletonScope();
+container.bind(GameController).toSelf().inSingletonScope();
 
-container.bind<GamesManagerService>('GamesManagerService').to(GamesManagerService).inSingletonScope();
-container.bind<GamesManagerController>('GamesManagerController').to(GamesManagerController).inSingletonScope();
+container.bind(GamesManagerService).toSelf().inSingletonScope();
+container.bind(GamesManagerController).toSelf().inSingletonScope();
 
+console.log("Bindings complete.");
 const app = new InversifyExpressServer(container)
     .setConfig((app) => {
         app.use(cors());
@@ -32,14 +32,17 @@ const app = new InversifyExpressServer(container)
         app.use(express.json());
     })
     .build();
-
+console.log("Express app built.");
 const server = http.createServer(app);
 const io = buildSocketServer(container, server, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST']
+    }},
+     {
+        log: console.log
     }
-});
+);
 
 const PORT = env.PORT || 3000;
 server.listen(PORT, () => {

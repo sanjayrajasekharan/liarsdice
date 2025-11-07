@@ -1,17 +1,14 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { controller, httpGet, httpPost, request, requestBody, requestParam, response } from "inversify-express-utils";
-import { inject, injectable } from 'inversify';
-import { PlayerId } from '../../../shared/types';
+import { inject } from 'inversify';
 import GamesManagerService from '../app/GamesMangerService';
 import { isErr } from '../../../shared/Result';
 import { generatePlayerToken } from '../auth/utils';
-import { hostname } from 'os';
-import { generate } from 'random-words';
 
 // TODO: Make sure playerId is generated server-side and not passed from client
 @controller('/api/games')
 export default class GamesManagerController {
-    constructor (@inject("GamesManagerService") private gamesService: GamesManagerService) { }
+    constructor (@inject(GamesManagerService) private gamesService: GamesManagerService) { }
     @httpPost("/")
     private async createGame(@requestBody() body: { hostName: string }, @response() res: Response) {
         const createGameResult = await this.gamesService.createGame(body.hostName);

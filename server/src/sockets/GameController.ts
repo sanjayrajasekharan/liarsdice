@@ -2,88 +2,133 @@ import { Action } from "../../../shared/actions";
 import { StateChange } from "../../../shared/states";
 import { onConnect, socketController, event, onDisconnect } from "./socket-utils/main";
 import { Socket, Server as SocketServer } from "socket.io";
-import { verifyPlayerToken } from "../auth/utils";
 import { inject } from "inversify";
 import GameService from "../app/GameService";
-import { DieFace, GameCode, PlayerId } from "../../../shared/types";
+import {
+    ChallengeMadeMessage, ClaimMadeMessage, DiceRolledMessage, DieFace, GameCode, GameStartedMessage, PlayerId, PlayerLeftMessage, RoundStartedMessage, ServerMessage
+} from "../../../shared/types";
 import { isErr } from "../../../shared/Result";
 import { errorMessage } from "../../../shared/errors";
-import Store from "../app/Store";
-import SocketController from "./socket-utils/SocketController";
+import { authMiddleware } from "./middleware/authMiddleware";
 
-@socketController()
-export class GameController extends SocketController {
-    constructor(@inject("GameService") private gameService: GameService, @inject("SocketServer") private io: SocketServer) {
-        super();
-    }
-
-    // TODO: need to send joining and disconnecting players during pre game stage   
-    // TODO: need to all players of state change
+@socketController(undefined, authMiddleware)
+export class GameController {
+    constructor(@inject(GameService) private gameService: GameService, @inject(SocketServer) private io: SocketServer) { }
     @onConnect()
     handleConnect(socket: Socket) {
-        const token = socket.handshake.query.token;
-        if (!token) {
-            socket.disconnect(true);
-            return;
-        }
+        const playerId: PlayerId = socket.data.playerId!;
+        const gameCode: GameCode = socket.data.gameCode!;
 
-        const payload = verifyPlayerToken(String(token));
-        if (!payload) {
-            socket.disconnect(true);
-            return;
-        }
+        socket.join(gameCode);
+        socket.join(playerId);
 
-        socket.join(payload.gameCode);
-        socket.join(payload.playerId);
+        const playerMessage: ServerMessage = {
+            type: StateChange.PLAYER_JOINED,
+            playerId: playerId
+        };
+        this.io.to(gameCode).emit(StateChange.PLAYER_JOINED, playerMessage);
+    }
+
+    @onDisconnect()
+    handleDisconnect(socket: Socket) {
+        const playerId: PlayerId = socket.data.playerId!;
+        const gameCode: GameCode = socket.data.gameCode!;
+
+        socket.leave(gameCode);
+        socket.leave(playerId);
+        const playerMessage: PlayerLeftMessage = {
+            type: StateChange.PLAYER_LEFT,
+            playerId: playerId
+        };
+        this.io.to(gameCode).emit(StateChange.PLAYER_LEFT, playerMessage);
     }
 
     @event(Action.CLAIM)
-    handleClaim(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId, faceValue: DieFace, quantity: number}) {
-        const claimResult = this.gameService.makeClaim(data.gameCode, data.playerId, data.faceValue, data.quantity);
+    handleClaim(socket: Socket, data: { faceValue: DieFace, quantity: number }) {
+        const playerId: PlayerId = socket.data.playerId!;
+        const gameCode: GameCode = socket.data.gameCode!;
+
+        const claimResult = this.gameService.makeClaim(gameCode, playerId, data.faceValue, data.quantity);
         if (isErr(claimResult)) {
             throw new Error(errorMessage(claimResult.error));
         }
-        this.io.to(data.gameCode).emit(Action.CLAIM, { playerId: data.playerId, faceValue: data.faceValue, quantity: data.quantity });
+
+        const claimMessage: ClaimMadeMessage = {
+            type: StateChange.CLAIM_MADE,
+            playerId: playerId,
+            faceValue: data.faceValue,
+            quantity: data.quantity
+        };
+        this.io.to(gameCode).emit(StateChange.CLAIM_MADE, claimMessage);
     }
 
     @event(Action.CHALLENGE)
-    handleChallenge(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId}) {
-        const challengeResult = this.gameService.makeChallenge(data.gameCode, data.playerId);
+    handleChallenge(socket: Socket) {
+        const playerId: PlayerId = socket.data.playerId!;
+        const gameCode: GameCode = socket.data.gameCode!;
+
+        const challengeResult = this.gameService.makeChallenge(gameCode, playerId);
         if (isErr(challengeResult)) {
             throw new Error(errorMessage(challengeResult.error));
         }
-        this.io.to(data.gameCode).emit(StateChange.CHALLENGE_MADE, challengeResult.value);
 
+        const challengeMessage: ChallengeMadeMessage = {
+            type: StateChange.CHALLENGE_MADE,
+            ...challengeResult.value
+        };
+
+        this.io.to(gameCode).emit(StateChange.CHALLENGE_MADE, challengeMessage);
     }
 
     // TODO: handle errors better
     @event(Action.START_GAME)
-    handleStartGame(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId}) {
-        console.log("Start game event received");
-        const startGameResult = this.gameService.startGame(data.gameCode, data.playerId); 
+    handleStartGame(socket: Socket) {
+        const playerId: PlayerId = socket.data.playerId!;
+        const gameCode: GameCode = socket.data.gameCode!;
+
+        const startGameResult = this.gameService.startGame(gameCode, playerId);
         if (isErr(startGameResult)) {
-            console.log("Error starting game:", startGameResult.error);
             throw new Error(errorMessage(startGameResult.error));
         }
-        const {startingPlayerId, dice} = startGameResult.value;
-        this.io.to(data.gameCode).emit(StateChange.GAME_STARTED, { startingPlayerId });
-        console.log(JSON.stringify(dice));
+        const { startingPlayerId, dice } = startGameResult.value;
+        const gameStartedMessage: GameStartedMessage = {
+            type: StateChange.GAME_STARTED,
+            startingPlayerId: startingPlayerId
+        };
+        this.io.to(gameCode).emit(StateChange.GAME_STARTED, gameStartedMessage);
         for (const [playerId, playerDice] of Object.entries(dice)) {
-            this.io.to(playerId).emit(StateChange.DICE_ROLLED, { dice: playerDice });
+            const diceMessage: DiceRolledMessage = {
+                type: StateChange.DICE_ROLLED,
+                dice: playerDice
+            };
+            this.io.to(playerId).emit(StateChange.DICE_ROLLED, diceMessage);
         }
     }
 
     @event(Action.START_ROUND)
-    handleStartRound(socket: Socket, data: {gameCode: GameCode, playerId: PlayerId}) {
-        const startRoundResult = this.gameService.startRound(data.gameCode, data.playerId);
+    handleStartRound(socket: Socket) {
+        const playerId: PlayerId = socket.data.playerId!;
+        const gameCode: GameCode = socket.data.gameCode!;
+
+        const startRoundResult = this.gameService.startRound(gameCode, playerId);
         if (isErr(startRoundResult)) {
             throw new Error(errorMessage(startRoundResult.error));
         }
-        const {startingPlayerId, dice} = startRoundResult.value;
-        this.io.to(data.gameCode).emit(Action.START_ROUND, { startingPlayerId });
-        
+        const { startingPlayerId, dice } = startRoundResult.value;
+
+        const message: RoundStartedMessage = {
+            type: StateChange.ROUND_STARTED,
+            startingPlayerId: startingPlayerId
+        }
+        this.io.to(gameCode).emit(StateChange.ROUND_STARTED, message);
+
         for (const [playerId, playerDice] of Object.entries(dice)) {
-            this.io.to(playerId).emit(StateChange.DICE_ROLLED, { dice: playerDice });
+            let diceMessage: DiceRolledMessage = {
+                type: StateChange.DICE_ROLLED,
+                dice: playerDice
+            };
+
+            this.io.to(playerId).emit(StateChange.DICE_ROLLED, diceMessage);
         }
     }
 }

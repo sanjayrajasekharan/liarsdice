@@ -1,5 +1,3 @@
-import { ChallengeResult, DieFace, GameCode, PlayerId } from "./types";
-
 export enum GameStage {
     PRE_GAME = 'PRE_GAME',
     DICE_ROLLING = 'DICE_ROLLING',

@@ -7,7 +7,7 @@ import { Player } from "../game/Player";
 
 @injectable()
 export default class GameService {
-    constructor(@inject("Store") private store: Store) { }
+    constructor(@inject(Store) private store: Store) { }
 
     makeClaim(gameCode: GameCode, playerId: PlayerId, faceValue: DieFace, quantity: number): Result<void> {
         const gameResult = this.store.getGame(gameCode);
@@ -44,7 +44,24 @@ export default class GameService {
             return Err(gameResult.error);
         }
         const game = gameResult.value;
-        const startGameResult = game.startRound(initiator);
+        const startRoundResult = game.startRound(initiator);
+        if (isErr(startRoundResult)) {
+            return Err(startRoundResult.error);
+        }
+        
+        const dice = Object.fromEntries(
+            Array.from(game.getPlayers().values()).map(player => [player.getId(), player.getDice()])
+        ) as Record<PlayerId, DieFace[]>;
+        return Ok({ startingPlayerId: startRoundResult.value, dice });
+    }
+
+    startGame(gameCode: GameCode, initiator: PlayerId): Result<{startingPlayerId:PlayerId, dice: Record<PlayerId, DieFace[]>}> {
+        const gameResult = this.store.getGame(gameCode);
+        if (isErr(gameResult)) {
+            return Err(gameResult.error);
+        }
+        const game = gameResult.value;
+        const startGameResult = game.startGame(initiator);
         if (isErr(startGameResult)) {
             return Err(startGameResult.error);
         }
@@ -54,6 +71,4 @@ export default class GameService {
         ) as Record<PlayerId, DieFace[]>;
         return Ok({ startingPlayerId: startGameResult.value, dice });
     }
-
-    startGame = this.startRound;
 }

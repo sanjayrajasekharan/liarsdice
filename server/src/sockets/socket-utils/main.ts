@@ -1,2 +1,2 @@
-export * from './SocketController';
+export * from './socket-descriptors';
 export * from './socket-builder';
