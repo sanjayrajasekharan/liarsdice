@@ -79,6 +79,9 @@ export function buildSocketServer(
             onConnectHandler.call(instance, socket);
           } catch (e: any) {
             log(`onConnect error (${ctor.name}): ${e.message || e}`);
+            socket.emit('error', { error: true, message: e.message || String(e) });
+            socket.disconnect(true);
+            return;
           }
         }
 

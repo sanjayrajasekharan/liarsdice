@@ -14,7 +14,6 @@ export function socketController(namespace?: string, ...middleware: SocketMiddle
     };
 
     Reflect.defineMetadata(SOCKET_METADATA.controller, meta, Target);
-    // TODO: look into this --> Maintain global list (useful if not relying solely on container)
     const list: any[] = Reflect.getMetadata(SOCKET_METADATA.controllerList, Reflect) || [];
     list.push(Target);
     Reflect.defineMetadata(SOCKET_METADATA.controllerList, list, Reflect);

@@ -5,7 +5,6 @@ import GamesManagerService from '@app/GamesMangerService.js';
 import { isErr } from 'shared/Result.js';
 import { generatePlayerToken } from '@auth/utils.js';
 
-// TODO: Make sure playerId is generated server-side and not passed from client
 @controller('/api/games')
 export default class GamesManagerController {
     constructor (@inject(GamesManagerService) private gamesService: GamesManagerService) { }

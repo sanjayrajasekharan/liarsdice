@@ -37,7 +37,6 @@ private games: Record<GameCode, Game> = {};
             return Err(ErrorCode.GAME_NOT_FOUND);
         }
         delete this.games[gameCode];
-        // TODO : Clean up connections associated with this game
         return Ok(undefined);
     }
 

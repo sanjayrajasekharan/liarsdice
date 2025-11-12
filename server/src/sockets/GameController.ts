@@ -15,8 +15,6 @@ import { authMiddleware } from "@sockets/middleware/authMiddleware";
 export class GameController {
     constructor(@inject(GameService) private gameService: GameService, @inject(SocketServer) private io: SocketServer) { }
 
-    // TODO: have to send game state on connect
-    // TODO: have to deny connections for games that don't exist
     @onConnect()
     handleConnect(socket: Socket) {
         const playerId: PlayerId = socket.data.playerId!;
@@ -32,7 +30,8 @@ export class GameController {
             playerName: playerName
         };
 
-        const gameStateResult = this.gameService.getGameState(gameCode);
+        const gameStateResult = this.gameService.getGameState(playerId, gameCode);
+
         if (isErr(gameStateResult)) {
             throw new Error(errorMessage(gameStateResult.error));
         }

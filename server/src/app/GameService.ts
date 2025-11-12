@@ -100,23 +100,25 @@ export default class GameService {
         const game = gameResult.value;
         game.updateActivity();
 
-        if (game.getStage() === GameStage.PRE_GAME) {
+        if (game.getStage() === GameStage.PRE_GAME || game.getStage() === GameStage.POST_GAME) {
             const removePlayerResult = game.removePlayer(playerId);
             if (isErr(removePlayerResult)) {
                 return Err(removePlayerResult.error);
             }
         }
         
-        // If game is now empty, it will be cleaned up by passive cleanup or periodic sweep
         return Ok(undefined);
     }
 
-    getGameState(gameCode: GameCode): Result<GameState> {
+    getGameState(playerId: PlayerId, gameCode: GameCode): Result<GameState> {
         const gameResult = this.store.getGame(gameCode);
         if (isErr(gameResult)) {
             return Err(gameResult.error);
         }
         const game = gameResult.value;
+        if (!game.getPlayers().has(playerId)) {
+            return Err(ErrorCode.PLAYER_NOT_FOUND);
+        }
         return Ok(game.toJSON());
     }
 }
