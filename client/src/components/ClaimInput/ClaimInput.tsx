@@ -1,17 +1,11 @@
 import { useState } from "react";
-import styles from "./ClaimInput.module.css";
-import Button from "../Button/Button";
-import upArrow from "../../assets/up.svg";
-import downArrow from "../../assets/down.svg";
-import xIcon from "../../assets/x.svg";
 import { motion } from "framer-motion";
-import { useGameState } from "../../store/gameStore";
-import oneSvg from '../../assets/dice/one.svg?url';
-import twoSvg from '../../assets/dice/two.svg?url';
-import threeSvg from '../../assets/dice/three.svg?url';
-import fourSvg from '../../assets/dice/four.svg?url';
-import fiveSvg from '../../assets/dice/five.svg?url';
-import sixSvg from '../../assets/dice/six.svg?url';
+import oneSvg from "../../assets/dice/one.svg?url";
+import twoSvg from "../../assets/dice/two.svg?url";
+import threeSvg from "../../assets/dice/three.svg?url";
+import fourSvg from "../../assets/dice/four.svg?url";
+import fiveSvg from "../../assets/dice/five.svg?url";
+import sixSvg from "../../assets/dice/six.svg?url";
 
 type ClaimInputProps = {
     currentDieValue: number;
@@ -37,13 +31,14 @@ const ClaimInput: React.FC<ClaimInputProps> = ({ currentDieValue, currentCount, 
     const startCount = dieValue <= currentDieValue ? currentCount + 1 : currentCount;
 
     return (
-        <div className={styles.overlay}>
-            <div className={styles.container}>
-                <div className={styles.diceSelector}>
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center z-1000 "> {/* overlay */}
+            <div className="w-full p-4"> {/* container */}
+                <div className="flex flex-row items-center justify-center"> {/* diceSelector */}
                     {Object.entries(diceSvgs).map(([value, src]) => (
                         <div
                             key={value}
-                            className={styles.die}
+                            className="m-1 border-2 border-transparent relative flex justify-center items-center w-full rounded-xl
+                                       hover:cursor-pointer hover:border-accent"
                             onClick={() => {
                                 const newDieValue = Number(value);
                                 const newStartCount = newDieValue <= currentDieValue ? currentCount + 1 : currentCount;
@@ -51,11 +46,11 @@ const ClaimInput: React.FC<ClaimInputProps> = ({ currentDieValue, currentCount, 
                                 setCount(newStartCount);
                             }}
                         >
-                            <img src={src} alt={`Dice ${value}`} />
+                            <img src={src} alt={`Dice ${value}`} className="block h-8" />
                             {
                                 value == String(dieValue) && (
                                     <motion.div
-                                        className={styles.selectedDie}
+                                        className = "absolute -inset-1 z-1 border border-accent rounded-xl"
                                         layoutId="selected-die"
                                         id="selected-die"
                                         initial={false}
@@ -65,20 +60,21 @@ const ClaimInput: React.FC<ClaimInputProps> = ({ currentDieValue, currentCount, 
                         </div>
                     ))}
                 </div>
-                <div className={styles.countSelector}>
+                <div className="m-1 rounded-xl flex flex-row items-stretch justify-between flex-wrap text-xl w-full"> {/* countSelector */}
                     {
 
                         Array.from({ length: 4 }, (_, i) => i + startCount).map((value) => (
                             <div
                                 key={value}
-                                className={styles.count}
+                                className="mx-1 py-2 px-4 border-2 border-transparent relative flex-1 flex justify-center items-center z-1 w-full rounded-xl
+                                           hover:cursor-pointer hover:border-accent"
                                 onClick={() => {setCount(value)}}
                             >
                                 {value}
                                 {
                                     value === count && (
                                         <motion.div
-                                            className={styles.selectedCount}
+                                            className="absolute -inset-1 z-1 border border-accent rounded-xl"
                                             layoutId={`selected-count-${dieValue}`}
                                             key={`selected-count-${dieValue}`}
                                             initial={{ opacity: 0 }}
