@@ -4,15 +4,16 @@ interface ButtonProps {
     onClick?: () => void;
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
-    text: string;
+    text?: string;
     disabled?: boolean;
     variant?: "red" | "black";
+    children?: React.ReactNode;
 }
 
-const Button: React.FC<ButtonProps> = ({ onClick, onMouseEnter, onMouseLeave, text, disabled, variant='red' }) => {
+const Button: React.FC<ButtonProps> = ({ onClick, onMouseEnter, onMouseLeave, text, disabled, variant='red', children }) => {
     return (
         <button className={`${styles.button} ${styles[variant]}`} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} disabled={disabled}>
-            {text}
+            {children || text}
         </button>
     );
 };

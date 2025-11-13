@@ -43,7 +43,12 @@ export class GameController extends SocketController {
     }
 }
 ```
-
+## Client Architecture
+### Tailwind CSS
+Using tailwind v4
+### Radix
+### Vite
+### Framer Motion for Animations
 ### Client State Management (Zustand)
 - `client/src/store/gameStore.ts`: Single Zustand store for game state
 - **No Redux/Context** - use `useGameState()` hook everywhere
