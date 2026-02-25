@@ -1,153 +1,176 @@
-// class that manages the game state and logic
 import { Player } from './Player.js';
 import { Claim } from './Claim.js';
 import { generate } from 'random-words';
-import { Result, Ok, Err } from 'shared/Result.js';
+import { Result, ok, err } from 'neverthrow';
 import { ErrorCode } from 'shared/errors.js';
-import { PlayerId, GameCode, GameStage, ChallengeResult, GameState } from 'shared/types.js';
+import { PlayerId, GameCode, GameStage, ChallengeResult, GameState } from 'shared/domain.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class Game {
-    private static readonly MAX_PLAYERS = 6; // change to reed from shared config in future
+    private static readonly MAX_PLAYERS = 6;
 
     private constructor(
         private gameCode: GameCode,
         private hostId: PlayerId,
-        private hostName: string,
-        private players: Map<PlayerId, Player> = new Map(),
-        private order: PlayerId[] = [],
-        private turnIndex: number = 0,
+        private players: Player[] = [],
+        private currentTurnIndex: number = 0,
         private claims: Claim[] = [],
         private stage: GameStage = GameStage.PRE_GAME,
         private createdAt: Date = new Date(),
         private lastActivityAt: Date = new Date()
-    ) { 
-        const hostPlayer = new Player(hostId, hostName, this);
-        this.players.set(hostId, hostPlayer);
-        this.order.push(hostId);
-    }
+    ) {}
 
-
-    public createPlayer(playerName: string): Result<{ playerId: PlayerId; player: Player }> {
-        if (this.players.size >= Game.MAX_PLAYERS) {
-            return Err(ErrorCode.GAME_FULL);
+    public createPlayer(playerName: string): Result<{ playerId: PlayerId; player: Player }, ErrorCode> {
+        if (this.players.length >= Game.MAX_PLAYERS) {
+            return err(ErrorCode.GAME_FULL);
         }
         if (this.stage !== GameStage.PRE_GAME) {
-            return Err(ErrorCode.GAME_IN_PROGRESS);
+            return err(ErrorCode.GAME_IN_PROGRESS);
         }
 
         const playerId = Game.generatePlayerId();
-        const player = new Player(playerId, playerName, this);
-        this.players.set(player.getId(), player);
-        this.order.push(player.getId());
-        return Ok({ playerId, player });
+        const player = new Player(playerId, playerName);
+        this.players.push(player);
+        return ok({ playerId, player });
     }
 
-    validateTurn(playerId: PlayerId): Result<void> {
+    validateTurn(playerId: PlayerId): Result<void, ErrorCode> {
         if (this.stage !== GameStage.ROUND_ROBIN) {
-            return Err(ErrorCode.ROUND_NOT_ACTIVE);
+            return err(ErrorCode.ROUND_NOT_ACTIVE);
         }
-        const currentPlayerId = this.order[this.turnIndex];
-        if (currentPlayerId !== playerId) {
-            return Err(ErrorCode.OUT_OF_TURN);
+        const currentPlayer = this.players[this.currentTurnIndex];
+        if (!currentPlayer || currentPlayer.getId() !== playerId) {
+            return err(ErrorCode.OUT_OF_TURN);
         }
-        return Ok(undefined);
+        return ok(undefined);
     }
 
-    addClaim(claim: Claim): Result<void> {
+    addClaim(claim: Claim): Result<void, ErrorCode> {
         const turnValidation = this.validateTurn(claim.getPlayerId());
-        if (!turnValidation.ok) {
-            return turnValidation;
+        if (turnValidation.isErr()) {
+            return err(turnValidation.error);
         }
         const lastClaim = this.claims[this.claims.length - 1];
-        // First claim of the round is always valid
         if (lastClaim && !claim.validateAgainst(lastClaim)) {
-            return Err(ErrorCode.INVALID_CLAIM,
-                // #TODO replace these string literals with templates
-                `Claim ${claim.getQuantity()} of ${claim.getFaceValue()} is not valid against ${lastClaim.getQuantity()} of ${lastClaim.getFaceValue()}`
-            );
+            return err(ErrorCode.INVALID_CLAIM);
         }
         this.claims.push(claim);
-        this.turnIndex = (this.turnIndex + 1) % this.order.length;
-        return Ok(undefined);
+        this.currentTurnIndex = (this.currentTurnIndex + 1) % this.players.length;
+        return ok(undefined);
     }
 
-    challenge(playerId: PlayerId): Result<ChallengeResult> {
+    challenge(playerId: PlayerId): Result<ChallengeResult, ErrorCode> {
         const turnValidation = this.validateTurn(playerId);
-        if (!turnValidation.ok) {
-            return turnValidation;
+        if (turnValidation.isErr()) {
+            return err(turnValidation.error);
         }
 
         if (this.claims.length === 0) {
-            return Err(ErrorCode.INVALID_CHALLENGE, 'No claim to challenge');
+            return err(ErrorCode.INVALID_CHALLENGE);
         }
 
         const lastClaim = this.claims[this.claims.length - 1];
-        const [quantity, faceValue, prevPlayerId] = [lastClaim.getQuantity(), lastClaim.getFaceValue(), lastClaim.getPlayerId()];
+        const [quantity, faceValue, claimerId] = [lastClaim.getQuantity(), lastClaim.getFaceValue(), lastClaim.getPlayerId()];
 
-        const winnerId = this.countDice(faceValue) < quantity ? playerId : prevPlayerId;
-        const loserId = winnerId === playerId ? prevPlayerId : playerId;
+        const actualTotal = this.countDice(faceValue);
+        const playerCounts = this.players.map(player => ({
+            playerId: player.getId(),
+            playerName: player.getName(),
+            count: player.getDiceCount(faceValue),
+        }));
 
-        this.players.get(loserId)?.loseDie();
-        this.turnIndex = this.order.indexOf(winnerId);
+        const winnerId = actualTotal < quantity ? playerId : claimerId;
+        const loserId = winnerId === playerId ? claimerId : playerId;
 
-        const loserOut = this.players.get(loserId)?.getNumberOfDice() === 0;
+        const loser = this.findPlayer(loserId);
+        loser?.loseDie();
+
+        const winnerIndex = this.players.findIndex(p => p.getId() === winnerId);
+        this.currentTurnIndex = winnerIndex >= 0 ? winnerIndex : 0;
+
+        const loserOut = loser?.getNumberOfDice() === 0;
 
         if (loserOut) {
-            this.order = this.order.filter(id => id !== loserId);
+            const loserIndex = this.players.findIndex(p => p.getId() === loserId);
+            if (loserIndex >= 0) {
+                this.players.splice(loserIndex, 1);
+                if (this.currentTurnIndex >= this.players.length) {
+                    this.currentTurnIndex = 0;
+                } else if (loserIndex < this.currentTurnIndex) {
+                    this.currentTurnIndex--;
+                }
+            }
         }
 
         this.stage = GameStage.POST_ROUND;
-        const gameOver = this.order.length === 1;
+        const gameOver = this.players.length === 1;
         if (gameOver) {
             this.stage = GameStage.POST_GAME;
         }
 
-        return Ok({ winnerId, loserId, loserOut, gameOver });
+        return ok({
+            challengerId: playerId,
+            claimerId,
+            claimedQuantity: quantity,
+            claimedFace: faceValue,
+            actualTotal,
+            playerCounts,
+            winnerId,
+            loserId,
+            loserOut,
+            gameOver,
+        });
     }
 
     private countDice(faceValue: number): number {
-        return Array.from(this.players.values()).reduce((total, player) => {
+        return this.players.reduce((total, player) => {
             return total + player.getDiceCount(faceValue);
         }, 0);
     }
 
-    startRound(initiator: PlayerId): Result<PlayerId> {
-        if (this.stage !== GameStage.PRE_GAME && this.stage !== GameStage.POST_ROUND) {
-            return Err(ErrorCode.INVALID_GAME_STATE);
-        }
-
-        this.rollAllDice();
-        this.claims = [];
-
-        this.stage = GameStage.ROUND_ROBIN;
-
-        return Ok(this.order[this.turnIndex]);
+    private findPlayer(playerId: PlayerId): Player | undefined {
+        return this.players.find(p => p.getId() === playerId);
     }
 
-    startGame(initiator: PlayerId): Result<PlayerId> {
-        if (initiator !== this.hostId) {
-            return Err(ErrorCode.UNAUTHORIZED);
-        }
-        if (this.stage !== GameStage.PRE_GAME) {
-            return Err(ErrorCode.GAME_IN_PROGRESS);
-        }
-        if (this.players.size < 2) {
-            return Err(ErrorCode.NOT_ENOUGH_PLAYERS);
-        }
+    private findPlayerIndex(playerId: PlayerId): number {
+        return this.players.findIndex(p => p.getId() === playerId);
+    }
 
-        this.turnIndex = Math.floor(Math.random() * this.players.size);
+    startRound(initiator: PlayerId): Result<PlayerId, ErrorCode> {
+        if (this.stage !== GameStage.PRE_GAME && this.stage !== GameStage.POST_ROUND) {
+            return err(ErrorCode.INVALID_GAME_STATE);
+        }
 
         this.rollAllDice();
         this.claims = [];
-
         this.stage = GameStage.ROUND_ROBIN;
 
-        return Ok(this.order[this.turnIndex]);
+        const currentPlayer = this.players[this.currentTurnIndex];
+        return ok(currentPlayer?.getId() as PlayerId);
+    }
+
+    startGame(initiator: PlayerId): Result<PlayerId, ErrorCode> {
+        if (initiator !== this.hostId) {
+            return err(ErrorCode.UNAUTHORIZED);
+        }
+        if (this.stage !== GameStage.PRE_GAME) {
+            return err(ErrorCode.GAME_IN_PROGRESS);
+        }
+        if (this.players.length < 2) {
+            return err(ErrorCode.NOT_ENOUGH_PLAYERS);
+        }
+
+        this.currentTurnIndex = Math.floor(Math.random() * this.players.length);
+        this.rollAllDice();
+        this.claims = [];
+        this.stage = GameStage.ROUND_ROBIN;
+
+        const currentPlayer = this.players[this.currentTurnIndex];
+        return ok(currentPlayer?.getId() as PlayerId);
     }
 
     private rollAllDice(): void {
-        Array.from(this.players.values()).forEach(player => player.rollDice());
+        this.players.forEach(player => player.rollDice());
     }
 
     // Getters
@@ -160,58 +183,57 @@ export class Game {
         return this.hostId;
     }
 
-    getPlayers(): Map<PlayerId, Player> {
+    getPlayers(): Player[] {
         return this.players;
     }
 
-    getPlayer(playerId: PlayerId): Result<Player> {
-        const player = this.players.get(playerId);
+    getPlayer(playerId: PlayerId): Result<Player, ErrorCode> {
+        const player = this.findPlayer(playerId);
         if (!player) {
-            return Err(ErrorCode.PLAYER_NOT_FOUND);
+            return err(ErrorCode.PLAYER_NOT_FOUND);
         }
-        return Ok(player);
+        return ok(player);
     }
 
-    removePlayer(playerId: PlayerId): Result<void> {
-        if (!this.players.has(playerId)) {
-            return Err(ErrorCode.PLAYER_NOT_FOUND);
+    removePlayer(playerId: PlayerId): Result<void, ErrorCode> {
+        const index = this.findPlayerIndex(playerId);
+        if (index < 0) {
+            return err(ErrorCode.PLAYER_NOT_FOUND);
         }
-        this.players.delete(playerId);
-        this.order = this.order.filter(id => id !== playerId);
-        return Ok(undefined);
+        this.players.splice(index, 1);
+        if (this.currentTurnIndex >= this.players.length) {
+            this.currentTurnIndex = 0;
+        }
+        return ok(undefined);
     }
 
     getStage(): GameStage {
         return this.stage;
     }
 
-    getOrder(): PlayerId[] {
-        return this.order;
+    getCurrentTurnIndex(): number {
+        return this.currentTurnIndex;
     }
 
-    getTurnIndex(): number {
-        return this.turnIndex;
+    getCurrentPlayerId(): PlayerId | null {
+        const player = this.players[this.currentTurnIndex];
+        return player ? player.getId() as PlayerId : null;
     }
 
     getClaims(): Claim[] {
         return this.claims;
     }
 
-    toJSON() : GameState{
-        const playersRecord: Record<PlayerId, { name: string ; remainingDice: number }> = {};
-        
-        this.players.forEach((player, playerId) => {
-            playersRecord[playerId] = {
-                name: player.getName(),
-                remainingDice: player.getNumberOfDice()
-            };
-        });
-
+    toJSON(): GameState {
         return {
             gameCode: this.gameCode,
-            host: this.players.get(this.hostId)?.getName(),
-            players: playersRecord,
-            order: this.order,
+            hostId: this.hostId,
+            players: this.players.map(player => ({
+                id: player.getId(),
+                name: player.getName(),
+                remainingDice: player.getNumberOfDice()
+            })),
+            currentTurnIndex: this.currentTurnIndex,
             stage: this.stage,
         };
     }
@@ -237,22 +259,21 @@ export class Game {
     // Static
 
     public static generateGameCode(): GameCode {
-        let gameCode: GameCode;
-        gameCode = generate({
+        return generate({
             exactly: 3,
             maxLength: 5,
             minLength: 4,
             join: "-",
             seed: Date.now().toString(),
-        });
-
-        return gameCode;
+        }) as GameCode;
     }
 
-    static generatePlayerId = uuidv4;
+    static generatePlayerId = (): PlayerId => uuidv4() as PlayerId;
 
     public static createGame(gameCode: GameCode, hostName: string): Game {
-        return new Game(gameCode, this.generatePlayerId(), hostName);
+        const hostId = this.generatePlayerId();
+        const hostPlayer = new Player(hostId, hostName);
+        const game = new Game(gameCode, hostId, [hostPlayer]);
+        return game;
     }
-
 }

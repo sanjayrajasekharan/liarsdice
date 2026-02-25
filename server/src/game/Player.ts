@@ -1,28 +1,20 @@
-import { Result } from 'shared/Result.js';
-import { DieFace } from 'shared/types.js';
-import { Claim } from './Claim.js';
-import { Game } from './Game.js';
+import { DieFace, PlayerId } from 'shared/domain.js';
 
 export class Player {
-    private id: string;
+    private id: PlayerId;
     private name: string;
-    private game: Game;
-    private numberOfDice: number = 6;
+    private numberOfDice: number = 5;
     private dice: DieFace[] = [];
 
-    constructor(id: string, name: string, game: Game) {
+    constructor(id: PlayerId, name: string) {
         this.id = id;
         this.name = name;
-        this.game = game;
     }
 
-    makeClaim(quantity: number, faceValue: DieFace): Result<void> {
-        return this.game.addClaim(new Claim(this.id, quantity, faceValue));
-    }
-
-    getId(): string {
+    getId(): PlayerId {
         return this.id;
     }
+
     getName(): string {
         return this.name;
     }
@@ -48,6 +40,5 @@ export class Player {
 
     loseDie(): void {
         this.numberOfDice--;
-
     }
 }

@@ -2,27 +2,26 @@ import { expect } from 'chai';
 import { Player } from '../Player.js';
 import { Game } from '../Game.js';
 import { Claim } from '../Claim.js';
-import { GameStage } from 'shared/types.js';
+import { GameStage, PlayerId } from 'shared/domain.js';
 
-const STARTING_DICE_COUNT = 6;
+const STARTING_DICE_COUNT = 5;
 
 describe('Player', () => {
     let game: Game;
     let player: Player;
 
     beforeEach(() => {
-        // Create a game and player for testing
         const gameCode = Game.generateGameCode();
         game = Game.createGame(gameCode, 'Host');
         
         const playerResult = game.createPlayer('TestPlayer');
-        if (!playerResult.ok) throw new Error('Failed to create player');
+        if (playerResult.isErr()) throw new Error('Failed to create player');
         player = playerResult.value.player;
     });
 
     describe('constructor', () => {
         it('should create a player with correct properties', () => {
-            const testPlayer = new Player('player1', 'John', game);
+            const testPlayer = new Player('player1' as PlayerId, 'John');
             
             expect(testPlayer.getId()).to.equal('player1');
             expect(testPlayer.getName()).to.equal('John');

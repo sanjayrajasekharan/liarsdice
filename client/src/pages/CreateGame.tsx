@@ -1,48 +1,50 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GameService } from '../services/gameService';
-import  Button from '../components/Button/Button';
-import Card from '../components/Card/Card';
-import { useGameState } from '../store/gameStore';
+import { EntryCard } from '@components/layout';
+import { toast } from '@store/toastStore';
 
 const CreateGame: React.FC = () => {
-    const navigate = useNavigate();
-    const [errorMessage, setErrorMessage] = useState('');
-    const [playerName, setPlayerName] = useState('');
+  const navigate = useNavigate();
+  const [playerName, setPlayerName] = useState('');
 
-    const { gameCode } = useGameState();
+  const handleCreateGame = async () => {
+    if (!playerName.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
 
-    useEffect(() => {
-        if (gameCode) {
-            navigate(`/game/${gameCode}`);
-        }
-    }, [gameCode, navigate]);
+    try {
+      await GameService.createGame(playerName);
+      const gameCode = GameService.getGameCode();
+      if (gameCode) {
+        navigate(`/game/${gameCode}`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to create game');
+    }
+  };
 
-    const handleCreateGame = async () => {
-        try {
-            await GameService.createGame(playerName);
-        } catch (error) {
-            setErrorMessage('Failed to create game: ' + error);
-            console.error('Failed to create game:', error);
-        }
-    };
-
-    return (
-        <div className="container">
-            <Card title="NEW GAME" error={errorMessage}>
-                {/* <h1><em>NEW GAME</em></h1> */}
-                    <input
-                        type="text"
-                        value={playerName}
-                        onChange={(e) => setPlayerName(e.target.value)}
-                        placeholder="Enter your name"
-                        className="input-field"
-                        onKeyDown={(e) => e.key === 'Enter' && handleCreateGame()}
-                    />
-                    <Button onClick={handleCreateGame} text="Create" variant='red'/>
-            </Card>
-        </div>
-    );
+  return (
+    <EntryCard title='Create Game'>
+      <div className="space-y-4">
+        <input
+          type="text"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          placeholder="Enter your name"
+          className="input-field"
+          onKeyDown={(e) => e.key === 'Enter' && handleCreateGame()}
+        />
+        <button
+          onClick={handleCreateGame}
+          className="btn-primary w-full"
+        >
+          Create Game
+        </button>
+      </div>
+    </EntryCard>
+  );
 };
 
-export default CreateGame; 
+export default CreateGame;

@@ -1,76 +1,73 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Button from '../components/Button/Button';
-import Card from '../components/Card/Card';
 import { GameService } from '../services/gameService';
-import { useGameState } from '../store/gameStore';
+import { EntryCard } from '@components/layout';
+import { toast } from '@store/toastStore';
 
 const JoinGame: React.FC = () => {
-    const navigate = useNavigate();
-    const [errorMessage, setErrorMessage] = useState('');
-    const [gameCode, setGameCode] = useState('');
-    const [playerName, setPlayerName] = useState('');
-    const location = useLocation();
-    
-    const { gameCode: storeGameCode } = useGameState();
+  const navigate = useNavigate();
+  const [gameCode, setGameCode] = useState('');
+  const [playerName, setPlayerName] = useState('');
+  const location = useLocation();
 
-    useEffect(() => {
-        // Check if there's an error in location state
-        if (location.state?.error) {
-            setErrorMessage(location.state.error);
-        }
-    }, [location.state]);
+  useEffect(() => {
+    if (location.state?.error) {
+      toast.error(location.state.error);
+    }
+    if (location.state?.gameCode) {
+      setGameCode(location.state.gameCode);
+    }
+  }, [location.state]);
 
-    useEffect(() => {
-        // Navigate to game when gameCode is set in store
-        if (storeGameCode) {
-            navigate(`/game/${storeGameCode}`);
-        }
-    }, [storeGameCode, navigate]);
+  const handleJoinGame = async () => {
+    if (!gameCode.trim()) {
+      toast.error('Please enter a game code');
+      return;
+    }
+    if (!playerName.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
 
-    const handleJoinGame = async () => {
-        try {
-            await GameService.joinGame(gameCode, playerName);
-            setErrorMessage('');
-        } catch (error) {
-            setErrorMessage('Failed to join game: ' + (error instanceof Error ? error.message : String(error)));
-            console.error('Failed to join game:', error);
-        }
-    };
+    try {
+      await GameService.joinGame(gameCode, playerName);
+      const storeGameCode = GameService.getGameCode();
+      if (storeGameCode) {
+        navigate(`/game/${storeGameCode}`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to join game');
+    }
+  };
 
-    return (
-        <div style={{ position: 'relative' }}>
-            <div className="container">
-                <Card title="JOIN" error={errorMessage}>
-                        <input
-                            type="text"
-                            value={gameCode}
-                            onChange={(e) => setGameCode(e.target.value)}
-                            placeholder="Enter game code"
-                            className="input-field"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleJoinGame();
-                                }
-                            }}
-                        />
-                        <input
-                            type="text"
-                            value={playerName}
-                            onChange={(e) => setPlayerName(e.target.value)}
-                            placeholder="Enter your name"
-                            className="input-field"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleJoinGame();
-                                }
-                            }}
-                        />
-                        <Button onClick={handleJoinGame} text="Join" variant='red'/>
-                </Card>
-            </div>
-        </div>
-    );
+  return (
+    <EntryCard title="Join Game">
+      <div className="space-y-4">
+        <input
+          type="text"
+          value={gameCode}
+          onChange={(e) => setGameCode(e.target.value)}
+          placeholder="Enter game code"
+          className="input-field"
+          onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
+        />
+        <input
+          type="text"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          placeholder="Enter your name"
+          className="input-field"
+          onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
+        />
+        <button
+          onClick={handleJoinGame}
+          className="btn-primary w-full"
+        >
+          Join Game
+        </button>
+      </div>
+    </EntryCard>
+  );
 };
 
-export default JoinGame; 
+export default JoinGame;

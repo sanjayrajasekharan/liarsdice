@@ -1,30 +1,32 @@
 import { inject, injectable } from "inversify";
 import Store from "./Store";
-import { Result, Ok, Err, isErr } from "shared/Result";
-import { ChallengeResult, DieFace, GameCode, PlayerId, GameStage, GameState } from "shared/types";
+import { Result, ok, err } from "neverthrow";
+import { ChallengeResult, DieFace, GameCode, PlayerId, GameStage, GameState } from "shared/domain.js";
 import { Claim } from "@game/Claim";
 import { Player } from "@game/Player";
-import { ErrorCode } from "shared/errors";
+import { ErrorCode } from "shared/errors.js";
 
 @injectable()
 export default class GameService {
     constructor(@inject(Store) private store: Store) { }
 
-    getCurrentPlayer(gameCode: GameCode): Result<PlayerId> {
+    getCurrentPlayer(gameCode: GameCode): Result<PlayerId, ErrorCode> {
         const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
+        if (gameResult.isErr()) {
+            return err(gameResult.error);
         }
         const game = gameResult.value;
-        if (game.getStage() !== GameStage.ROUND_ROBIN) return Err(ErrorCode.ROUND_NOT_ACTIVE);
+        if (game.getStage() !== GameStage.ROUND_ROBIN) return err(ErrorCode.ROUND_NOT_ACTIVE);
 
-        return Ok(game.getOrder()[game.getTurnIndex()]);
+        const currentPlayerId = game.getCurrentPlayerId();
+        if (!currentPlayerId) return err(ErrorCode.PLAYER_NOT_FOUND);
+        return ok(currentPlayerId);
     }
 
-    makeClaim(gameCode: GameCode, playerId: PlayerId, faceValue: DieFace, quantity: number): Result<void> {
+    makeClaim(gameCode: GameCode, playerId: PlayerId, faceValue: DieFace, quantity: number): Result<void, ErrorCode> {
         const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
+        if (gameResult.isErr()) {
+            return err(gameResult.error);
         }
         const game = gameResult.value;
         game.updateActivity();
@@ -32,93 +34,99 @@ export default class GameService {
         const claim = new Claim(playerId, quantity, faceValue);
         const claimResult = game.addClaim(claim);
 
-        if (isErr(claimResult)) {
-            return Err(claimResult.error);
+        if (claimResult.isErr()) {
+            return err(claimResult.error);
         }
-        return Ok(undefined);
+        return ok(undefined);
 
     }
 
-    makeChallenge(gameCode: GameCode, playerId: PlayerId): Result<ChallengeResult> {
+    makeChallenge(gameCode: GameCode, playerId: PlayerId): Result<ChallengeResult, ErrorCode> {
         const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
+        if (gameResult.isErr()) {
+            return err(gameResult.error);
         }
         const game = gameResult.value;
         game.updateActivity();
         
         const challengeResult = game.challenge(playerId);
-        if (isErr(challengeResult)) {
-            return Err(challengeResult.error);
+        if (challengeResult.isErr()) {
+            return err(challengeResult.error);
         }
-        return Ok(challengeResult.value);
+        return ok(challengeResult.value);
     }
 
-    startRound(gameCode: GameCode, initiator: PlayerId): Result<{ startingPlayerId: PlayerId, dice: Record<PlayerId, DieFace[]> }> {
+    startRound(gameCode: GameCode, initiator: PlayerId): Result<{ startingPlayerId: PlayerId, dice: Record<PlayerId, DieFace[]> }, ErrorCode> {
         const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
+        if (gameResult.isErr()) {
+            return err(gameResult.error);
         }
         const game = gameResult.value;
         game.updateActivity();
         
         const startRoundResult = game.startRound(initiator);
-        if (isErr(startRoundResult)) {
-            return Err(startRoundResult.error);
+        if (startRoundResult.isErr()) {
+            return err(startRoundResult.error);
         }
 
         const dice = Object.fromEntries(
-            Array.from(game.getPlayers().values()).map(player => [player.getId(), player.getDice()])
+            game.getPlayers().map(player => [player.getId(), player.getDice()])
         ) as Record<PlayerId, DieFace[]>;
-        return Ok({ startingPlayerId: startRoundResult.value, dice });
+        return ok({ startingPlayerId: startRoundResult.value, dice });
     }
 
-    startGame(gameCode: GameCode, initiator: PlayerId): Result<{ startingPlayerId: PlayerId, dice: Record<PlayerId, DieFace[]> }> {
+    startGame(gameCode: GameCode, initiator: PlayerId): Result<{ startingPlayerId: PlayerId, dice: Record<PlayerId, DieFace[]> }, ErrorCode> {
         const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
+        if (gameResult.isErr()) {
+            return err(gameResult.error);
         }
         const game = gameResult.value;
         game.updateActivity();
         
         const startGameResult = game.startGame(initiator);
-        if (isErr(startGameResult)) {
-            return Err(startGameResult.error);
+        if (startGameResult.isErr()) {
+            return err(startGameResult.error);
         }
 
         const dice = Object.fromEntries(
-            Array.from(game.getPlayers().values()).map(player => [player.getId(), player.getDice()])
+            game.getPlayers().map(player => [player.getId(), player.getDice()])
         ) as Record<PlayerId, DieFace[]>;
-        return Ok({ startingPlayerId: startGameResult.value, dice });
+        return ok({ startingPlayerId: startGameResult.value, dice });
     }
 
-    handleDisconnect(gameCode: GameCode, playerId: PlayerId): Result<void> {
+    handleDisconnect(gameCode: GameCode, playerId: PlayerId): Result<{ gameShutdown: boolean }, ErrorCode> {
         const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
+        if (gameResult.isErr()) {
+            return err(gameResult.error);
         }
         const game = gameResult.value;
         game.updateActivity();
 
         if (game.getStage() === GameStage.PRE_GAME || game.getStage() === GameStage.POST_GAME) {
             const removePlayerResult = game.removePlayer(playerId);
-            if (isErr(removePlayerResult)) {
-                return Err(removePlayerResult.error);
+            if (removePlayerResult.isErr()) {
+                return err(removePlayerResult.error);
+            }
+
+            if (game.getStage() === GameStage.PRE_GAME && game.getPlayers().length === 0) {
+                this.store.removeGame(gameCode);
+                return ok({ gameShutdown: true });
             }
         }
         
-        return Ok(undefined);
+        return ok({ gameShutdown: false });
     }
 
-    getGameState(playerId: PlayerId, gameCode: GameCode): Result<GameState> {
+    getGameState(playerId: PlayerId, gameCode: GameCode): Result<GameState, ErrorCode> {
         const gameResult = this.store.getGame(gameCode);
-        if (isErr(gameResult)) {
-            return Err(gameResult.error);
+        if (gameResult.isErr()) {
+            return err(gameResult.error);
         }
         const game = gameResult.value;
-        if (!game.getPlayers().has(playerId)) {
-            return Err(ErrorCode.PLAYER_NOT_FOUND);
+        const playerExists = game.getPlayers().some(p => p.getId() === playerId);
+        if (!playerExists) {
+            return err(ErrorCode.PLAYER_NOT_FOUND);
         }
-        return Ok(game.toJSON());
+        return ok(game.toJSON());
     }
 }

@@ -1,19 +1,19 @@
-import { Action } from "shared/actions";
-import { StateChange } from "shared/states";
+import { ClaimPayloadSchema, ActionResponse, ClientToServerEvents } from "shared/client-events.js";
+import { ServerToClientEvents, PlayerJoinedPayload, PlayerLeftPayload, ClaimMadePayload, ChallengeMadePayload, GameStartedPayload, RoundStartedPayload, DiceRolledPayload } from "shared/server-events.js";
 import { onConnect, socketController, event, onDisconnect } from "@sockets/socket-utils/main";
-import { Socket, Server as SocketServer } from "socket.io";
+import { Socket as BaseSocket, Server as BaseServer } from "socket.io";
 import { inject } from "inversify";
-import GameService from "@app/GameService";
-import {
-    ChallengeMadeMessage, ClaimMadeMessage, DiceRolledMessage, DieFace, GameCode, GameStartedMessage, PlayerId, PlayerLeftMessage, RoundStartedMessage, ServerMessage
-} from "shared/types";
-import { isErr } from "shared/Result";
-import { errorMessage } from "shared/errors";
-import { authMiddleware } from "@sockets/middleware/authMiddleware";
+import GameService from "@app/GameService.js";
+import { DieFace, GameCode, PlayerId } from "shared/domain.js";
+import { getErrorMessage } from "shared/errors.js";
+import { authMiddleware } from "@sockets/middleware/authMiddleware.js";
+
+type Socket = BaseSocket<ClientToServerEvents, ServerToClientEvents>;
+type Server = BaseServer<ClientToServerEvents, ServerToClientEvents>;
 
 @socketController(undefined, authMiddleware)
 export class GameController {
-    constructor(@inject(GameService) private gameService: GameService, @inject(SocketServer) private io: SocketServer) { }
+    constructor(@inject(GameService) private gameService: GameService, @inject(BaseServer) private io: Server) { }
 
     @onConnect()
     handleConnect(socket: Socket) {
@@ -24,20 +24,21 @@ export class GameController {
         socket.join(gameCode);
         socket.join(playerId);
 
-        const playerMessage: ServerMessage = {
-            type: StateChange.PLAYER_JOINED,
+        const gameStateResult = this.gameService.getGameState(playerId, gameCode);
+
+        if (gameStateResult.isErr()) {
+            throw new Error(getErrorMessage(gameStateResult.error));
+        }
+        const gameState = gameStateResult.value;
+        socket.emit('GAME_STATE', gameState);
+
+        
+
+        const playerMessage: PlayerJoinedPayload = {
             playerId: playerId,
             playerName: playerName
         };
-
-        const gameStateResult = this.gameService.getGameState(playerId, gameCode);
-
-        if (isErr(gameStateResult)) {
-            throw new Error(errorMessage(gameStateResult.error));
-        }
-        const gameState = gameStateResult.value;
-        this.io.to(playerId).emit(StateChange.GAME_STATE, gameState);
-        this.io.to(gameCode).emit(StateChange.PLAYER_JOINED, playerMessage);
+        socket.to(gameCode).emit('PLAYER_JOINED', playerMessage);
     }
 
     @onDisconnect()
@@ -47,107 +48,110 @@ export class GameController {
 
         socket.leave(gameCode);
         socket.leave(playerId);
-        const playerMessage: PlayerLeftMessage = {
-            type: StateChange.PLAYER_LEFT,
+        const playerMessage: PlayerLeftPayload = {
             playerId: playerId
         };
 
         this.gameService.handleDisconnect(gameCode, playerId);
-        this.io.to(gameCode).emit(StateChange.PLAYER_LEFT, playerMessage);
+        this.io.to(gameCode).emit('PLAYER_LEFT', playerMessage);
     }
 
-    @event(Action.CLAIM)
-    handleClaim(socket: Socket, data: { faceValue: DieFace, quantity: number }) {
+    @event('CLAIM')
+    handleClaim(socket: Socket, data: { faceValue: DieFace, quantity: number }): ActionResponse {
         const playerId: PlayerId = socket.data.playerId!;
         const gameCode: GameCode = socket.data.gameCode!;
 
+        ClaimPayloadSchema.parse(data);
+
         const claimResult = this.gameService.makeClaim(gameCode, playerId, data.faceValue, data.quantity);
-        if (isErr(claimResult)) {
-            throw new Error(errorMessage(claimResult.error));
+        if (claimResult.isErr()) {
+            return { ok: false, code: claimResult.error, message: getErrorMessage(claimResult.error) };
         }
 
         const nextPlayerResult = this.gameService.getCurrentPlayer(gameCode);
-        if (isErr(nextPlayerResult)) {
-            throw new Error(errorMessage(nextPlayerResult.error));
+        if (nextPlayerResult.isErr()) {
+            return { ok: false, code: nextPlayerResult.error, message: getErrorMessage(nextPlayerResult.error) };
         }
-        const claimMessage: ClaimMadeMessage = {
-            type: StateChange.CLAIM_MADE,
+
+        const claimMessage: ClaimMadePayload = {
             playerId: playerId,
             faceValue: data.faceValue,
             quantity: data.quantity,
             nextPlayerId: nextPlayerResult.value
-
         };
-        this.io.to(gameCode).emit(StateChange.CLAIM_MADE, claimMessage);
+        this.io.to(gameCode).emit('CLAIM_MADE', claimMessage);
+
+        return { ok: true };
     }
 
-    @event(Action.CHALLENGE)
-    handleChallenge(socket: Socket) {
+    @event('CHALLENGE')
+    handleChallenge(socket: Socket): ActionResponse {
         const playerId: PlayerId = socket.data.playerId!;
         const gameCode: GameCode = socket.data.gameCode!;
 
         const challengeResult = this.gameService.makeChallenge(gameCode, playerId);
-        if (isErr(challengeResult)) {
-            throw new Error(errorMessage(challengeResult.error));
+        if (challengeResult.isErr()) {
+            return { ok: false, code: challengeResult.error, message: getErrorMessage(challengeResult.error) };
         }
 
-        const challengeMessage: ChallengeMadeMessage = {
-            type: StateChange.CHALLENGE_MADE,
+        const challengeMessage: ChallengeMadePayload = {
             ...challengeResult.value
         };
 
-        this.io.to(gameCode).emit(StateChange.CHALLENGE_MADE, challengeMessage);
+        this.io.to(gameCode).emit('CHALLENGE_MADE', challengeMessage);
+
+        return { ok: true };
     }
 
-    // TODO: handle errors better
-    @event(Action.START_GAME)
-    handleStartGame(socket: Socket) {
+    @event('START_GAME')
+    handleStartGame(socket: Socket): ActionResponse {
         const playerId: PlayerId = socket.data.playerId!;
         const gameCode: GameCode = socket.data.gameCode!;
 
         const startGameResult = this.gameService.startGame(gameCode, playerId);
-        if (isErr(startGameResult)) {
-            throw new Error(errorMessage(startGameResult.error));
+        if (startGameResult.isErr()) {
+            return { ok: false, code: startGameResult.error, message: getErrorMessage(startGameResult.error) };
         }
+
         const { startingPlayerId, dice } = startGameResult.value;
-        const gameStartedMessage: GameStartedMessage = {
-            type: StateChange.GAME_STARTED,
+        const gameStartedMessage: GameStartedPayload = {
             startingPlayerId: startingPlayerId
         };
-        this.io.to(gameCode).emit(StateChange.GAME_STARTED, gameStartedMessage);
+        this.io.to(gameCode).emit('GAME_STARTED', gameStartedMessage);
+
         for (const [playerId, playerDice] of Object.entries(dice)) {
-            const diceMessage: DiceRolledMessage = {
-                type: StateChange.DICE_ROLLED,
+            const diceMessage: DiceRolledPayload = {
                 dice: playerDice
             };
-            this.io.to(playerId).emit(StateChange.DICE_ROLLED, diceMessage);
+            this.io.to(playerId).emit('DICE_ROLLED', diceMessage);
         }
+
+        return { ok: true };
     }
 
-    @event(Action.START_ROUND)
-    handleStartRound(socket: Socket) {
+    @event('START_ROUND')
+    handleStartRound(socket: Socket): ActionResponse {
         const playerId: PlayerId = socket.data.playerId!;
         const gameCode: GameCode = socket.data.gameCode!;
 
         const startRoundResult = this.gameService.startRound(gameCode, playerId);
-        if (isErr(startRoundResult)) {
-            throw new Error(errorMessage(startRoundResult.error));
+        if (startRoundResult.isErr()) {
+            return { ok: false, code: startRoundResult.error, message: getErrorMessage(startRoundResult.error) };
         }
-        const { startingPlayerId, dice } = startRoundResult.value;
 
-        const message: RoundStartedMessage = {
-            type: StateChange.ROUND_STARTED,
+        const { startingPlayerId, dice } = startRoundResult.value;
+        const roundStartedMessage: RoundStartedPayload = {
             startingPlayerId: startingPlayerId
-        }
-        this.io.to(gameCode).emit(StateChange.ROUND_STARTED, message);
+        };
+        this.io.to(gameCode).emit('ROUND_STARTED', roundStartedMessage);
 
         for (const [playerId, playerDice] of Object.entries(dice)) {
-            let diceMessage: DiceRolledMessage = {
-                type: StateChange.DICE_ROLLED,
+            const diceMessage: DiceRolledPayload = {
                 dice: playerDice
             };
-
-            this.io.to(playerId).emit(StateChange.DICE_ROLLED, diceMessage);
+            this.io.to(playerId).emit('DICE_ROLLED', diceMessage);
         }
+
+        return { ok: true };
     }
 }

@@ -1,43 +1,43 @@
-import { PlayerId, GameCode, SocketId, GameStage } from 'shared/types.js';
+import { PlayerId, GameCode, SocketId, GameStage } from 'shared/domain.js';
 import { Game } from '@game/Game.js';
-import { Result, Err, Ok } from 'shared/Result.js';
-import {ErrorCode} from 'shared/errors.js'
+import { Result, ok, err } from 'neverthrow';
+import { ErrorCode } from 'shared/errors.js';
 import { injectable } from 'inversify';
 
 @injectable()
 export default class Store {
-private games: Record<GameCode, Game> = {};
-     addGame(game: Game): Result<void> {
+private games: Record<GameCode, Game> = {} as Record<GameCode, Game>;
+     addGame(game: Game): Result<void, ErrorCode> {
         const gameCode = game.getGameCode();
         if (this.games[gameCode]) {
-            return Err(ErrorCode.GAME_ALREADY_EXISTS);
+            return err(ErrorCode.GAME_ALREADY_EXISTS);
         }
         this.games[gameCode] = game;
-        return Ok(undefined);
+        return ok(undefined);
     }
 
-     getGame(gameCode: GameCode): Result<Game> {
+     getGame(gameCode: GameCode): Result<Game, ErrorCode> {
         const game = this.games[gameCode];
         if (!game) {
-            return Err(ErrorCode.GAME_NOT_FOUND);
+            return err(ErrorCode.GAME_NOT_FOUND);
         }
         
         // Passive cleanup: check if game is stale on access
         if (this.isGameStale(game)) {
             console.log(`Removing stale game on access: ${gameCode}`);
             delete this.games[gameCode];
-            return Err(ErrorCode.GAME_NOT_FOUND);
+            return err(ErrorCode.GAME_NOT_FOUND);
         }
         
-        return Ok(game);
+        return ok(game);
     }
     
-     removeGame(gameCode: GameCode): Result<void> {
+     removeGame(gameCode: GameCode): Result<void, ErrorCode> {
         if (!this.games[gameCode]) {
-            return Err(ErrorCode.GAME_NOT_FOUND);
+            return err(ErrorCode.GAME_NOT_FOUND);
         }
         delete this.games[gameCode];
-        return Ok(undefined);
+        return ok(undefined);
     }
 
     getAllGames(): Game[] {
@@ -48,7 +48,7 @@ private games: Record<GameCode, Game> = {};
         const inactiveMs = game.getInactivityMs();
         
         // Empty games -> 5 min grace period for reconnection
-        if (game.getPlayers().size === 0) {
+        if (game.getPlayers().length === 0) {
             return inactiveMs > 5 * 60 * 1000;
         }
         

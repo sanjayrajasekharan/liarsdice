@@ -1,11 +1,11 @@
-import { DieFace, PlayerId } from 'shared/types.js';
+import { DieFace, PlayerId } from 'shared/domain.js';
 
 export class Claim {
     private playerId: PlayerId;
     private quantity: number;
     private faceValue: DieFace;
 
-    constructor(playerId: string, quantity: number, faceValue: DieFace) {
+    constructor(playerId: PlayerId, quantity: number, faceValue: DieFace) {
         this.playerId = playerId;
         this.quantity = quantity;
         this.faceValue = faceValue;

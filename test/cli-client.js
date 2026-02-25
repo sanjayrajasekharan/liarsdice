@@ -171,6 +171,12 @@ class GameClient {
                 this.gameState.stage = data.stage;
                 this.log(`   Stage: ${data.stage}`, 'cyan');
                 if (data.players) {
+                    // Extract player names from the game state
+                    Object.entries(data.players).forEach(([playerId, playerData]) => {
+                        if (playerData.name) {
+                            this.playerNames.set(playerId, playerData.name);
+                        }
+                    });
                     const playerCount = Object.keys(data.players).length;
                     this.log(`   Players: ${playerCount}`, 'cyan');
                 }
@@ -260,9 +266,23 @@ class GameClient {
         this.socket.on('GAME_ENDED', (data) => {
             this.gameState.stage = 'POST_GAME';
             const winner = this.getPlayerName(data.winnerId);
-            this.log(`\nGAME OVER! Winner: ${winner}`, 'green');
-            this.log('\nDisconnecting...', 'yellow');
-            setTimeout(() => process.exit(0), 1000);
+            
+            console.log('\n' + colors.cyan + '═══════════════════════════════════════════════════' + colors.reset);
+            if (data.winnerId === this.playerId) {
+                this.log('🎉 CONGRATULATIONS! YOU WON! 🎉', 'green');
+            } else {
+                this.log(`GAME OVER! Winner: ${winner}`, 'yellow');
+            }
+            console.log(colors.cyan + '═══════════════════════════════════════════════════' + colors.reset + '\n');
+            
+            this.log('Thanks for playing!', 'cyan');
+            this.log('Disconnecting in 2 seconds...', 'yellow');
+            setTimeout(() => {
+                if (this.socket) {
+                    this.socket.disconnect();
+                }
+                process.exit(0);
+            }, 2000);
         });
 
         this.socket.on('error', (error) => {
@@ -284,6 +304,9 @@ class GameClient {
             console.log(colors.yellow + '  start' + colors.reset + ' - Start the game');
         } else if (this.gameState.stage === 'POST_ROUND') {
             console.log(colors.yellow + '  roll' + colors.reset + ' - Start a new round');
+        } else if (this.gameState.stage === 'POST_GAME') {
+            console.log(colors.reset + '  Game has ended. Goodbye!');
+            return; // Don't show other commands
         } else if (this.gameState.stage === 'ROUND_ROBIN') {
             if (this.isMyTurn()) {
                 if (this.gameState.lastClaim) {

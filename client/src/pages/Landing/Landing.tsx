@@ -1,58 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Button from '../../components/Button/Button';
-import styles from './Landing.module.css';
-import { useGameState } from '../../store/gameStore';
+import { EntryCard } from '@components/layout';
+import { diceSvgs } from '../../assets/dice';
+
+const DICE_FACES = [1, 2, 3, 4, 5, 6] as const;
+const SHUFFLE_INTERVAL_MS = 1000;
 
 const LandingPage: React.FC = () => {
-    const [titleEmoji, setTitleEmoji] = useState('🎲');
-    const [isSpinning, setIsSpinning] = useState(false);
-    const error = useGameState((state) => state.error);
+  const [currentFace, setCurrentFace] = useState(1);
 
-    const triggerSpin = (newEmoji: string) => {
-        if (isSpinning) return; // Prevent multiple animations
-        
-        setIsSpinning(true);
-        setTimeout(() => {
-            setTitleEmoji(newEmoji);
-            setTimeout(() => setIsSpinning(false), 500); // Match animation duration
-        }, 250); // Half way through the spin
-    };
+  // Periodic dice shuffle animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFace((prev) => {
+        const otherFaces = DICE_FACES.filter((face) => face !== prev);
+        const nextIndex = Math.floor(Math.random() * otherFaces.length);
+        return otherFaces[nextIndex];
+      });
+    }, SHUFFLE_INTERVAL_MS);
 
-    const handleMouseEnter = () => {
-        triggerSpin('😈');
-    };
+    return () => clearInterval(interval);
+  }, []);
 
-    const handleMouseLeave = () => {
-        triggerSpin('🎲');
-    };
+  const titleContent = (
+    <span className="flex font-mono items-center justify-center gap-6">
+      Liar's Dice
+      <img
+        src={diceSvgs[currentFace]}
+        alt={`Dice face ${currentFace}`}
+        className="w-8 h-8 inline-block"
+      />
+    </span>
+  );
 
-    return (
-        <div className={styles.container}>
-            <div className={styles.card}>
-            <div className={styles.form_group}>
-                <h1 className={styles.title}>
-                    <em>LIAR'S DICE</em>&nbsp;&nbsp;
-                    <span className={`${styles.titleEmoji} ${isSpinning ? styles.spin : ''}`}>
-                        {titleEmoji}
-                    </span>
-                </h1>
-                <div className={styles.button_container}>
-                    <Link to="/create">
-                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="New Game" variant='red'/>
-                    </Link>
-                    <Link to="/join">
-                        <Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="Join Game" variant='black'/>
-                    </Link>
-                    <Link to="/mock">
-                        I<Button onMouseEnter={handleMouseEnter} onMouseLeave= {handleMouseLeave} text="🧪 Test New UI" variant='black'/>
-                    </Link>
-                </div>
-                <div className={styles.error_message}>{error || " "}</div>
-                </div>
-            </div>
-        </div>
-    );
+  return (
+    <EntryCard title="">
+      <h1 className="text-2xl font-mono text-text-primary mb-6 p-2 text-center font-display">
+        {titleContent}
+      </h1>
+      <div className="flex flex-col gap-3">
+        <Link to="/create">
+          <button className="btn-primary w-full">
+            New Game
+          </button>
+        </Link>
+        <Link to="/join">
+          <button className="btn-secondary w-full">
+            Join Game
+          </button>
+        </Link>
+      </div>
+    </EntryCard>
+  );
 };
 
 export default LandingPage;
