@@ -265,7 +265,6 @@ export const SixPlayers: Story = {
 };
 
 export const LongClaimHistory: Story = {
-  name: 'Long Claim History',
   args: {
     players: [
       { id: '1', name: 'You', diceCount: 4, isCurrentTurn: true, isUser: true },
@@ -325,7 +324,6 @@ export const HeadsUp: Story = {
 };
 
 export const LongPlayerNames: Story = {
-  name: 'Long Player Names',
   args: {
     players: [
       { id: '1', name: 'You', diceCount: 5, isCurrentTurn: true, isUser: true },

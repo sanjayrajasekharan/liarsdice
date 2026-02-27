@@ -29,42 +29,55 @@ export const GameStage = {
   POST_GAME: 'POST_GAME',
 } as const satisfies Record<string, GameStage>;
 
-export const PlayerInfoSchema = z.object({
-  id: z.string(),
+export const PlayerSchema = z.object({
+  id: PlayerIdSchema,
   name: z.string(),
   remainingDice: z.number(),
+  dice: z.array(DieFaceSchema),
 });
-export type PlayerInfo = z.infer<typeof PlayerInfoSchema>;
+export type Player = z.infer<typeof PlayerSchema>;
+
+export const ClaimSchema = z.object({
+  playerId: PlayerIdSchema,
+  quantity: z.number(),
+  faceValue: DieFaceSchema,
+});
+export type Claim = z.infer<typeof ClaimSchema>;
 
 export const GameStateSchema = z.object({
-  gameCode: z.string(),
-  hostId: z.string().optional(),
-  players: z.array(PlayerInfoSchema),
-  currentTurnIndex: z.number(),
+  gameCode: GameCodeSchema,
+  hostId: PlayerIdSchema,
+  players: z.array(PlayerSchema),
+  claims: z.array(ClaimSchema).default([]),
+  currentTurnIndex: z.number().default(0),
   stage: GameStageSchema,
+  turnDeadline: z.date().nullable(),
+  createdAt: z.date(),
+  lastActivityAt: z.date(),
 });
 
 export type GameState = z.infer<typeof GameStateSchema>;
 
 export const PlayerDiceCountSchema = z.object({
-  playerId: z.string(),
+  playerId: PlayerIdSchema,
   playerName: z.string(),
   count: z.number(),
 });
 export type PlayerDiceCount = z.infer<typeof PlayerDiceCountSchema>;
 
 export const ChallengeResultSchema = z.object({
-  challengerId: z.string(),
-  claimerId: z.string(),
+  challengerId: PlayerIdSchema,
+  claimerId: PlayerIdSchema,
   claimedQuantity: z.number(),
   claimedFace: DieFaceSchema,
   actualTotal: z.number(),
   playerCounts: z.array(PlayerDiceCountSchema),
-  winnerId: z.string(),
-  loserId: z.string(),
+  winnerId: PlayerIdSchema,
+  loserId: PlayerIdSchema,
   loserOut: z.boolean(),
   gameOver: z.boolean(),
 });
+
 export type ChallengeResult = z.infer<typeof ChallengeResultSchema>;
 
 export const DiceArraySchema = z.array(DieFaceSchema);

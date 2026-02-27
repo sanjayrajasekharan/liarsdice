@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import Reveal from './Reveal';
+import { PlayerId } from 'shared/domain';
 
 const meta = {
   title: 'Components/Reveal',
@@ -35,9 +36,9 @@ type Story = StoryObj<typeof meta>;
 export const ThreePlayers: Story = {
   args: {
     playerCounts: [
-      { playerId: 'p1', playerName: 'Alice', count: 2 },
-      { playerId: 'p2', playerName: 'Bob', count: 3 },
-      { playerId: 'p3', playerName: 'Charlie', count: 1 },
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 2 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 3 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 1 },
     ],
     claimedFace: 4,
     actualTotal: 6,
@@ -48,8 +49,8 @@ export const ThreePlayers: Story = {
 export const TwoPlayers: Story = {
   args: {
     playerCounts: [
-      { playerId: 'p1', playerName: 'You', count: 3 },
-      { playerId: 'p2', playerName: 'Opponent', count: 1 },
+      { playerId: 'p1' as PlayerId, playerName: 'You', count: 3 },
+      { playerId: 'p2' as PlayerId, playerName: 'Opponent', count: 1 },
     ],
     claimedFace: 6,
     actualTotal: 4,
@@ -60,12 +61,12 @@ export const TwoPlayers: Story = {
 export const SixPlayers: Story = {
   args: {
     playerCounts: [
-      { playerId: 'p1', playerName: 'Alice', count: 1 },
-      { playerId: 'p2', playerName: 'Bob', count: 2 },
-      { playerId: 'p3', playerName: 'Charlie', count: 3 },
-      { playerId: 'p4', playerName: 'Diana', count: 0 },
-      { playerId: 'p5', playerName: 'Eve', count: 2 },
-      { playerId: 'p6', playerName: 'Frank', count: 1 },
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 1 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 2 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 3 },
+      { playerId: 'p4' as PlayerId, playerName: 'Diana', count: 0 },
+      { playerId: 'p5' as PlayerId, playerName: 'Eve', count: 2 },
+      { playerId: 'p6' as PlayerId, playerName: 'Frank', count: 1 },
     ],
     claimedFace: 3,
     actualTotal: 9,
@@ -76,9 +77,9 @@ export const SixPlayers: Story = {
 export const PlayerWithZero: Story = {
   args: {
     playerCounts: [
-      { playerId: 'p1', playerName: 'Alice', count: 2 },
-      { playerId: 'p2', playerName: 'Bob', count: 0 },
-      { playerId: 'p3', playerName: 'Charlie', count: 3 },
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 2 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 0 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 3 },
     ],
     claimedFace: 5,
     actualTotal: 5,
@@ -89,9 +90,9 @@ export const PlayerWithZero: Story = {
 export const ChallengerWins: Story = {
   args: {
     playerCounts: [
-      { playerId: 'p1', playerName: 'Alice', count: 1 },
-      { playerId: 'p2', playerName: 'Bob', count: 1 },
-      { playerId: 'p3', playerName: 'Charlie', count: 0 },
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 1 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 1 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 0 },
     ],
     claimedFace: 2,
     actualTotal: 2,

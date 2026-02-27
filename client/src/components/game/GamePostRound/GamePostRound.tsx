@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   GameService,
   useGameState,
@@ -17,9 +17,16 @@ const pageVariants = {
   exit: { opacity: 0, scale: 1.05 },
 };
 
+const resultVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0 },
+};
+
 const GamePostRound: React.FC<GamePostRoundProps> = ({ isHost }) => {
+  const [revealComplete, setRevealComplete] = useState(false);
   const challengeResult = useGameState(selectChallengeResult);
   const playerId = useGameState(state => state.playerId);
+  const winnerName = useGameState(state => state.gameState)?.players.filter(player => player.id === challengeResult?.winnerId)[0]?.name;
 
   const handleStartNextRound = () => {
     GameService.startRound();
@@ -34,7 +41,6 @@ const GamePostRound: React.FC<GamePostRoundProps> = ({ isHost }) => {
       exit="exit"
       transition={{ duration: 0.3 }}
     >
-      <h2 className="text-2xl font-bold text-text-primary">Round Over!</h2>
 
       {challengeResult && (
         <>
@@ -44,27 +50,42 @@ const GamePostRound: React.FC<GamePostRoundProps> = ({ isHost }) => {
               claimedFace={challengeResult.claimedFace}
               actualTotal={challengeResult.actualTotal}
               currentPlayerId={playerId}
+              onAnimationComplete={() => setRevealComplete(true)}
             />
           </div>
         </>
       )}
 
-      {isHost && (
-        <div className="mt-4">
-          <button
-            className="btn-primary"
-            onClick={handleStartNextRound}
+      <AnimatePresence>
+        {revealComplete && (
+          <motion.div
+            className="flex flex-col items-center gap-4"
+            variants={resultVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ duration: 0.4 }}
           >
-            Start Next Round
-          </button>
-        </div>
-      )}
+            <h3 className="text-xl font-mono">{winnerName} wins!</h3>
 
-      {!isHost && (
-        <p className="text-text-secondary text-center">
-          Waiting for host to start next round...
-        </p>
-      )}
+            {isHost && (
+              <div className="mt-4">
+                <button
+                  className="btn-primary"
+                  onClick={handleStartNextRound}
+                >
+                  Start Next Round
+                </button>
+              </div>
+            )}
+
+            {!isHost && (
+              <p className="text-text-secondary text-center">
+                Waiting for host to start next round...
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

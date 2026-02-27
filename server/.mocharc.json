@@ -1,5 +1,5 @@
 {
   "extensions": ["ts"],
-  "spec": ["src/game/test/**/*.test.ts"],
+  "spec": ["test/**/*.test.ts"],
   "node-option": ["import=tsx"]
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { GameStateSchema } from './domain';
 
 
 export const CreateGameRequestSchema = z.object({
@@ -37,33 +38,17 @@ export const AddPlayerResponseSchema = z.object({
 export type AddPlayerResponse = z.infer<typeof AddPlayerResponseSchema>;
 
 
-export const GetGameResponseSchema = z.object({
-  game: z.any(), // TODO: type this properly with GameStateSchema
+export const GetGameStatusResponseSchema = z.object({
+  exists: z.boolean(),
+  joinable: z.boolean(),
+  reason: z.string().optional(),
+  isMember: z.boolean().optional(),
+  game: GameStateSchema.optional(),
 });
-export type GetGameResponse = z.infer<typeof GetGameResponseSchema>;
+export type GetGameStatusResponse = z.infer<typeof GetGameStatusResponseSchema>;
 
 
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
-
-
-export const CheckMembershipParamsSchema = z.object({
-  gameCode: z.string().min(1, 'Game code is required'),
-  playerId: z.string().min(1, 'Player ID is required'),
-});
-export type CheckMembershipParams = z.infer<typeof CheckMembershipParamsSchema>;
-
-export const CheckMembershipResponseSchema = z.object({
-  isMember: z.boolean(),
-  gameExists: z.boolean(),
-});
-export type CheckMembershipResponse = z.infer<typeof CheckMembershipResponseSchema>;
-
-
-export const CheckJoinableResponseSchema = z.object({
-  joinable: z.boolean(),
-  reason: z.string().optional(),
-});
-export type CheckJoinableResponse = z.infer<typeof CheckJoinableResponseSchema>;

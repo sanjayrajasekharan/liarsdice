@@ -130,7 +130,11 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                       value={otherValue ?? ""}
                       onChange={(e) => {
                         const value = parseInt(e.target.value, 10);
-                        !isNaN(value) ? setOtherValue(value) : setOtherValue(undefined);
+                        if (!isNaN(value)) {
+                          setOtherValue(value);
+                        } else {
+                          setOtherValue(undefined);
+                        }
                       }}
                       onBlur={() => {
                         if (otherValue && otherValue >= startCount) {

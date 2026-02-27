@@ -25,7 +25,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
         };
 
         initSession();
-    }, []);
+    }, [location.pathname, navigate]);
 
     if (!isInitialized) {
         return (

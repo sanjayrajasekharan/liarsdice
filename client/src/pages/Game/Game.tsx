@@ -31,12 +31,12 @@ const Game: React.FC = () => {
     // If we have a game code from URL but not in store, validate and redirect to join
     if (urlGameCode && !gameCode) {
       setIsValidating(true);
-      GameService.checkJoinable(urlGameCode).then(({ joinable, reason }) => {
+      GameService.getGameStatus(urlGameCode).then((status) => {
         setIsValidating(false);
-        if (joinable) {
+        if (status.joinable) {
           navigate('/join', { state: { gameCode: urlGameCode } });
         } else {
-          toast.error(reason || 'Unable to join game');
+          toast.error(status.reason || 'Unable to join game');
           navigate('/');
         }
       });
@@ -112,9 +112,12 @@ const Game: React.FC = () => {
     <div className="h-screen flex flex-col bg-surface-primary overflow-x-hidden">
       <header className="shrink-0 flex items-center justify-between px-4 py-3 bg-surface-elevated border-b border-border-light">
         <span className="text-sm font-medium text-text-secondary">
-          Game: <span className="font-mono text-text-primary">{gameCode}</span>
+          <span className="font-mono text-text-primary">{gameCode}</span>
         </span>
-        <span className="text-sm">
+        <span className="text-sm flex items-center gap-1.5">
+          <svg width="8" height="8" viewBox="0 0 8 8" className="shrink-0">
+            <circle cx="4" cy="4" r="4" fill={isConnected ? '#22c55e' : '#ef4444'} />
+          </svg>
           {isConnected ? 'Connected' : 'Disconnected'}
         </span>
       </header>

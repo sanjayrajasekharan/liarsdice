@@ -43,7 +43,7 @@ cd client && pnpm run storybook
 
 ## Test Commands
 
-The server uses **Mocha + Chai + tsx**. All tests live in `server/src/game/test/`.
+The server uses **Mocha + Chai + tsx**. All tests live in `server/test/`.
 
 ```bash
 # Run all server tests
@@ -53,11 +53,10 @@ cd server && pnpm run test
 cd server && pnpm run test:watch
 
 # Run a single test file
-cd server && pnpm exec mocha src/game/test/Game.test.ts
-cd server && pnpm exec mocha src/game/test/Claim.test.ts
+cd server && pnpm exec mocha test/Game.test.ts
 
 # Run tests matching a name pattern (--grep supports regex)
-cd server && pnpm exec mocha --grep "should reject 7th player" "src/game/test/**/*.test.ts"
+cd server && pnpm exec mocha --grep "should reject 7th player" "test/**/*.test.ts"
 ```
 
 Mocha config is in `server/.mocharc.json` — TypeScript is loaded via `--node-option import=tsx`, so no pre-compilation is needed.
@@ -79,8 +78,8 @@ Client (REST) → Server → JWT Token → Client (WebSocket) → Server
 | File | Role |
 |---|---|
 | `server/src/index.ts` | DI container setup + server boot |
-| `server/src/game/Game.ts` | Pure game logic (turn validation, claim checking) |
-| `server/src/app/GameService.ts` | Business logic facade |
+| `server/src/app/GameService.ts` | Pure game functions + injectable service facade |
+| `server/src/app/GamesMangerService.ts` | Game creation/joining orchestration |
 | `server/src/app/Store.ts` | In-memory Map of games |
 | `server/src/sockets/GameController.ts` | Socket.IO event handlers (custom decorators) |
 | `server/src/rest/GamesMangerController.ts` | REST endpoints |
@@ -143,12 +142,12 @@ handleClaim(socket, data): ActionResponse {
 - **Server imports must include explicit `.js` extensions** even though source is `.ts`:
   ```typescript
   // ✅ CORRECT
-  import { Game } from '../Game.js';
+  import { GameState } from 'shared/domain.js';
   import { ClientToServerEvents } from 'shared/client-events.js';
   import { ServerToClientEvents } from 'shared/server-events.js';
 
   // ❌ WRONG
-  import { Game } from '../Game';
+  import { GameState } from 'shared/domain';
   ```
 - **Client imports do NOT need `.js` extensions** (Vite handles resolution):
   ```typescript
@@ -173,12 +172,14 @@ import { Button } from '@components/Button/Button';
 
 ## Error Handling
 
-### Game Logic — `Result<T>` Monad (NEVER throw)
+### Game Logic — `Result<T>` Monad via `neverthrow` (NEVER throw)
 ```typescript
+import { Result, ok, err } from 'neverthrow';
+
 // ✅ CORRECT — return Result
-function makeClaim(claim: Claim): Result<void> {
-    if (invalidClaim) return Err(ErrorCode.INVALID_CLAIM);
-    return Ok(undefined);
+function makeClaim(claim: Claim): Result<void, ErrorCode> {
+    if (invalidClaim) return err(ErrorCode.INVALID_CLAIM);
+    return ok(undefined);
 }
 
 // ❌ WRONG — do not throw for expected failures
@@ -187,10 +188,10 @@ function makeClaim(claim: Claim): void {
 }
 ```
 
-Check results with `isErr()` / `isOk()` from `shared/Result.ts`:
+Check results with `.isErr()` / `.isOk()` methods:
 ```typescript
-const result = game.addClaim(claim);
-if (isErr(result)) return Err(result.error); // propagate up
+const result = addClaim(game, claim);
+if (result.isErr()) return err(result.error); // propagate up
 // result.value is now safely accessible
 ```
 
@@ -206,8 +207,8 @@ if (isErr(result)) return Err(result.error); // propagate up
 |---|---|---|
 | React components | PascalCase folder + file | `Button/Button.tsx` |
 | Storybook stories | `Component.stories.tsx` co-located | `DiceRoll.stories.tsx` |
-| Server domain classes | PascalCase | `Game.ts`, `Player.ts` |
-| Test files | `ClassName.test.ts` in `test/` subdir | `game/test/Game.test.ts` |
+| Server domain types | PascalCase in `shared/domain.ts` | `GameState`, `Player`, `Claim` |
+| Test files | `ClassName.test.ts` in `server/test/` | `test/Game.test.ts` |
 | Variables / functions | camelCase | `handleJoinGame`, `makeClaim` |
 | Classes / interfaces | PascalCase (no `I`-prefix) | `GameService`, `TokenPayload` |
 | Enum values | `UPPER_SNAKE_CASE` | `ErrorCode.GAME_FULL`, `GameStage.PRE_GAME` |
@@ -220,29 +221,34 @@ if (isErr(result)) return Err(result.error); // propagate up
 
 ```typescript
 import { expect } from 'chai';
-import { Game } from '../Game.js';   // .js extension required
+import * as Game from '@app/GameService.js';
+import { generateGameCode } from '@app/GamesMangerService.js';
+import { ErrorCode } from 'shared/errors.js';
+import { GameState, GameCode } from 'shared/domain.js';
 
 describe('Game', () => {
-    let game: Game;
+    let game: GameState;
+    let gameCode: GameCode;
 
     beforeEach(() => {
-        game = Game.createGame(Game.generateGameCode(), 'Host');
+        gameCode = generateGameCode();
+        game = Game.createGame(gameCode, 'Host');
     });
 
     it('should reject 7th player', () => {
-        // ... add 6 players ...
-        const result = game.createPlayer('Player7');
+        // ... add 5 more players to reach 6 total ...
+        const result = Game.addPlayer(game, 'Player7');
 
-        expect(result.ok).to.be.false;
-        if (!result.ok) {
-            expect(result.error.code).to.equal(ErrorCode.GAME_FULL);
+        expect(result.isErr()).to.be.true;
+        if (result.isErr()) {
+            expect(result.error).to.equal(ErrorCode.GAME_FULL);
         }
     });
 });
 ```
 
 - BDD assertions: `expect(...).to.be.true`, `.to.equal(...)`, `.to.have.lengthOf(n)`
-- Always check `result.ok` before accessing `.value` or `.error`
+- Always check `result.isOk()` / `result.isErr()` before accessing `.value` or `.error`
 - Use `beforeEach` for fresh game state per test — no shared mutable state
 
 ---
@@ -266,9 +272,8 @@ describe('Game', () => {
 
 ## Common Pitfalls
 
-1. **`old-index.ts` files** — deprecated legacy code, **DO NOT EDIT**
-2. **Rate limiting** — only on REST routes (`rest/middleware/limiter.ts`), never on socket events
-3. **Turn validation** — always call `game.validateTurn(playerId)` before processing any player action
+1. **Rate limiting** — only on REST routes (`rest/middleware/limiter.ts`), never on socket events
+2. **Turn validation** — always call `validateTurn(game, playerId)` before processing any player action
 4. **Socket auth** — always check `socket.playerId` (injected by `authMiddleware`)
 5. **Room broadcasts** — `io.to(gameCode).emit(...)` for game-wide, `io.to(playerId).emit(...)` for private (dice rolls)
 6. **Store is in-memory** — `Store.ts` loses state on restart; do not assume persistence

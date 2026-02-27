@@ -15,7 +15,8 @@ interface LobbyProps {
   maxPlayers?: number;
 }
 
-const Lobby: React.FC<LobbyProps> = ({ players, onStartGame: _onStartGame, maxPlayers = 6 }) => {
+const Lobby: React.FC<LobbyProps> = ({ players, onStartGame, maxPlayers = 6 }) => {
+  void onStartGame; // Currently unused but part of props interface
   const playerSlots = Array.from({ length: maxPlayers }, (_, index) => {
     if (index < players.length) return players[index];
     return null; // null for empty slots
