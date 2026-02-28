@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GameStateSchema } from './domain';
+import { GameStateSchema } from './domain.js';
 
 
 export const CreateGameRequestSchema = z.object({

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DieFaceSchema, GameStateSchema, ChallengeResultSchema, GameSettingsSchema, PlayerIdSchema } from './domain';
+import { DieFaceSchema, GameStateSchema, ChallengeResultSchema, GameSettingsSchema, PlayerIdSchema } from './domain.js';
 
 // =============================================================================
 // Server → Client Payloads (Zod schemas for runtime validation)

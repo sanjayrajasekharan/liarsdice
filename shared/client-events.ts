@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { DieFaceSchema, GameSettingsSchema } from './domain';
-import { ErrorCode } from './errors';
+import { DieFaceSchema, GameSettingsSchema } from './domain.js';
+import { ErrorCode } from './errors.js';
 
 export type ActionResponse =
   | { ok: true }
