@@ -24,9 +24,11 @@ container.bind(RoundTimerService).toSelf().inSingletonScope();
 container.bind(GameController).toSelf().inSingletonScope();
 container.bind(GamesManagerController).toSelf().inSingletonScope();
 
+const corsOrigin = env.CORS_ORIGIN || 'http://localhost:5173';
+
 const app = new InversifyExpressServer(container)
   .setConfig((app) => {
-    app.use(cors());
+    app.use(cors({ origin: corsOrigin, credentials: true }));
     app.use(morgan('dev'));
     app.use(limiter);
     app.use(express.json());
@@ -34,11 +36,11 @@ const app = new InversifyExpressServer(container)
   .build();
 const server = http.createServer(app);
 
-// TODO: maybe make this neater
 buildSocketServer(container, server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: corsOrigin,
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 },
   {

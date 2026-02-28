@@ -41,6 +41,25 @@ cd client && pnpm run storybook
 
 ---
 
+## Deployment (Railway)
+
+The app is deployed to Railway as **two separate services** (monorepo root as source for both):
+
+| Service | Config File | Build | Start |
+|---|---|---|---|
+| `server` | `server/railway.json` | `pnpm --filter shared build && pnpm --filter server build` | `node dist/index.js` |
+| `client` | `client/railway.json` | `pnpm --filter shared build && pnpm --filter client build` | `serve dist -s -l $PORT` |
+
+Both services use **Railpack** builder and watch `/shared/**` in addition to their own workspace.
+
+### Railway Project Setup
+1. Create a Railway project from the monorepo root
+2. Add two services, each pointing to the same repo
+3. Set **Root Directory** for each service: `server/` or `client/` (Railway will pick up the corresponding `railway.json`)
+4. Configure environment variables (JWT_SECRET, CORS origins, etc.) per service
+
+---
+
 ## Test Commands
 
 The server uses **Mocha + Chai + tsx**. All tests live in `server/test/`.
