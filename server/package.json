@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc && tsc-alias",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "dev": "nodemon --watch src --exec tsx src/index.ts",
     "test": "mocha",
     "test:watch": "mocha --watch"
