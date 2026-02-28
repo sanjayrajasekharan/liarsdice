@@ -25,6 +25,10 @@ const CreateGame: React.FC = () => {
     }
   };
 
+  const handleGoBack = () => {
+    navigate('/');
+  }
+
   return (
     <EntryCard title='Create Game'>
       <div className="space-y-4">
@@ -36,12 +40,17 @@ const CreateGame: React.FC = () => {
           className="input-field"
           onKeyDown={(e) => e.key === 'Enter' && handleCreateGame()}
         />
-        <button
-          onClick={handleCreateGame}
-          className="btn-primary w-full"
-        >
-          Create Game
-        </button>
+        <div className='flex gap-2'>
+          <button
+            onClick={handleCreateGame}
+            className="btn-primary w-full"
+          >
+            Create Game
+          </button>
+          <button onClick={handleGoBack} className="btn-ghost w-full">
+            Back
+          </button>
+        </div>
       </div>
     </EntryCard>
   );

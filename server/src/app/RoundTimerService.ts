@@ -1,33 +1,29 @@
 import { injectable } from 'inversify';
-import { GameCode, PlayerId } from 'shared/domain.js';
+import { GameCode } from 'shared/domain.js';
 
-export const DEFAULT_TURN_TIMEOUT_MS = 60_000;
+export type RoundStartCallback = (gameCode: GameCode) => void;
 
-export type TurnTimeoutCallback = (playerId: PlayerId, gameCode: GameCode) => void;
-
-interface ActiveTimer {
-  playerId: PlayerId;
+interface ActiveRoundTimer {
   gameCode: GameCode;
   timer: ReturnType<typeof setTimeout>;
   deadline: Date;
 }
 
 @injectable()
-export default class TurnTimerService {
-  private activeTimers: Map<GameCode, ActiveTimer> = new Map();
+export default class RoundTimerService {
+  private activeTimers: Map<GameCode, ActiveRoundTimer> = new Map();
 
-  startTimer(playerId: PlayerId, gameCode: GameCode, callback: TurnTimeoutCallback, timeoutMs: number = DEFAULT_TURN_TIMEOUT_MS): Date {
+  startTimer(gameCode: GameCode, callback: RoundStartCallback, delayMs: number): Date {
     this.cancelTimer(gameCode);
 
-    const deadline = new Date(Date.now() + timeoutMs);
+    const deadline = new Date(Date.now() + delayMs);
 
     const timer = setTimeout(() => {
       this.activeTimers.delete(gameCode);
-      callback(playerId, gameCode);
-    }, timeoutMs);
+      callback(gameCode);
+    }, delayMs);
 
     this.activeTimers.set(gameCode, {
-      playerId,
       gameCode,
       timer,
       deadline,
@@ -49,11 +45,6 @@ export default class TurnTimerService {
   getDeadline(gameCode: GameCode): Date | null {
     const active = this.activeTimers.get(gameCode);
     return active?.deadline ?? null;
-  }
-
-  getCurrentTurnPlayer(gameCode: GameCode): PlayerId | null {
-    const active = this.activeTimers.get(gameCode);
-    return active?.playerId ?? null;
   }
 
   clearAll(): void {

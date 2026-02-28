@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from "framer-motion";
 import clsx from 'clsx';
 import { DieFace, PlayerDiceCount } from 'shared/domain';
@@ -10,17 +10,24 @@ interface RevealProps {
   claimedFace: DieFace;
   actualTotal: number;
   currentPlayerId: string | null;
+  skipAnimation?: boolean;
   onAnimationComplete?: () => void;
 }
 
-const Reveal: React.FC<RevealProps> = ({ playerCounts, claimedFace, actualTotal, currentPlayerId, onAnimationComplete }) => {
+const Reveal: React.FC<RevealProps> = ({ playerCounts, claimedFace, actualTotal, currentPlayerId, skipAnimation, onAnimationComplete }) => {
+  useEffect(() => {
+    if (skipAnimation && onAnimationComplete) {
+      onAnimationComplete();
+    }
+  }, [skipAnimation, onAnimationComplete]);
+
   return (
     <motion.div
       className="w-full max-w-lg mx-auto rounded-xl overflow-hidden border border-border-light bg-surface-elevated shadow-lg"
       variants={containerVariants}
-      initial="hidden"
+      initial={skipAnimation ? "show" : "hidden"}
       animate="show"
-      onAnimationComplete={onAnimationComplete}
+      onAnimationComplete={skipAnimation ? undefined : onAnimationComplete}
     >
       {playerCounts.map((player, index) => (
         <motion.div

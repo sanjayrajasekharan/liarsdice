@@ -451,4 +451,286 @@ describe('Game', () => {
       expect(thirdPlayer).to.not.equal(secondPlayer);
     });
   });
+
+  describe('reorderPlayers', () => {
+    it('should reorder players when called by host', () => {
+      let currentGame = game;
+      const addResult1 = Game.addPlayer(currentGame, 'Player2');
+      if (addResult1.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult1.value.game;
+      const player2Id = addResult1.value.playerId;
+
+      const addResult2 = Game.addPlayer(currentGame, 'Player3');
+      if (addResult2.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult2.value.game;
+      const player3Id = addResult2.value.playerId;
+
+      const hostId = currentGame.hostId;
+      const newOrder = [player3Id, player2Id, hostId];
+
+      const result = Game.reorderPlayers(currentGame, hostId, newOrder);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.players[0].id).to.equal(player3Id);
+        expect(result.value.players[1].id).to.equal(player2Id);
+        expect(result.value.players[2].id).to.equal(hostId);
+      }
+    });
+
+    it('should reject reorder from non-host', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+      const player2Id = addResult.value.playerId;
+
+      const newOrder = [player2Id, currentGame.hostId];
+      const result = Game.reorderPlayers(currentGame, player2Id, newOrder);
+
+      expect(result.isErr()).to.be.true;
+      if (result.isErr()) {
+        expect(result.error).to.equal(ErrorCode.UNAUTHORIZED);
+      }
+    });
+
+    it('should reject reorder during active game', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+
+      const startResult = Game.startGame(currentGame, currentGame.hostId);
+      if (startResult.isErr()) throw new Error('Failed to start game');
+      currentGame = startResult.value;
+
+      const newOrder = currentGame.players.map(p => p.id).reverse();
+      const result = Game.reorderPlayers(currentGame, currentGame.hostId, newOrder);
+
+      expect(result.isErr()).to.be.true;
+      if (result.isErr()) {
+        expect(result.error).to.equal(ErrorCode.GAME_IN_PROGRESS);
+      }
+    });
+
+    it('should reject reorder with invalid player IDs', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+
+      const newOrder = [currentGame.hostId, 'invalid-id' as PlayerId];
+      const result = Game.reorderPlayers(currentGame, currentGame.hostId, newOrder);
+
+      expect(result.isErr()).to.be.true;
+      if (result.isErr()) {
+        expect(result.error).to.equal(ErrorCode.INVALID_REQUEST);
+      }
+    });
+  });
+
+  describe('resetGame', () => {
+    it('should reset game to PRE_GAME stage with all players', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+
+      const startResult = Game.startGame(currentGame, currentGame.hostId);
+      if (startResult.isErr()) throw new Error('Failed to start game');
+      currentGame = startResult.value;
+
+      const claim: Claim = { playerId: currentGame.players[currentGame.currentTurnIndex].id, quantity: 1, faceValue: 1 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+      currentGame = claimResult.value;
+
+      const challengerId = currentGame.players[currentGame.currentTurnIndex].id;
+      const challengeResult = Game.challenge(currentGame, challengerId);
+      if (challengeResult.isErr()) throw new Error('Failed to challenge');
+      currentGame = challengeResult.value.game;
+
+      if (currentGame.stage !== GameStage.POST_GAME) {
+        currentGame = { ...currentGame, stage: GameStage.POST_GAME };
+      }
+
+      const result = Game.resetGame(currentGame, currentGame.hostId);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.stage).to.equal(GameStage.PRE_GAME);
+        expect(result.value.claims).to.have.lengthOf(0);
+        expect(result.value.challengeResults).to.have.lengthOf(0);
+        expect(result.value.players.every(p => p.remainingDice === currentGame.settings.startingDice)).to.be.true;
+        expect(result.value.players.every(p => p.dice.length === 0)).to.be.true;
+        expect(result.value.turnDeadline).to.be.null;
+      }
+    });
+
+    it('should reject reset from non-host', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = { ...currentGame, stage: GameStage.POST_GAME };
+
+      const result = Game.resetGame(currentGame, player2Id);
+
+      expect(result.isErr()).to.be.true;
+      if (result.isErr()) {
+        expect(result.error).to.equal(ErrorCode.UNAUTHORIZED);
+      }
+    });
+
+    it('should reject reset when not in POST_GAME stage', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+
+      const result = Game.resetGame(currentGame, currentGame.hostId);
+
+      expect(result.isErr()).to.be.true;
+      if (result.isErr()) {
+        expect(result.error).to.equal(ErrorCode.INVALID_GAME_STATE);
+      }
+    });
+
+    it('should preserve game code and host ID', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+
+      currentGame = { ...currentGame, stage: GameStage.POST_GAME };
+
+      const originalGameCode = currentGame.gameCode;
+      const originalHostId = currentGame.hostId;
+
+      const result = Game.resetGame(currentGame, currentGame.hostId);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.gameCode).to.equal(originalGameCode);
+        expect(result.value.hostId).to.equal(originalHostId);
+      }
+    });
+  });
+
+  describe('leaveGame', () => {
+    it('should remove player from game in PRE_GAME stage', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+      const player2Id = addResult.value.playerId;
+
+      const result = Game.leaveGame(currentGame, player2Id);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.game.players).to.have.lengthOf(1);
+        expect(result.value.gameOver).to.be.false;
+        expect(result.value.gameDestroyed).to.be.false;
+      }
+    });
+
+    it('should destroy game when last player leaves', () => {
+      const result = Game.leaveGame(game, game.hostId);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.gameDestroyed).to.be.true;
+      }
+    });
+
+    it('should reassign host when host leaves', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+      const player2Id = addResult.value.playerId;
+
+      const result = Game.leaveGame(currentGame, currentGame.hostId);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.newHostId).to.equal(player2Id);
+        expect(result.value.game.hostId).to.equal(player2Id);
+      }
+    });
+
+    it('should end game when player leaves during active game with 2 players', () => {
+      let currentGame = game;
+      const addResult = Game.addPlayer(currentGame, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      currentGame = addResult.value.game;
+      const player2Id = addResult.value.playerId;
+
+      const startResult = Game.startGame(currentGame, currentGame.hostId);
+      if (startResult.isErr()) throw new Error('Failed to start game');
+      currentGame = startResult.value;
+
+      const result = Game.leaveGame(currentGame, player2Id);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.gameOver).to.be.true;
+        expect(result.value.game.stage).to.equal(GameStage.POST_GAME);
+        expect(result.value.game.players).to.have.lengthOf(1);
+      }
+    });
+
+    it('should not end game when player leaves during active game with 3+ players', () => {
+      let currentGame = game;
+      
+      const add1 = Game.addPlayer(currentGame, 'Player2');
+      if (add1.isErr()) throw new Error('Failed to add player 2');
+      currentGame = add1.value.game;
+      const player2Id = add1.value.playerId;
+
+      const add2 = Game.addPlayer(currentGame, 'Player3');
+      if (add2.isErr()) throw new Error('Failed to add player 3');
+      currentGame = add2.value.game;
+
+      const startResult = Game.startGame(currentGame, currentGame.hostId);
+      if (startResult.isErr()) throw new Error('Failed to start game');
+      currentGame = startResult.value;
+
+      const result = Game.leaveGame(currentGame, player2Id);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.gameOver).to.be.false;
+        expect(result.value.game.stage).to.equal(GameStage.ROUND_ROBIN);
+        expect(result.value.game.players).to.have.lengthOf(2);
+      }
+    });
+
+    it('should adjust turn index when current player leaves', () => {
+      let currentGame = game;
+      
+      const add1 = Game.addPlayer(currentGame, 'Player2');
+      if (add1.isErr()) throw new Error('Failed to add player 2');
+      currentGame = add1.value.game;
+
+      const add2 = Game.addPlayer(currentGame, 'Player3');
+      if (add2.isErr()) throw new Error('Failed to add player 3');
+      currentGame = add2.value.game;
+
+      const startResult = Game.startGame(currentGame, currentGame.hostId);
+      if (startResult.isErr()) throw new Error('Failed to start game');
+      currentGame = startResult.value;
+
+      const currentTurnPlayerId = currentGame.players[currentGame.currentTurnIndex].id;
+      const result = Game.leaveGame(currentGame, currentTurnPlayerId);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.game.currentTurnIndex).to.be.lessThan(result.value.game.players.length);
+      }
+    });
+  });
 });

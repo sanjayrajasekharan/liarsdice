@@ -12,8 +12,8 @@ const App: React.FC = () => {
     <Router>
       <ToastProvider>
         <SessionProvider>
-          <div className="min-h-screen flex justify-center bg-surface-secondary">
-            <div className="w-full max-w-[430px] min-h-screen bg-surface-secondary">
+          <div className="h-dvh flex justify-center bg-surface-secondary">
+            <div className="w-full max-w-[430px] h-dvh bg-surface-secondary">
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/create" element={<CreateGame />} />

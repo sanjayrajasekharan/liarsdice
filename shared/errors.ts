@@ -1,6 +1,7 @@
 export const ErrorCode = {
   INVALID_CLAIM: 'INVALID_CLAIM',
   INVALID_CHALLENGE: 'INVALID_CHALLENGE',
+  INVALID_REQUEST: 'INVALID_REQUEST',
   GAME_NOT_FOUND: 'GAME_NOT_FOUND',
   ROUND_NOT_ACTIVE: 'ROUND_NOT_ACTIVE',
   OUT_OF_TURN: 'OUT_OF_TURN',
@@ -18,6 +19,7 @@ export type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode];
 export const errorMessages: Record<ErrorCode, string> = {
   [ErrorCode.INVALID_CLAIM]: 'Claim must be higher than the previous claim',
   [ErrorCode.INVALID_CHALLENGE]: 'Cannot challenge nonexistent claim',
+  [ErrorCode.INVALID_REQUEST]: 'Invalid request',
   [ErrorCode.GAME_NOT_FOUND]: 'Game not found',
   [ErrorCode.ROUND_NOT_ACTIVE]: 'Round not active',
   [ErrorCode.OUT_OF_TURN]: 'Attempting to make a move out of turn',

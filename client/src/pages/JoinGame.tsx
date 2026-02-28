@@ -59,12 +59,17 @@ const JoinGame: React.FC = () => {
           className="input-field"
           onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
         />
-        <button
-          onClick={handleJoinGame}
-          className="btn-primary w-full"
-        >
-          Join Game
-        </button>
+        <div className='flex gap-2'>
+          <button
+            onClick={handleJoinGame}
+            className="btn-primary w-full"
+          >
+            Create Game
+          </button>
+          <button onClick={() => navigate('/')} className="btn-ghost w-full">
+            Back
+          </button>
+        </div>
       </div>
     </EntryCard>
   );

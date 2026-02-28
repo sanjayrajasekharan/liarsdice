@@ -47,15 +47,16 @@ const ClaimTimeline: React.FC<ClaimTimelineProps> = ({
   const hasPreviousClaims = previousClaims.length > 0;
 
   if (!currentClaim && claimHistory.length === 0) {
-    return
+    return null;
   }
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       {/* Entire card is the trigger when there's history */}
-      <Dialog.Trigger asChild disabled={hasPreviousClaims ? undefined : true}>
+      <Dialog.Trigger asChild>
         <button
           type="button"
+          disabled={!hasPreviousClaims}
           className={clsx(
             "card overflow-x-hidden p-3 sm:p-6 w-full text-left",
             hasPreviousClaims && "cursor-pointer hover:bg-surface-secondary transition-colors duration-200"

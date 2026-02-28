@@ -6,12 +6,10 @@ import {
   selectIsMyTurn,
   selectCanChallenge,
   selectClaimHistory,
-  selectCurrentPlayer,
-  selectMyPlayerInfo,
 } from '../../../services/gameService';
 import { DieFace } from 'shared/domain';
 import DiceRoll from '../../ui/DiceRoll/DiceRoll';
-import PlayersDisplay, { Player } from '../../ui/PlayersDisplay/PlayersDisplay';
+import PlayersDisplay from '../../ui/PlayersDisplay/PlayersDisplay';
 import ClaimInput from '../../ui/ClaimInput/ClaimInput';
 import ClaimTimeline from '../../ui/ClaimTimeline/ClaimTimeline';
 
@@ -26,24 +24,13 @@ const GameRound: React.FC = () => {
   const isRolling = useGameState(state => state.isRolling);
   const setIsRolling = useGameState(state => state.setIsRolling);
   const currentClaim = useGameState(state => state.currentClaim);
-  const players = useGameState(state => state.gameState?.players ?? []);
-  const currentPlayer = useGameState(selectCurrentPlayer);
   const isMyTurn = useGameState(selectIsMyTurn);
   const canChallenge = useGameState(selectCanChallenge);
   const playerId = useGameState(state => state.playerId);
   const claimHistory = useGameState(selectClaimHistory);
-  const myPlayerInfo = useGameState(selectMyPlayerInfo);
-  const [showRound, setShowRound] = useState(false);
+  const [showRound, setShowRound] = useState(() => !useGameState.getState().isRolling);
 
   const [isClaimInputOpen, setIsClaimInputOpen] = useState(false);
-
-  const displayPlayers: Player[] = players.map(player => ({
-    id: player.id,
-    name: player.name,
-    diceCount: player.remainingDice,
-    isCurrentTurn: player.id === currentPlayer?.id,
-    isUser: player.id === playerId,
-  }));
 
   const handleMakeClaim = (quantity: number, faceValue: DieFace) => {
     GameService.makeClaim(quantity, faceValue);
@@ -89,7 +76,7 @@ const GameRound: React.FC = () => {
   if (showRound) {
     return (
       <motion.div
-        className="flex flex-col h-full overflow-hidden p-4"
+        className="flex flex-col h-full overflow-hidden p-4 justify-center"
         variants={pageVariants}
         initial="initial"
         animate="animate"
@@ -103,14 +90,13 @@ const GameRound: React.FC = () => {
             currentPlayerId={playerId}
           />
 
-          <PlayersDisplay
-            players={displayPlayers}
-            claimHistory={claimHistory}
-          />
+          <PlayersDisplay />
 
-          <div className="card flex items-center justify-center py-3 sm:py-6">
-            <DiceRoll dice={myDice} />
-          </div>
+          {myDice.length > 0 &&
+            <div className="card flex items-center justify-center py-3 sm:py-6">
+              <DiceRoll dice={myDice} />
+            </div>
+          }
         </div>
 
         <div className="shrink-0 pt-4 flex items-center justify-center">
@@ -159,7 +145,7 @@ const GameRound: React.FC = () => {
         <ClaimInput
           isOpen={isClaimInputOpen}
           currentDieValue={currentClaim?.faceValue ?? 1}
-          currentCount={currentClaim?.quantity ?? 0}
+          currentCount={currentClaim?.quantity ?? 1}
           onClose={() => setIsClaimInputOpen(false)}
           onSubmit={(faceValue, count) => handleMakeClaim(count, faceValue as DieFace)}
         />

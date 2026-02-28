@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as Game from '@app/GameService.js';
 import { generateGameCode } from '@app/GameService.js';
-import TurnTimerService, { TURN_TIMEOUT_MS } from '@app/TurnTimerService.js';
+import TurnTimerService, { DEFAULT_TURN_TIMEOUT_MS } from '@app/TurnTimerService.js';
 import { ErrorCode } from 'shared/errors.js';
 import { GameStage, GameCode, PlayerId, GameState, Claim, DieFace } from 'shared/domain.js';
 
@@ -219,8 +219,8 @@ describe('TurnTimerService', () => {
       const deadline = timerService.startTimer(playerId, gameCode, () => { });
       const after = Date.now();
 
-      expect(deadline.getTime()).to.be.greaterThanOrEqual(before + TURN_TIMEOUT_MS);
-      expect(deadline.getTime()).to.be.lessThanOrEqual(after + TURN_TIMEOUT_MS);
+      expect(deadline.getTime()).to.be.greaterThanOrEqual(before + DEFAULT_TURN_TIMEOUT_MS);
+      expect(deadline.getTime()).to.be.lessThanOrEqual(after + DEFAULT_TURN_TIMEOUT_MS);
     });
 
     it('should track current turn player', () => {

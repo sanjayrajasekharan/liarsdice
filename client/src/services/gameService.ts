@@ -5,6 +5,7 @@ import {
   ClientToServerEvents,
   ActionResponse,
   ClaimPayload,
+  UpdateSettingsPayload,
 } from "shared/client-events";
 import {
   ServerToClientEvents,
@@ -17,6 +18,9 @@ import {
   ClaimMadePayload,
   ChallengeMadePayload,
   GameStatePayload,
+  SettingsUpdatedPayload,
+  PlayersReorderedPayload,
+  GameResetPayload,
 } from "shared/server-events";
 import {
   CreateGameResponse,
@@ -87,7 +91,10 @@ interface GameStore {
   claimHistory: ClaimHistoryItem[];
   challengeResult: ChallengeResult | null;
   turnDeadline: Date | null;
+  nextRoundStartsAt: Date | null;
+  forfeitedPlayerId: string | null;
   isRolling: boolean;
+  isPostRoundReconnect: boolean;
   error: string | null;
 
   setGameCode: (newGameCode: string) => void;
@@ -111,8 +118,11 @@ const initialState = {
   claimHistory: [],
   challengeResult: null,
   turnDeadline: null,
+  nextRoundStartsAt: null,
+  forfeitedPlayerId: null,
   isRolling: false,
-  error: null,
+  isPostRoundReconnect: false,
+  error: null
 };
 
 const findPlayer = (players: Player[], playerId: string): Player | undefined =>
@@ -182,7 +192,7 @@ const useGameState = create<GameStore>((set, get) => ({
                 {
                   id: data.playerId as PlayerId,
                   name: data.playerName,
-                  remainingDice: 5,
+                  remainingDice: data.remainingDice,
                   dice: [],
                 }
               ]
@@ -209,14 +219,19 @@ const useGameState = create<GameStore>((set, get) => ({
       case 'PLAYER_FORFEIT': {
         const data = payload as PlayerForfeitPayload;
         if (currentState) {
+          const forfeitedPlayer = findPlayer(currentState.players, data.playerId);
+          const playerName = forfeitedPlayer?.name ?? 'Someone';
+          toast.warning(`${playerName} ran out of time!`);
+
           let updatedPlayers = currentState.players.map(p =>
             p.id === data.playerId
               ? { ...p, remainingDice: p.remainingDice - 1 }
               : p
           );
 
+          let newEliminatedPlayers = currentState.eliminatedPlayers;
           if (data.loserOut) {
-            updatedPlayers = updatedPlayers.filter(p => p.id !== data.playerId);
+            newEliminatedPlayers = [...newEliminatedPlayers, data.playerId]
           }
 
           set({
@@ -224,7 +239,12 @@ const useGameState = create<GameStore>((set, get) => ({
               ...currentState,
               players: updatedPlayers,
               stage: data.gameOver ? 'POST_GAME' : 'POST_ROUND',
+              eliminatedPlayers: newEliminatedPlayers
             },
+            turnDeadline: null,
+            nextRoundStartsAt: data.nextRoundStartsAt ? new Date(data.nextRoundStartsAt) : null,
+            forfeitedPlayerId: data.playerId,
+            challengeResult: null,
           });
         }
         break;
@@ -263,7 +283,10 @@ const useGameState = create<GameStore>((set, get) => ({
             myDice: [],
             challengeResult: null,
             turnDeadline: new Date(data.turnDeadline),
+            nextRoundStartsAt: null,
+            forfeitedPlayerId: null,
             isRolling: true,
+            isPostRoundReconnect: false,
           });
 
           // set a timeout to end the rolling state after a short delay (e.g., 2 seconds)
@@ -289,6 +312,12 @@ const useGameState = create<GameStore>((set, get) => ({
           const currentHistory = get().claimHistory;
           const newClaimNumber = currentHistory.length + 1;
           const nextPlayerIndex = currentState.players.findIndex(p => p.id === data.nextPlayerId);
+          const myPlayerId = get().playerId;
+          const isMyTurn = data.nextPlayerId === myPlayerId;
+
+          if (isMyTurn) {
+            toast.info("It's your turn!");
+          }
 
           set({
             gameState: {
@@ -320,20 +349,38 @@ const useGameState = create<GameStore>((set, get) => ({
       case 'CHALLENGE_MADE': {
         const data = payload as ChallengeMadePayload;
         if (currentState) {
-          const updatedPlayers = currentState.players.map(p =>
-            p.id === data.loserId
-              ? { ...p, remainingDice: p.remainingDice - 1 }
-              : p
-          );
+          const isReconnect = currentState.stage === 'POST_ROUND';
+          const updatedPlayers = isReconnect
+            ? currentState.players
+            : currentState.players.map(p =>
+              p.id === data.loserId
+                ? { ...p, remainingDice: p.remainingDice - 1 }
+                : p
+            );
+
+          if (!isReconnect) {
+            const challenger = findPlayer(currentState.players, data.challengerId);
+            const challengerName = challenger?.name ?? 'Someone';
+            toast.info(`${challengerName} challenges!`);
+          }
+
+          let newEliminatedPlayers = currentState.eliminatedPlayers;
+          if (data.loserOut) {
+            newEliminatedPlayers = [...newEliminatedPlayers, data.loserId]
+          }
 
           set({
             gameState: {
               ...currentState,
               players: updatedPlayers,
-              stage: data.gameOver ? 'POST_GAME' : 'POST_ROUND'
+              stage: data.gameOver ? 'POST_GAME' : 'POST_ROUND',
+              eliminatedPlayers: newEliminatedPlayers
             },
             challengeResult: data,
             turnDeadline: null,
+            nextRoundStartsAt: data.nextRoundStartsAt ? new Date(data.nextRoundStartsAt) : null,
+            forfeitedPlayerId: null,
+            isPostRoundReconnect: isReconnect,
           });
         }
         break;
@@ -348,6 +395,58 @@ const useGameState = create<GameStore>((set, get) => ({
             }
           });
         }
+        break;
+      }
+
+      case 'SETTINGS_UPDATED': {
+        const data = payload as SettingsUpdatedPayload;
+        if (currentState) {
+          const updatedPlayers = currentState.players.map(p => ({
+            ...p,
+            remainingDice: data.startingDice,
+          }));
+          set({
+            gameState: {
+              ...currentState,
+              settings: data,
+              players: updatedPlayers,
+            }
+          });
+        }
+        break;
+      }
+
+      case 'PLAYERS_REORDERED': {
+        const data = payload as PlayersReorderedPayload;
+        if (currentState) {
+          const playerMap = new Map(currentState.players.map(p => [p.id, p]));
+          const reorderedPlayers = data.playerIds
+            .map(id => playerMap.get(id as PlayerId))
+            .filter((p): p is Player => p !== undefined);
+          set({
+            gameState: {
+              ...currentState,
+              players: reorderedPlayers,
+            }
+          });
+        }
+        break;
+      }
+
+      case 'GAME_RESET': {
+        const data = payload as GameResetPayload;
+        set({
+          gameState: data,
+          myDice: [],
+          currentClaim: null,
+          claimHistory: [],
+          challengeResult: null,
+          turnDeadline: null,
+          nextRoundStartsAt: null,
+          forfeitedPlayerId: null,
+          isRolling: false,
+          isPostRoundReconnect: false,
+        });
         break;
       }
     }
@@ -386,11 +485,20 @@ export const selectClaimHistory = (state: GameStore): ClaimHistoryItem[] =>
 export const selectChallengeResult = (state: GameStore): ChallengeResult | null =>
   state.challengeResult;
 
+export const selectIsPostRoundReconnect = (state: GameStore): boolean =>
+  state.isPostRoundReconnect;
+
 export const selectPlayerClaimHistory = (playerId: string) => (state: GameStore): ClaimHistoryItem[] =>
   state.claimHistory.filter(claim => claim.playerId === playerId);
 
 export const selectTurnDeadline = (state: GameStore): Date | null =>
   state.turnDeadline;
+
+export const selectNextRoundStartsAt = (state: GameStore): Date | null =>
+  state.nextRoundStartsAt;
+
+export const selectForfeitedPlayerId = (state: GameStore): string | null =>
+  state.forfeitedPlayerId;
 
 // API client
 const createApiClient = (baseUrl: string) => ({
@@ -595,6 +703,72 @@ class GameService {
       this.handleActionResponse(response);
     } catch {
       toast.error("Request timed out");
+    }
+  }
+
+  static async updateSettings(settings: UpdateSettingsPayload): Promise<void> {
+    const socket = useGameState.getState().socket;
+    if (!socket?.connected) {
+      toast.error("Not connected to server");
+      return;
+    }
+
+    try {
+      const response = await socket.timeout(ACK_TIMEOUT).emitWithAck('UPDATE_SETTINGS', settings);
+      this.handleActionResponse(response);
+    } catch {
+      toast.error("Request timed out");
+    }
+  }
+
+  static async reorderPlayers(playerIds: string[]): Promise<void> {
+    const socket = useGameState.getState().socket;
+    if (!socket?.connected) {
+      toast.error("Not connected to server");
+      return;
+    }
+
+    try {
+      const response = await socket.timeout(ACK_TIMEOUT).emitWithAck('REORDER_PLAYERS', { playerIds });
+      this.handleActionResponse(response);
+    } catch {
+      toast.error("Request timed out");
+    }
+  }
+
+  static async resetGame(): Promise<void> {
+    const socket = useGameState.getState().socket;
+    if (!socket?.connected) {
+      toast.error("Not connected to server");
+      return;
+    }
+
+    try {
+      const response = await socket.timeout(ACK_TIMEOUT).emitWithAck('RESET_GAME');
+      this.handleActionResponse(response);
+    } catch {
+      toast.error("Request timed out");
+    }
+  }
+
+  static async leaveGame(): Promise<boolean> {
+    const socket = useGameState.getState().socket;
+    if (!socket?.connected) {
+      toast.error("Not connected to server");
+      return true;
+    }
+
+    try {
+      const response = await socket.timeout(ACK_TIMEOUT).emitWithAck('LEAVE_GAME');
+      if (response.ok) {
+        this.clearSession();
+        return true;
+      }
+      this.handleActionResponse(response);
+      return false;
+    } catch {
+      toast.error("Request timed out");
+      return false;
     }
   }
 

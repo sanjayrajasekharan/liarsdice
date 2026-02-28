@@ -14,6 +14,8 @@ import GameLobby from '../../components/game/GameLobby/GameLobby';
 import GameRound from '../../components/game/GameRound/GameRound';
 import GamePostRound from '../../components/game/GamePostRound/GamePostRound';
 import GameOver from '../../components/game/GameOver/GameOver';
+import LeaveGameButton from '../../components/ui/LeaveGameButton/LeaveGameButton';
+import { diceSvgs } from '../../assets/dice';
 
 const Game: React.FC = () => {
   const { gameCode: urlGameCode } = useParams<{ gameCode: string }>();
@@ -64,7 +66,7 @@ const Game: React.FC = () => {
   // Render loading state
   if (isValidating || !gameState) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="h-dvh flex items-center justify-center p-4">
         <div className="card text-center">
           {error ? (
             <div>
@@ -97,7 +99,7 @@ const Game: React.FC = () => {
         return <GameRound key="round" />;
 
       case GameStage.POST_ROUND:
-        return <GamePostRound key="post-round" isHost={isHost} />;
+        return <GamePostRound key="post-round" />;
 
       case GameStage.POST_GAME:
         return <GameOver key="game-over" />;
@@ -109,17 +111,25 @@ const Game: React.FC = () => {
 
   // replace connected / not connected with a better UI element
   return (
-    <div className="h-screen flex flex-col bg-surface-primary overflow-x-hidden">
+    <div className="h-dvh flex flex-col bg-surface-primary overflow-x-hidden">
       <header className="shrink-0 flex items-center justify-between px-4 py-3 bg-surface-elevated border-b border-border-light">
-        <span className="text-sm font-medium text-text-secondary">
+        <span className="text-sm flex items-center gap-4 font-medium text-text-secondary">
+          <img
+            src={diceSvgs[5]}
+            alt={`Liar's Dice Logo`}
+            className="w-5 h-5 inline-block shrink-0"
+          />
           <span className="font-mono text-text-primary">{gameCode}</span>
         </span>
-        <span className="text-sm flex items-center gap-1.5">
-          <svg width="8" height="8" viewBox="0 0 8 8" className="shrink-0">
-            <circle cx="4" cy="4" r="4" fill={isConnected ? '#22c55e' : '#ef4444'} />
-          </svg>
-          {isConnected ? 'Connected' : 'Disconnected'}
-        </span>
+        <div className="flex items-center gap-3">
+          <LeaveGameButton />
+          <span className="text-sm flex items-center gap-1.5">
+            <svg width="8" height="8" viewBox="0 0 8 8" className="shrink-0">
+              <circle cx="4" cy="4" r="4" fill={isConnected ? '#22c55e' : '#ef4444'} />
+            </svg>
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </span>
+        </div>
       </header>
 
       {error && (

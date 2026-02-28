@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import clsx from "clsx";
 import { diceSvgs } from "../../../assets/dice";
 import * as Dialog from "@radix-ui/react-dialog";
 
@@ -51,7 +52,10 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
           <Dialog.Portal forceMount>
             <Dialog.Overlay asChild>
               <motion.div
-                className="fixed inset-0 bg-surface-overlay"
+                className={clsx(
+                  "fixed inset-0 bg-surface-overlay",
+                  !isOpen && "pointer-events-none"
+                )}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

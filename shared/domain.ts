@@ -44,19 +44,18 @@ export const ClaimSchema = z.object({
 });
 export type Claim = z.infer<typeof ClaimSchema>;
 
-export const GameStateSchema = z.object({
-  gameCode: GameCodeSchema,
-  hostId: PlayerIdSchema,
-  players: z.array(PlayerSchema),
-  claims: z.array(ClaimSchema).default([]),
-  currentTurnIndex: z.number().default(0),
-  stage: GameStageSchema,
-  turnDeadline: z.date().nullable(),
-  createdAt: z.date(),
-  lastActivityAt: z.date(),
+export const GameSettingsSchema = z.object({
+  startingDice: z.number().min(1).max(10).default(6),
+  turnTimeoutSeconds: z.number().min(10).max(300).default(60),
+  postRoundDelaySeconds: z.number().min(10).max(60).default(20),
 });
+export type GameSettings = z.infer<typeof GameSettingsSchema>;
 
-export type GameState = z.infer<typeof GameStateSchema>;
+export const DEFAULT_GAME_SETTINGS: GameSettings = {
+  startingDice: 6,
+  turnTimeoutSeconds: 60,
+  postRoundDelaySeconds: 20,
+};
 
 export const PlayerDiceCountSchema = z.object({
   playerId: PlayerIdSchema,
@@ -77,8 +76,23 @@ export const ChallengeResultSchema = z.object({
   loserOut: z.boolean(),
   gameOver: z.boolean(),
 });
-
 export type ChallengeResult = z.infer<typeof ChallengeResultSchema>;
+
+export const GameStateSchema = z.object({
+  gameCode: GameCodeSchema,
+  hostId: PlayerIdSchema,
+  players: z.array(PlayerSchema).default([]),
+  eliminatedPlayers: z.array(PlayerIdSchema).default([]),
+  claims: z.array(ClaimSchema).default([]),
+  challengeResults: z.array(ChallengeResultSchema).default([]),
+  currentTurnIndex: z.number().default(0),
+  stage: GameStageSchema,
+  settings: GameSettingsSchema,
+  turnDeadline: z.date().nullable(),
+  createdAt: z.date(),
+  lastActivityAt: z.date(),
+});
+export type GameState = z.infer<typeof GameStateSchema>;
 
 export const DiceArraySchema = z.array(DieFaceSchema);
 export type DiceArray = z.infer<typeof DiceArraySchema>;

@@ -9,7 +9,7 @@ const variantStyles: Record<ToastVariant, { bg: string; border: string; icon: st
   info: {
     bg: "bg-surface-elevated",
     border: "border-primary-500/30",
-    icon: "ℹ️",
+    icon: "🛈",
   },
   success: {
     bg: "bg-surface-elevated",

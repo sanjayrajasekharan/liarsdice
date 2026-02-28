@@ -8,6 +8,8 @@ import {
   PlayerId,
   GameStage,
   GameState,
+  GameSettings,
+  DEFAULT_GAME_SETTINGS,
   Claim,
   Player,
 } from 'shared/domain.js';
@@ -17,7 +19,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { generate } from 'random-words';
 
 const MAX_PLAYERS = 6;
-const STARTING_DICE = 5;
 
 export function generateGameCode(): GameCode {
   return generate({
@@ -33,8 +34,8 @@ export function generatePlayerId(): PlayerId {
   return uuidv4() as PlayerId;
 }
 
-export function createPlayer(id: PlayerId, name: string): Player {
-  return { id, name, remainingDice: STARTING_DICE, dice: [] };
+export function createPlayer(id: PlayerId, name: string, startingDice: number): Player {
+  return { id, name, remainingDice: startingDice, dice: [] };
 }
 
 function rollDie(): DieFace {
@@ -78,14 +79,17 @@ export function getInactivityMs(game: GameState): number {
 
 export function createGame(gameCode: GameCode, hostName: string): GameState {
   const hostId = generatePlayerId();
-  const hostPlayer = createPlayer(hostId, hostName);
+  const hostPlayer = createPlayer(hostId, hostName, DEFAULT_GAME_SETTINGS.startingDice);
   return {
     gameCode,
     hostId,
     players: [hostPlayer],
+    eliminatedPlayers: [],
     claims: [],
+    challengeResults: [],
     currentTurnIndex: 0,
     stage: GameStage.PRE_GAME,
+    settings: { ...DEFAULT_GAME_SETTINGS },
     turnDeadline: null,
     createdAt: new Date(),
     lastActivityAt: new Date(),
@@ -101,7 +105,7 @@ export function addPlayer(game: GameState, playerName: string): Result<{ game: G
   }
 
   const playerId = generatePlayerId();
-  const player = createPlayer(playerId, playerName);
+  const player = createPlayer(playerId, playerName, game.settings.startingDice);
   return ok({
     game: {
       ...game,
@@ -109,6 +113,56 @@ export function addPlayer(game: GameState, playerName: string): Result<{ game: G
       lastActivityAt: new Date(),
     },
     playerId,
+  });
+}
+
+export function updateSettings(game: GameState, playerId: PlayerId, settings: Partial<GameSettings>): Result<GameState, ErrorCode> {
+  if (playerId !== game.hostId) {
+    return err(ErrorCode.UNAUTHORIZED);
+  }
+  if (game.stage !== GameStage.PRE_GAME) {
+    return err(ErrorCode.GAME_IN_PROGRESS);
+  }
+
+  const newSettings = { ...game.settings, ...settings };
+  const updatedPlayers = game.players.map(p => ({
+    ...p,
+    remainingDice: newSettings.startingDice,
+  }));
+
+  return ok({
+    ...game,
+    settings: newSettings,
+    players: updatedPlayers,
+    lastActivityAt: new Date(),
+  });
+}
+
+export function reorderPlayers(game: GameState, playerId: PlayerId, newOrder: PlayerId[]): Result<GameState, ErrorCode> {
+  if (playerId !== game.hostId) {
+    return err(ErrorCode.UNAUTHORIZED);
+  }
+  if (game.stage !== GameStage.PRE_GAME) {
+    return err(ErrorCode.GAME_IN_PROGRESS);
+  }
+
+  if (newOrder.length !== game.players.length) {
+    return err(ErrorCode.INVALID_REQUEST);
+  }
+
+  const currentIds = new Set(game.players.map(p => p.id));
+  const newIds = new Set(newOrder);
+  if (newIds.size !== newOrder.length || !newOrder.every(id => currentIds.has(id))) {
+    return err(ErrorCode.INVALID_REQUEST);
+  }
+
+  const playerMap = new Map(game.players.map(p => [p.id, p]));
+  const reorderedPlayers = newOrder.map(id => playerMap.get(id)!);
+
+  return ok({
+    ...game,
+    players: reorderedPlayers,
+    lastActivityAt: new Date(),
   });
 }
 
@@ -145,6 +199,66 @@ export function removePlayer(game: GameState, playerId: PlayerId): Result<{ game
   });
 }
 
+export interface LeaveGameResult {
+  game: GameState;
+  newHostId: PlayerId | null;
+  gameOver: boolean;
+  gameDestroyed: boolean;
+}
+
+export function leaveGame(game: GameState, playerId: PlayerId): Result<LeaveGameResult, ErrorCode> {
+  const index = game.players.findIndex(p => p.id === playerId);
+  if (index < 0) {
+    return err(ErrorCode.PLAYER_NOT_FOUND);
+  }
+
+  const newPlayers = game.players.filter(p => p.id !== playerId);
+
+  if (newPlayers.length === 0) {
+    return ok({
+      game: { ...game, players: [] },
+      newHostId: null,
+      gameOver: false,
+      gameDestroyed: true,
+    });
+  }
+
+  let newTurnIndex = game.currentTurnIndex;
+  if (index < game.currentTurnIndex) {
+    newTurnIndex = game.currentTurnIndex - 1;
+  } else if (index === game.currentTurnIndex) {
+    newTurnIndex = game.currentTurnIndex % newPlayers.length;
+  }
+  if (newTurnIndex >= newPlayers.length) {
+    newTurnIndex = 0;
+  }
+
+  let newHostId: PlayerId | null = null;
+  let hostId = game.hostId;
+  if (playerId === game.hostId) {
+    hostId = newPlayers[0].id;
+    newHostId = hostId;
+  }
+
+  const isActiveGame = game.stage === GameStage.ROUND_ROBIN || game.stage === GameStage.POST_ROUND;
+  const gameOver = isActiveGame && newPlayers.length === 1;
+  const newStage = gameOver ? GameStage.POST_GAME : game.stage;
+
+  return ok({
+    game: {
+      ...game,
+      players: newPlayers,
+      currentTurnIndex: newTurnIndex,
+      hostId,
+      stage: newStage,
+      lastActivityAt: new Date(),
+    },
+    newHostId,
+    gameOver,
+    gameDestroyed: false,
+  });
+}
+
 export function forfeitRound(game: GameState, playerId: PlayerId): Result<{ game: GameState; loserOut: boolean; gameOver: boolean }, ErrorCode> {
   const playerIndex = game.players.findIndex(p => p.id === playerId);
   if (playerIndex < 0) {
@@ -158,8 +272,9 @@ export function forfeitRound(game: GameState, playerId: PlayerId): Result<{ game
   const loser = newPlayers.find(p => p.id === playerId);
   const loserOut = loser?.remainingDice === 0;
 
+  let losers = game.eliminatedPlayers;
   if (loserOut) {
-    newPlayers = newPlayers.filter(p => p.id !== playerId);
+    losers = losers.concat(playerId);
   }
 
   let newTurnIndex = game.currentTurnIndex;
@@ -177,6 +292,7 @@ export function forfeitRound(game: GameState, playerId: PlayerId): Result<{ game
       currentTurnIndex: newTurnIndex,
       stage: newStage,
       lastActivityAt: new Date(),
+      losers
     },
     loserOut,
     gameOver,
@@ -218,8 +334,8 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
   if (turnValidation.isErr()) {
     return err(turnValidation.error);
   }
-
   if (game.claims.length === 0) {
+
     return err(ErrorCode.INVALID_CHALLENGE);
   }
 
@@ -247,10 +363,10 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
   const loser = newPlayers.find(p => p.id === loserId);
   const loserOut = loser?.remainingDice === 0;
 
+  let losers = game.eliminatedPlayers;
   if (loserOut) {
-    newPlayers = newPlayers.filter(p => p.id !== loserId);
+    losers = losers.concat(loser.id)
   }
-
   const winnerIndex = newPlayers.findIndex(p => p.id === winnerId);
   const newTurnIndex = winnerIndex >= 0 ? winnerIndex : 0;
 
@@ -274,6 +390,7 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
     game: {
       ...game,
       players: newPlayers,
+      challengeResults: [...game.challengeResults, challengeResult],
       currentTurnIndex: newTurnIndex,
       stage: newStage,
       lastActivityAt: new Date(),
@@ -320,6 +437,32 @@ export function startRound(game: GameState, _initiatorId: PlayerId): Result<Game
   });
 }
 
+export function resetGame(game: GameState, playerId: PlayerId): Result<GameState, ErrorCode> {
+  if (playerId !== game.hostId) {
+    return err(ErrorCode.UNAUTHORIZED);
+  }
+  if (game.stage !== GameStage.POST_GAME) {
+    return err(ErrorCode.INVALID_GAME_STATE);
+  }
+
+  const resetPlayers = game.players.map(p => ({
+    ...p,
+    remainingDice: game.settings.startingDice,
+    dice: [],
+  }));
+
+  return ok({
+    ...game,
+    players: resetPlayers,
+    claims: [],
+    challengeResults: [],
+    currentTurnIndex: 0,
+    stage: GameStage.PRE_GAME,
+    turnDeadline: null,
+    lastActivityAt: new Date(),
+  });
+}
+
 @injectable()
 export default class GameService {
   constructor(@inject(Store) private store: Store) { }
@@ -350,6 +493,64 @@ export default class GameService {
     const result = removePlayer(gameResult.value, playerId);
     if (result.isOk()) {
       this.store.setGame(result.value.game);
+    }
+    return result;
+  }
+
+  leaveGame(gameCode: GameCode, playerId: PlayerId): Result<LeaveGameResult, ErrorCode> {
+    const gameResult = this.store.getGame(gameCode);
+    if (gameResult.isErr()) {
+      return err(gameResult.error);
+    }
+
+    const result = leaveGame(gameResult.value, playerId);
+    if (result.isOk()) {
+      if (result.value.gameDestroyed) {
+        this.store.removeGame(gameCode);
+      } else {
+        this.store.setGame(result.value.game);
+      }
+    }
+    return result;
+  }
+
+  updateSettings(gameCode: GameCode, playerId: PlayerId, settings: Partial<GameSettings>): Result<GameSettings, ErrorCode> {
+    const gameResult = this.store.getGame(gameCode);
+    if (gameResult.isErr()) {
+      return err(gameResult.error);
+    }
+
+    const result = updateSettings(gameResult.value, playerId, settings);
+    if (result.isOk()) {
+      this.store.setGame(result.value);
+      return ok(result.value.settings);
+    }
+    return err(result.error);
+  }
+
+  reorderPlayers(gameCode: GameCode, playerId: PlayerId, newOrder: PlayerId[]): Result<PlayerId[], ErrorCode> {
+    const gameResult = this.store.getGame(gameCode);
+    if (gameResult.isErr()) {
+      return err(gameResult.error);
+    }
+
+    const result = reorderPlayers(gameResult.value, playerId, newOrder);
+    if (result.isOk()) {
+      this.store.setGame(result.value);
+      return ok(result.value.players.map(p => p.id));
+    }
+    return err(result.error);
+  }
+
+  resetGame(gameCode: GameCode, playerId: PlayerId): Result<GameState, ErrorCode> {
+    const gameResult = this.store.getGame(gameCode);
+    if (gameResult.isErr()) {
+      return err(gameResult.error);
+    }
+
+    const result = resetGame(gameResult.value, playerId);
+    if (result.isOk()) {
+      this.store.setGame(result.value);
     }
     return result;
   }
@@ -419,6 +620,34 @@ export default class GameService {
     ) as Record<PlayerId, DieFace[]>;
 
     return ok({ startingPlayerId, dice });
+  }
+
+  startRoundAuto(gameCode: GameCode): Result<{ startingPlayerId: PlayerId; dice: Record<PlayerId, DieFace[]> }, ErrorCode> {
+    const gameResult = this.store.getGame(gameCode);
+    if (gameResult.isErr()) {
+      return err(gameResult.error);
+    }
+
+    const game = gameResult.value;
+    const hostId = game.hostId;
+
+    const result = startRound(game, hostId);
+    if (result.isErr()) {
+      return err(result.error);
+    }
+
+    this.store.setGame(result.value);
+
+    const startingPlayerId = result.value.players[result.value.currentTurnIndex].id;
+    const dice = Object.fromEntries(
+      result.value.players.map(p => [p.id, p.dice])
+    ) as Record<PlayerId, DieFace[]>;
+
+    return ok({ startingPlayerId, dice });
+  }
+
+  getGameByCode(gameCode: GameCode): Result<GameState, ErrorCode> {
+    return this.store.getGame(gameCode);
   }
 
   startGame(gameCode: GameCode, initiator: PlayerId): Result<{ startingPlayerId: PlayerId; dice: Record<PlayerId, DieFace[]> }, ErrorCode> {
@@ -491,6 +720,19 @@ export default class GameService {
       return err(ErrorCode.PLAYER_NOT_FOUND);
     }
     return ok(sanitizeGameStateForPlayer(game, playerId));
+  }
+
+  getPlayerRemainingDice(playerId: PlayerId, gameCode: GameCode): Result<number, ErrorCode> {
+    const gameResult = this.store.getGame(gameCode);
+    if (gameResult.isErr()) {
+      return err(gameResult.error);
+    }
+
+    const player = gameResult.value.players.find(p => p.id === playerId);
+    if (!player) {
+      return err(ErrorCode.PLAYER_NOT_FOUND);
+    }
+    return ok(player.remainingDice);
   }
 
   getPlayerDice(playerId: PlayerId, gameCode: GameCode): Result<DieFace[], ErrorCode> {
