@@ -275,6 +275,7 @@ export function forfeitRound(game: GameState, playerId: PlayerId): Result<{ game
   let losers = game.eliminatedPlayers;
   if (loserOut) {
     losers = losers.concat(playerId);
+    newPlayers = newPlayers.filter(p => p.id !== playerId);
   }
 
   let newTurnIndex = game.currentTurnIndex;
