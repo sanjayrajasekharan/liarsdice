@@ -1,6 +1,6 @@
 import { ClaimPayloadSchema, ActionResponse, ClientToServerEvents, UpdateSettingsPayloadSchema, ReorderPlayersPayloadSchema } from "shared/client-events.js";
 import { ServerToClientEvents, PlayerJoinedPayload, PlayerLeftPayload, ClaimMadePayload, ChallengeMadePayload, GameStartedPayload, RoundStartedPayload, DiceRolledPayload, PlayerForfeitPayload, GameEndedPayload, SettingsUpdatedPayload, PlayersReorderedPayload, GameResetPayload } from "shared/server-events.js";
-import { onConnect, socketController, event, onDisconnect } from "@sockets/socket-utils/main";
+import { onConnect, socketController, event, onDisconnect } from "@sockets/socket-utils/main.js";
 import { Socket as BaseSocket, Server as BaseServer } from "socket.io";
 import { inject } from "inversify";
 import GameService from "@app/GameService.js";
