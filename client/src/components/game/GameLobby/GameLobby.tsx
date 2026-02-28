@@ -40,7 +40,7 @@ const GameLobby: React.FC<GameLobbyProps> = ({ isHost }) => {
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/join?code=${gameCode}`;
+    const shareUrl = `${window.location.origin}/game/${gameCode}`;
     const shareData = {
       title: "Join my Liar's Dice game!",
       text: `Use code ${gameCode} to join`,
