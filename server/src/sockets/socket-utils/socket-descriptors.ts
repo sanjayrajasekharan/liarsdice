@@ -1,4 +1,4 @@
-import { SOCKET_METADATA, SocketControllerMeta, SocketMiddleware, SocketEventMeta } from './socket-metadata';
+import { SOCKET_METADATA, SocketControllerMeta, SocketMiddleware, SocketEventMeta } from './socket-metadata.js';
 
 
 type Constructor<T = any> = new (...args: any[]) => T;

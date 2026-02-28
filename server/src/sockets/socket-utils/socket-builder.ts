@@ -1,8 +1,8 @@
 import { Server, ServerOptions, Socket } from 'socket.io';
 import { createServer, Server as HttpServer } from 'http';
 import { Container } from 'inversify';
-import { SOCKET_METADATA, SocketControllerMeta } from './socket-metadata';
-import { getAllSocketControllerConstructors, getControllerEvents } from './socket-discovery';
+import { SOCKET_METADATA, SocketControllerMeta } from './socket-metadata.js';
+import { getAllSocketControllerConstructors, getControllerEvents } from './socket-discovery.js';
 
 interface BuildOptions {
   log?: (msg: string) => void;
@@ -16,7 +16,7 @@ export function buildSocketServer(
   buildOptions: BuildOptions = {}
 ): Server {
   const {
-    log = () => {},
+    log = () => { },
     verbose = false
   } = buildOptions;
 
@@ -25,10 +25,10 @@ export function buildSocketServer(
 
   if (verbose) {
     const originalTo = io.to.bind(io);
-    io.to = function(room: string | string[]) {
+    io.to = function (room: string | string[]) {
       const namespace = originalTo(room);
       const originalEmit = namespace.emit.bind(namespace);
-      namespace.emit = function(eventName: string, ...args: any[]) {
+      namespace.emit = function (eventName: string, ...args: any[]) {
         log(`[OUTGOING BROADCAST] Room: ${room} | Event: ${eventName} | Data: ${JSON.stringify(args, null, 2)}`);
         return originalEmit(eventName, ...args);
       };
@@ -58,13 +58,13 @@ export function buildSocketServer(
       });
 
       const originalEmit = socket.emit.bind(socket);
-      socket.emit = function(eventName: string, ...args: any[]) {
+      socket.emit = function (eventName: string, ...args: any[]) {
         log(`[OUTGOING] Socket: ${socket.id} | Event: ${eventName} | Data: ${JSON.stringify(args, null, 2)}`);
         return originalEmit(eventName, ...args);
-    };
-  }
+      };
+    }
 
-    controllerInfos.forEach(({ctor, meta, events}) => {      
+    controllerInfos.forEach(({ ctor, meta, events }) => {
       const instance = container.get(ctor);
       const controllerMiddleware = meta?.middleware || [];
       runMiddlewareChain(socket, controllerMiddleware, err => {

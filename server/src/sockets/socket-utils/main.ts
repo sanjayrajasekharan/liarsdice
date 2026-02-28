@@ -1,2 +1,2 @@
-export * from './socket-descriptors';
-export * from './socket-builder';
+export * from './socket-descriptors.js';
+export * from './socket-builder.js';

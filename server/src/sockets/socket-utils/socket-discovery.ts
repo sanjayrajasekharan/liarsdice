@@ -1,5 +1,5 @@
 import { Container } from 'inversify';
-import { SOCKET_METADATA, SocketEventMeta } from './socket-metadata';
+import { SOCKET_METADATA, SocketEventMeta } from './socket-metadata.js';
 
 export function getAllSocketControllerConstructors(container: Container): any[] {
   const globalList: any[] = Reflect.getMetadata(SOCKET_METADATA.controllerList, Reflect) || [];
