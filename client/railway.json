@@ -12,7 +12,7 @@
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "startCommand": "npx serve /app/client/dist -s -l $PORT",
+    "startCommand": "pnpm --fitler client start",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

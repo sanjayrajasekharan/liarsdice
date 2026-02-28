@@ -2,7 +2,7 @@
   "name": "shared",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,6 +13,10 @@
     "typescript": "^5.6.3"
   },
   "type": "module",
+  "exports": {
+    "./*.js": "./*.ts",
+    "./*": "./*.ts"
+  },
   "dependencies": {
     "neverthrow": "^8.2.0",
     "zod": "^4.1.12"

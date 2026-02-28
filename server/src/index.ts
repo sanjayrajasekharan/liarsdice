@@ -2,19 +2,19 @@ import http from 'http';
 import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
-import limiter from '@rest/middleware/limiter';
+import limiter from '@rest/middleware/limiter.js';
 
 import { Container } from 'inversify';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { env } from 'process';
-import Store from '@store/Store';
-import InMemoryStore from '@store/InMemoryStore';
-import GameService from '@app/GameService';
-import TurnTimerService from '@app/TurnTimerService';
-import RoundTimerService from '@app/RoundTimerService';
-import { buildSocketServer } from '@sockets/socket-utils/socket-builder';
-import { GameController } from '@sockets/GameController';
-import GamesManagerController from '@rest/GamesMangerController';
+import Store from '@store/Store.js';
+import InMemoryStore from '@store/InMemoryStore.js';
+import GameService from '@app/GameService.js';
+import TurnTimerService from '@app/TurnTimerService.js';
+import RoundTimerService from '@app/RoundTimerService.js';
+import { buildSocketServer } from '@sockets/socket-utils/socket-builder.js';
+import { GameController } from '@sockets/GameController.js';
+import GamesManagerController from '@rest/GamesMangerController.js';
 
 const container = new Container();
 container.bind(Store).to(InMemoryStore).inSingletonScope();
