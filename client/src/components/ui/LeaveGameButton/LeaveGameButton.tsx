@@ -8,7 +8,9 @@ const LeaveGameButton: React.FC = () => {
 
   const handleLeave = async () => {
     const success = await GameService.leaveGame();
-    navigate('/');
+    if (success) {
+      navigate('/');
+    }
   };
 
   return (
