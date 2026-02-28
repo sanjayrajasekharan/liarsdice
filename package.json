@@ -1,6 +1,7 @@
 {
   "name": "liars-dice",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.3.0",
   "description": "",
   "main": "index.js",
   "scripts": {
