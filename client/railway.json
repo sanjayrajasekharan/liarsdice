@@ -2,7 +2,7 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "RAILPACK",
-    "buildCommand": "pnpm --filter client build",
+    "buildCommand": "pnpm --filter shared build && pnpm --filter client build",
     "watchPatterns": [
       "/client/**",
       "/shared/**",
