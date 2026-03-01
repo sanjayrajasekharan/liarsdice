@@ -376,12 +376,106 @@ describe('Game', () => {
 
       const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
       const result = Game.challenge(claimResult.value, challengingPlayer);
-
       expect(result.isOk()).to.be.true;
       if (result.isOk()) {
         const currentPlayer = result.value.game.players[result.value.game.currentTurnIndex].id;
         expect(currentPlayer).to.equal(result.value.result.winnerId);
       }
+    });
+
+    it('should end game when challenge eliminates last opponent', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p =>
+          p.id === player2Id ? { ...p, remainingDice: 1, dice: [1 as DieFace] } : { ...p, dice: [2 as DieFace, 2 as DieFace, 2 as DieFace, 2 as DieFace, 2 as DieFace] }
+        ),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 5, faceValue: 2 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      expect(challengingPlayer).to.equal(player2Id);
+
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.result.loserOut).to.be.true;
+        expect(result.value.result.loserId).to.equal(player2Id);
+        expect(result.value.result.gameOver).to.be.true;
+        expect(result.value.game.stage).to.equal(GameStage.POST_GAME);
+        expect(result.value.game.players).to.have.lengthOf(1);
+        expect(result.value.game.eliminatedPlayers).to.include(player2Id);
+      }
+    });
+
+    it('should end game after multiple rounds when last opponent eliminated', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player1Id = currentGame.hostId;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p => ({
+          ...p,
+          remainingDice: 2,
+          dice: p.id === player1Id ? [2 as DieFace, 2 as DieFace] : [1 as DieFace, 1 as DieFace]
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      // Round 1: player1 claims, player2 challenges and loses
+      let claim: Claim = { playerId: player1Id, quantity: 2, faceValue: 2 as DieFace };
+      let claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+      currentGame = claimResult.value;
+
+      let challengeResult = Game.challenge(currentGame, player2Id);
+      if (challengeResult.isErr()) throw new Error('Failed to challenge');
+
+      expect(challengeResult.value.result.loserId).to.equal(player2Id);
+      expect(challengeResult.value.result.loserOut).to.be.false;
+      expect(challengeResult.value.result.gameOver).to.be.false;
+      expect(challengeResult.value.game.stage).to.equal(GameStage.POST_ROUND);
+
+      // Start round 2
+      currentGame = {
+        ...challengeResult.value.game,
+        players: challengeResult.value.game.players.map(p => ({
+          ...p,
+          dice: p.id === player1Id ? [2 as DieFace, 2 as DieFace] : [1 as DieFace]
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        claims: [],
+      };
+
+      // Round 2: player1 claims again, player2 challenges and loses (eliminated)
+      claim = { playerId: player1Id, quantity: 2, faceValue: 2 as DieFace };
+      claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim in round 2');
+      currentGame = claimResult.value;
+
+      challengeResult = Game.challenge(currentGame, player2Id);
+      if (challengeResult.isErr()) throw new Error('Failed to challenge in round 2');
+
+      expect(challengeResult.value.result.loserId).to.equal(player2Id);
+      expect(challengeResult.value.result.loserOut).to.be.true;
+      expect(challengeResult.value.result.gameOver).to.be.true;
+      expect(challengeResult.value.game.stage).to.equal(GameStage.POST_GAME);
+      expect(challengeResult.value.game.players).to.have.lengthOf(1);
     });
   });
 

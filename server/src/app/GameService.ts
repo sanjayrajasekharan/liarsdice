@@ -357,17 +357,22 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
   const winnerId = actualTotal < quantity ? challengerId : claimerId;
   const loserId = winnerId === challengerId ? claimerId : challengerId;
 
-  let newPlayers = game.players.map(p =>
-    p.id === loserId ? { ...p, remainingDice: p.remainingDice - 1 } : p
-  );
+  const playersWithUpdatedCounts = game.players.map(player => ({
+    ...player,
+    remainingDice: player.id === loserId ? player.remainingDice - 1 : player.remainingDice
+  }))
 
-  const loser = newPlayers.find(p => p.id === loserId);
-  const loserOut = loser?.remainingDice === 0;
+  console.log(playersWithUpdatedCounts); // 1
 
-  let losers = game.eliminatedPlayers;
-  if (loserOut) {
-    losers = losers.concat(loser.id)
-  }
+  const newPlayers = playersWithUpdatedCounts.filter((player) => player.remainingDice > 0);
+  console.log(newPlayers); // 2
+  const playersWithNoDice = playersWithUpdatedCounts.filter((player) => player.remainingDice === 0);
+  console.log(playersWithNoDice); // 3
+  const newEliminatedPlayers = [...game.eliminatedPlayers, ...playersWithNoDice.map(p => p.id)];
+  console.log(newEliminatedPlayers); // 4
+
+  const loserOut = newEliminatedPlayers.includes(loserId);
+
   const winnerIndex = newPlayers.findIndex(p => p.id === winnerId);
   const newTurnIndex = winnerIndex >= 0 ? winnerIndex : 0;
 
@@ -391,6 +396,7 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
     game: {
       ...game,
       players: newPlayers,
+      eliminatedPlayers: newEliminatedPlayers,
       challengeResults: [...game.challengeResults, challengeResult],
       currentTurnIndex: newTurnIndex,
       stage: newStage,
@@ -426,6 +432,10 @@ export function startGame(game: GameState, initiatorId: PlayerId): Result<GameSt
 export function startRound(game: GameState, _initiatorId: PlayerId): Result<GameState, ErrorCode> {
   if (game.stage !== GameStage.PRE_GAME && game.stage !== GameStage.POST_ROUND) {
     return err(ErrorCode.INVALID_GAME_STATE);
+  }
+
+  if (game.players.length < 2) {
+    return err(ErrorCode.NOT_ENOUGH_PLAYERS);
   }
 
   const rolledGame = rollAllDice(game);

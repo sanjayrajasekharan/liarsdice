@@ -100,7 +100,15 @@ export function buildSocketServer(
           const finalEventName = meta?.namespace ? `${meta.namespace}:${ev.eventName}` : ev.eventName;
 
           // Only run event-level middleware (not controller middleware)
-          const handlerWrapper = (data: any, ack?: Function) => {
+          const handlerWrapper = (...args: unknown[]) => {
+            // Last arg is the ack callback if it's a function
+            const lastArg = args[args.length - 1];
+            const ack = typeof lastArg === 'function' ? lastArg as Function : undefined;
+            // Data is first arg, unless first arg is the callback (no payload)
+            const data = typeof args[0] === 'function' ? undefined : args[0];
+
+            console.log(`[DEBUG] Event: ${finalEventName}, args.length: ${args.length}, ack defined: ${!!ack}, data type: ${typeof data}`);
+
             runMiddlewareChain(socket, ev.middleware, async err => {
               if (err) {
                 log(`Middleware error (${finalEventName}): ${err.message || err}`);
@@ -110,6 +118,7 @@ export function buildSocketServer(
               try {
                 const result = ev.handler.call(instance, socket, data);
                 const awaited = result instanceof Promise ? await result : result;
+                console.log(`[DEBUG] Event: ${finalEventName}, result:`, awaited, `calling ack: ${!!ack}`);
                 if (ack) ack(awaited);
               } catch (e: any) {
                 log(`Event handler error (${finalEventName}): ${e.message || e}`);

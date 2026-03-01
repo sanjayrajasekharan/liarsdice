@@ -174,6 +174,10 @@ export class GameController {
       return;
     }
 
+    if (game.players.length < 2) {
+      return;
+    }
+
     const startRoundResult = this.gameService.startRoundAuto(gameCode);
     if (startRoundResult.isErr()) {
       return;
@@ -258,6 +262,17 @@ export class GameController {
     };
 
     this.io.to(gameCode).emit('CHALLENGE_MADE', challengeMessage);
+
+    if (gameOver) {
+      const gameResult = this.gameService.getGameByCode(gameCode);
+      if (gameResult.isOk()) {
+        const winner = gameResult.value.players[0];
+        if (winner) {
+          const endMessage: GameEndedPayload = { winnerId: winner.id };
+          this.io.to(gameCode).emit('GAME_ENDED', endMessage);
+        }
+      }
+    }
 
     return { ok: true };
   }
