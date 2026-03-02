@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { GameService, useGameState } from '../../../services/gameService';
 import Lobby from '../../ui/Lobby/Lobby';
-import SettingsDialog from '../../ui/SettingsDialog/SettingsDialog';
 import Settings from '../../ui/SettingsDialog/Settings';
 import { toast } from '@store/toastStore';
-import { DEFAULT_GAME_SETTINGS, GameSettings } from 'shared/domain';
 
 
 interface GameLobbyProps {
@@ -23,8 +21,6 @@ const GameLobby: React.FC<GameLobbyProps> = ({ isHost }) => {
   const players = useGameState(state => state.gameState?.players ?? []);
   const hostId = useGameState(state => state.gameState?.hostId);
   const gameCode = useGameState(state => state.gameCode);
-  const settings = useGameState(state => state.gameState?.settings ?? DEFAULT_GAME_SETTINGS);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const lobbyPlayers = players.map(player => ({
     id: player.id,
@@ -69,10 +65,6 @@ const GameLobby: React.FC<GameLobbyProps> = ({ isHost }) => {
     } catch {
       toast.error('Failed to copy link');
     }
-  };
-
-  const handleSaveSettings = (changes: Partial<GameSettings>) => {
-    GameService.updateSettings(changes);
   };
 
   return (
@@ -140,15 +132,6 @@ const GameLobby: React.FC<GameLobbyProps> = ({ isHost }) => {
         <p className="text-text-secondary text-center">
           Waiting for host to start the game...
         </p>
-      )}
-
-      {isHost && (
-        <SettingsDialog
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          currentSettings={settings}
-          onSave={handleSaveSettings}
-        />
       )}
     </motion.div>
   );

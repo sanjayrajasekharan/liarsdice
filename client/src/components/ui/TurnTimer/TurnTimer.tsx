@@ -34,7 +34,7 @@ const TurnTimer: React.FC<TurnTimerProps> = ({ deadline }) => {
   return (
     <motion.span
       className={clsx(
-        "text-xs font-mono tabular-nums",
+        "text-sm font-mono tabular-nums",
         isLow ? "text-red-600" : "text-text-secondary"
       )}
       animate={isLow ? { opacity: [1, 0.4, 1] } : { opacity: 1 }}

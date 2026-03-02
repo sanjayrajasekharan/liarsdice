@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import clsx from "clsx";
-import { diceSvgs } from "../../../assets/dice";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import { AnimatePresence, motion } from "framer-motion";
+import { diceSvgs } from "../../../assets/dice";
+import SlidingSelector from "../SlidingSelector/SlidingSelector";
 
 type ClaimInputProps = {
   currentDieValue: number;
@@ -11,6 +11,11 @@ type ClaimInputProps = {
   onClose: () => void;
   onSubmit: (diceValue: number, count: number) => void;
 };
+
+const DIE_OPTIONS = Object.entries(diceSvgs).map(([value, src]) => ({
+  value: Number(value),
+  label: <img src={src} alt={`Dice ${value}`} className="block h-10 w-10" />,
+}));
 
 const ClaimInput: React.FC<ClaimInputProps> = ({
   currentDieValue,
@@ -26,22 +31,57 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
 
   const startCount = dieValue <= currentDieValue ? currentCount + 1 : currentCount;
 
-  // Reset state when opened with new values
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Map<number | 'other', HTMLElement>>(new Map());
+  const [countIndicatorStyle, setCountIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [shouldAnimateCount, setShouldAnimateCount] = useState(false);
+
+  const updateCountIndicator = useCallback(() => {
+    const selectedKey = otherValueSelected ? 'other' : count;
+    const button = buttonRefs.current.get(selectedKey);
+    const container = containerRef.current;
+    if (button && container) {
+      const containerRect = container.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      setCountIndicatorStyle({
+        left: buttonRect.left - containerRect.left,
+        width: buttonRect.width,
+      });
+    }
+  }, [count, otherValueSelected]);
+
+  useEffect(() => {
+    updateCountIndicator();
+  }, [updateCountIndicator]);
+
+  useLayoutEffect(() => {
+    if (isOpen) {
+      updateCountIndicator();
+    }
+  }, [isOpen, updateCountIndicator]);
+
   useEffect(() => {
     if (isOpen) {
       setDieValue(currentDieValue);
       setCount(currentCount + 1);
       setOtherValue(undefined);
       setOtherValueSelected(false);
+      setCountIndicatorStyle({ left: 0, width: 0 });
+      setShouldAnimateCount(false);
+      const timer = setTimeout(() => setShouldAnimateCount(true), 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, currentDieValue, currentCount]);
 
-  const handleSubmit = () => {
-    onSubmit(dieValue, count);
-    onClose();
+  const handleDieValueChange = (newDieValue: number) => {
+    const newStartCount = newDieValue <= currentDieValue ? currentCount + 1 : currentCount;
+    setDieValue(newDieValue);
+    setCount(newStartCount);
+    setOtherValueSelected(false);
   };
 
-  const handleClose = () => {
+  const handleSubmit = () => {
+    onSubmit(dieValue, count);
     onClose();
   };
 
@@ -52,16 +92,14 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
           <Dialog.Portal forceMount>
             <Dialog.Overlay asChild>
               <motion.div
-                className={clsx(
-                  "fixed inset-0 bg-surface-overlay",
-                  !isOpen && "pointer-events-none"
-                )}
+                className="fixed inset-0 bg-surface-overlay"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
               />
             </Dialog.Overlay>
-            <Dialog.Content asChild>
+            <Dialog.Content asChild forceMount>
               <motion.div
                 className="fixed inset-x-0 bottom-0 shadow-xl rounded-t-2xl p-4 bg-surface-elevated"
                 initial={{ y: '100%' }}
@@ -69,65 +107,48 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               >
-                <Dialog.Title className="sr-only">Make a claim</Dialog.Title>
                 <Dialog.Description className="sr-only">
                   Select a die face and count to make your claim
                 </Dialog.Description>
 
                 {/* Die value selector */}
-                <div className="flex flex-row items-center justify-center gap-1">
-                  {Object.entries(diceSvgs).map(([value, src]) => (
-                    <button
-                      key={value}
-                      className="p-2 border-2 border-transparent relative flex justify-center items-center rounded-xl
-                                 hover:cursor-pointer hover:border-primary-300 transition-colors"
-                      onClick={() => {
-                        const newDieValue = Number(value);
-                        const newStartCount = newDieValue <= currentDieValue ? currentCount + 1 : currentCount;
-                        setDieValue(newDieValue);
-                        setCount(newStartCount);
-                        setOtherValueSelected(false);
-                      }}
-                    >
-                      <img src={src} alt={`Dice ${value}`} className="block h-10 w-10" />
-                      {value === String(dieValue) && (
-                        <motion.div
-                          className="absolute inset-0 border-2 border-primary-500 rounded-xl"
-                          layoutId="selected-die"
-                          initial={false}
-                        />
-                      )}
-                    </button>
-                  ))}
+                <div className="flex justify-center">
+                  <SlidingSelector
+                    options={DIE_OPTIONS}
+                    value={dieValue}
+                    onChange={handleDieValueChange}
+                    buttonClassName="p-2 hover:cursor-pointer"
+                  />
                 </div>
 
                 {/* Count selector */}
-                <div className="flex flex-row gap-2 items-stretch justify-between mt-4 text-xl w-full">
+                <div ref={containerRef} className="relative flex flex-row gap-2 items-stretch justify-between mt-4 text-xl w-full">
                   {Array.from({ length: 4 }, (_, i) => i + startCount).map((value) => (
                     <button
                       key={value}
-                      className="py-3 px-2 border-2 border-transparent relative flex-1 flex justify-center items-center rounded-xl
-                                 hover:cursor-pointer hover:border-primary-300 transition-colors text-text-primary font-medium"
+                      ref={(el) => {
+                        if (el) buttonRefs.current.set(value, el);
+                      }}
+                      className="relative z-10 py-3 px-2 flex-1 flex justify-center items-center rounded-xl
+                                 border-2 border-transparent hover:border-primary-300 hover:cursor-pointer transition-colors text-text-primary font-medium"
                       onClick={() => {
                         setCount(value);
                         setOtherValueSelected(false);
                       }}
+                      type="button"
                     >
                       {value}
-                      {!otherValueSelected && value === count && (
-                        <motion.div
-                          className="absolute inset-0 border-2 border-primary-500 rounded-xl"
-                          layoutId={`selected-count-${dieValue}`}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        />
-                      )}
                     </button>
                   ))}
 
                   {/* Custom count input */}
-                  <div className="py-3 px-4 relative flex-1 flex justify-center items-center rounded-xl
-                                 text-center text-text-primary bg-surface-secondary">
+                  <div
+                    ref={(el) => {
+                      if (el) buttonRefs.current.set('other', el);
+                    }}
+                    className="relative z-10 py-3 px-4 flex-1 flex justify-center items-center rounded-xl
+                               text-center text-text-primary bg-surface-secondary"
+                  >
                     <input
                       className="text-center w-full bg-transparent focus:outline-none font-medium"
                       type="number"
@@ -154,15 +175,18 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                       onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                       placeholder="Other"
                     />
-                    {otherValueSelected && (
-                      <motion.div
-                        className="absolute inset-0 border-2 border-primary-500 rounded-xl pointer-events-none"
-                        layoutId={`selected-count-${dieValue}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      />
-                    )}
                   </div>
+
+                  {/* Sliding indicator for count */}
+                  {countIndicatorStyle.width > 0 && (
+                    <div
+                      className={`absolute top-0 h-full border-2 border-primary-500 rounded-xl pointer-events-none ${shouldAnimateCount ? 'transition-all duration-200 ease-out' : ''}`}
+                      style={{
+                        left: countIndicatorStyle.left,
+                        width: countIndicatorStyle.width,
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* Action buttons */}
@@ -173,7 +197,7 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                   Claim
                 </button>
                 <button
-                  onClick={handleClose}
+                  onClick={onClose}
                   className="btn-ghost w-full mt-2"
                 >
                   Cancel
