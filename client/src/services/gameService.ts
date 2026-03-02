@@ -65,6 +65,13 @@ function clearStoredToken(): void {
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
+interface CurrentClaim {
+  playerId: string;
+  playerName: string;
+  quantity: number;
+  faceValue: DieFace;
+}
+
 export interface ClaimHistoryItem {
   claimNumber: number;
   playerId: string;
@@ -80,6 +87,7 @@ interface GameStore {
   isConnected: boolean;
   gameState: GameState | null;
   myDice: DieFace[];
+  currentClaim: CurrentClaim | null;
   claimHistory: ClaimHistoryItem[];
   challengeResult: ChallengeResult | null;
   turnDeadline: Date | null;
@@ -106,6 +114,7 @@ const initialState = {
   isConnected: false,
   gameState: null,
   myDice: [],
+  currentClaim: null,
   claimHistory: [],
   challengeResult: null,
   turnDeadline: null,
@@ -148,9 +157,22 @@ const useGameState = create<GameStore>((set, get) => ({
           };
         });
 
+        const lastClaim = data.claims[data.claims.length - 1];
+        let currentClaim: CurrentClaim | null = null;
+        if (lastClaim) {
+          const player = data.players.find(p => p.id === lastClaim.playerId);
+          currentClaim = {
+            playerId: lastClaim.playerId,
+            playerName: player?.name ?? 'Unknown',
+            quantity: lastClaim.quantity,
+            faceValue: lastClaim.faceValue,
+          };
+        }
+
         set({
           gameState: data,
           claimHistory,
+          currentClaim,
           turnDeadline: data.turnDeadline ? new Date(data.turnDeadline) : null,
         });
         break;
@@ -238,6 +260,7 @@ const useGameState = create<GameStore>((set, get) => ({
               stage: 'ROUND_ROBIN',
               currentTurnIndex: startingPlayerIndex >= 0 ? startingPlayerIndex : 0
             },
+            currentClaim: null,
             turnDeadline: new Date(data.turnDeadline),
             isRolling: true,
           });
@@ -255,6 +278,7 @@ const useGameState = create<GameStore>((set, get) => ({
               stage: 'ROUND_ROBIN',
               currentTurnIndex: startingPlayerIndex >= 0 ? startingPlayerIndex : 0
             },
+            currentClaim: null,
             claimHistory: [],
             myDice: [],
             challengeResult: null,
@@ -299,6 +323,12 @@ const useGameState = create<GameStore>((set, get) => ({
             gameState: {
               ...currentState,
               currentTurnIndex: nextPlayerIndex >= 0 ? nextPlayerIndex : 0
+            },
+            currentClaim: {
+              playerId: data.playerId,
+              playerName,
+              quantity: data.quantity,
+              faceValue: data.faceValue,
             },
             claimHistory: [
               ...currentHistory,
@@ -408,6 +438,7 @@ const useGameState = create<GameStore>((set, get) => ({
         set({
           gameState: data,
           myDice: [],
+          currentClaim: null,
           claimHistory: [],
           challengeResult: null,
           turnDeadline: null,
@@ -443,7 +474,7 @@ export const selectCurrentPlayer = (state: GameStore): Player | null => {
 };
 
 export const selectCanChallenge = (state: GameStore): boolean =>
-  selectIsMyTurn(state) && state.claimHistory.length > 0 && state.gameState?.stage === 'ROUND_ROBIN';
+  selectIsMyTurn(state) && state.currentClaim !== null;
 
 export const selectCanMakeClaim = (state: GameStore): boolean =>
   selectIsMyTurn(state) && state.gameState?.stage === 'ROUND_ROBIN';

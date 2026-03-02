@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { GameService, useGameState, selectIsHost } from '../../../services/gameService';
+import { GameService, useGameState } from '../../../services/gameService';
 import { Player } from 'shared/domain';
 
 const pageVariants = {
