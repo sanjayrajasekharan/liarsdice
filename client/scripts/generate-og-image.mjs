@@ -7,8 +7,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const WIDTH = 1200;
 const HEIGHT = 630;
-const DICE_SIZE = 24;
-const GAP = 2;
+const DICE_SIZE = 32;
+const GAP = 4;
 const DICE_OPACITY = 0.75;
 const BG_COLOR = '#f5f5f5';
 const BRAND_COLOR = '#ef4444'; // primary-600 red
@@ -111,7 +111,7 @@ const fullSvg = `
   
   <!-- Title text (centered) -->
   <text 
-    x="${TEXT_X + 15}" 
+    x="${TEXT_X + 12}" 
     y="${HEIGHT / 2}" 
     text-anchor="middle" 
     dominant-baseline="middle"
