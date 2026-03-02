@@ -42,7 +42,7 @@ const Settings: React.FC = () => {
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <button
-          className="flex items-center gap-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
+          className="cursor-pointer flex items-center gap-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
           aria-label="Game settings"
         >
           <svg

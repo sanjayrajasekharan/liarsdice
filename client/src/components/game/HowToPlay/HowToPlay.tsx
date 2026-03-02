@@ -11,7 +11,7 @@ const HowToPlay: React.FC = () => {
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <button
-          className="flex items-center gap-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
+          className="cursor-pointer flex items-center gap-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
           aria-label="How to play"
         >
           <svg
@@ -94,8 +94,8 @@ const HowToPlay: React.FC = () => {
                             <img
                               src={src}
                               alt={alt}
-                              className={isDice 
-                                ? "inline-block h-6 w-6 align-text-bottom mx-0.5" 
+                              className={isDice
+                                ? "inline-block h-6 w-6 align-text-bottom mx-0.5"
                                 : "rounded-lg my-4 w-full"
                               }
                             />

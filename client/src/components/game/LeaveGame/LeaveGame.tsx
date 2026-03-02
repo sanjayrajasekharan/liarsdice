@@ -24,7 +24,7 @@ const LeaveGame: React.FC = () => {
     <AlertDialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialog.Trigger asChild>
         <button
-          className="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-text-primary"
+          className="class-pointer p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-text-primary"
           title="Leave game"
         >
           <svg

@@ -49,6 +49,7 @@ const JoinGame: React.FC = () => {
           onChange={(e) => setGameCode(e.target.value)}
           placeholder="Enter game code"
           className="input-field"
+          autoCapitalize="none"
           onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
         />
         <input

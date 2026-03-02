@@ -92,7 +92,7 @@ const Lobby: React.FC<LobbyProps> = ({ isHost }) => {
 
         <button
           onClick={handleShare}
-          className="flex items-center gap-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
+          className="cursor-pointer flex items-center gap-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
