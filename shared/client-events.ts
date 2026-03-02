@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DieFaceSchema, GameSettingsSchema } from './domain.js';
 import { ErrorCode } from './errors.js';
+import { ClientEvent } from './events.js';
 
 export type ActionResponse =
   | { ok: true }
@@ -21,13 +22,15 @@ export const ReorderPlayersPayloadSchema = z.object({
 });
 export type ReorderPlayersPayload = z.infer<typeof ReorderPlayersPayloadSchema>;
 
-export interface ClientToServerEvents {
-  'CLAIM': (payload: ClaimPayload, callback: (response: ActionResponse) => void) => void;
-  'CHALLENGE': (callback: (response: ActionResponse) => void) => void;
-  'START_GAME': (callback: (response: ActionResponse) => void) => void;
-  'START_ROUND': (callback: (response: ActionResponse) => void) => void;
-  'UPDATE_SETTINGS': (payload: UpdateSettingsPayload, callback: (response: ActionResponse) => void) => void;
-  'REORDER_PLAYERS': (payload: ReorderPlayersPayload, callback: (response: ActionResponse) => void) => void;
-  'RESET_GAME': (callback: (response: ActionResponse) => void) => void;
-  'LEAVE_GAME': (callback: (response: ActionResponse) => void) => void;
-}
+type ClientToServerEventHandlers = {
+  [ClientEvent.CLAIM]: (payload: ClaimPayload, callback: (response: ActionResponse) => void) => void;
+  [ClientEvent.CHALLENGE]: (callback: (response: ActionResponse) => void) => void;
+  [ClientEvent.START_GAME]: (callback: (response: ActionResponse) => void) => void;
+  [ClientEvent.START_ROUND]: (callback: (response: ActionResponse) => void) => void;
+  [ClientEvent.UPDATE_SETTINGS]: (payload: UpdateSettingsPayload, callback: (response: ActionResponse) => void) => void;
+  [ClientEvent.REORDER_PLAYERS]: (payload: ReorderPlayersPayload, callback: (response: ActionResponse) => void) => void;
+  [ClientEvent.RESET_GAME]: (callback: (response: ActionResponse) => void) => void;
+  [ClientEvent.LEAVE_GAME]: (callback: (response: ActionResponse) => void) => void;
+};
+
+export interface ClientToServerEvents extends ClientToServerEventHandlers {}

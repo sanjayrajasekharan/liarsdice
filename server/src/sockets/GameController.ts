@@ -1,5 +1,6 @@
 import { ClaimPayloadSchema, ActionResponse, ClientToServerEvents, UpdateSettingsPayloadSchema, ReorderPlayersPayloadSchema } from "shared/client-events.js";
 import { ServerToClientEvents, PlayerJoinedPayload, PlayerLeftPayload, ClaimMadePayload, ChallengeMadePayload, GameStartedPayload, RoundStartedPayload, DiceRolledPayload, PlayerForfeitPayload, GameEndedPayload, SettingsUpdatedPayload, PlayersReorderedPayload, GameResetPayload } from "shared/server-events.js";
+import { ClientEvent, ServerEvent } from "shared/events.js";
 import { onConnect, socketController, event, onDisconnect } from "@sockets/socket-utils/main.js";
 import { Socket as BaseSocket, Server as BaseServer } from "socket.io";
 import { inject } from "inversify";
@@ -47,18 +48,18 @@ export class GameController {
     if (sanitizedState.isErr()) {
       throw new Error(getErrorMessage(sanitizedState.error));
     }
-    socket.emit('GAME_STATE', sanitizedState.value);
+    socket.emit(ServerEvent.GAME_STATE, sanitizedState.value);
 
     if (isReconnect) {
       const diceResult = this.gameService.getPlayerDice(playerId, gameCode);
       if (diceResult.isOk() && diceResult.value.length > 0) {
-        socket.emit('DICE_ROLLED', { dice: diceResult.value });
+        socket.emit(ServerEvent.DICE_ROLLED, { dice: diceResult.value });
       }
 
       if (game.stage === GameStage.POST_ROUND && game.challengeResults.length > 0) {
         const lastChallengeResult = game.challengeResults[game.challengeResults.length - 1];
         const nextRoundStartsAt = this.roundTimerService.getDeadline(gameCode);
-        socket.emit('CHALLENGE_MADE', { ...lastChallengeResult, nextRoundStartsAt });
+        socket.emit(ServerEvent.CHALLENGE_MADE, { ...lastChallengeResult, nextRoundStartsAt });
       }
     } else {
       const remainingDiceResult = this.gameService.getPlayerRemainingDice(playerId, gameCode);
@@ -71,7 +72,7 @@ export class GameController {
         playerName: playerName,
         remainingDice: remainingDiceResult.value as number
       };
-      socket.to(gameCode).emit('PLAYER_JOINED', playerMessage);
+      socket.to(gameCode).emit(ServerEvent.PLAYER_JOINED, playerMessage);
     }
   }
 
@@ -96,7 +97,7 @@ export class GameController {
           playerId,
           newHostId: result.value.newHostId ?? undefined,
         };
-        this.io.to(gameCode).emit('PLAYER_LEFT', playerMessage);
+        this.io.to(gameCode).emit(ServerEvent.PLAYER_LEFT, playerMessage);
       }
     }
   }
@@ -138,7 +139,7 @@ export class GameController {
       gameOver,
       nextRoundStartsAt,
     };
-    this.io.to(gameCode).emit('PLAYER_FORFEIT', forfeitMessage);
+    this.io.to(gameCode).emit(ServerEvent.PLAYER_FORFEIT, forfeitMessage);
 
     if (gameOver) {
       this.turnTimerService.cancelTimer(gameCode);
@@ -147,7 +148,7 @@ export class GameController {
       const winner = updatedGame.players[0];
       if (winner) {
         const endMessage: GameEndedPayload = { winnerId: winner.id };
-        this.io.to(gameCode).emit('GAME_ENDED', endMessage);
+        this.io.to(gameCode).emit(ServerEvent.GAME_ENDED, endMessage);
       }
     }
   }
@@ -191,17 +192,17 @@ export class GameController {
       startingPlayerId,
       turnDeadline,
     };
-    this.io.to(gameCode).emit('ROUND_STARTED', roundStartedMessage);
+    this.io.to(gameCode).emit(ServerEvent.ROUND_STARTED, roundStartedMessage);
 
     for (const [playerId, playerDice] of Object.entries(dice)) {
       const diceMessage: DiceRolledPayload = {
         dice: playerDice
       };
-      this.io.to(playerId).emit('DICE_ROLLED', diceMessage);
+      this.io.to(playerId).emit(ServerEvent.DICE_ROLLED, diceMessage);
     }
   }
 
-  @event('CLAIM')
+  @event(ClientEvent.CLAIM)
   handleClaim(socket: Socket, data: { faceValue: DieFace, quantity: number }): ActionResponse {
     const playerId: PlayerId = socket.data.playerId!;
     const gameCode: GameCode = socket.data.gameCode!;
@@ -227,12 +228,12 @@ export class GameController {
       nextPlayerId: nextPlayerResult.value,
       turnDeadline,
     };
-    this.io.to(gameCode).emit('CLAIM_MADE', claimMessage);
+    this.io.to(gameCode).emit(ServerEvent.CLAIM_MADE, claimMessage);
 
     return { ok: true };
   }
 
-  @event('CHALLENGE')
+  @event(ClientEvent.CHALLENGE)
   handleChallenge(socket: Socket): ActionResponse {
     const playerId: PlayerId = socket.data.playerId!;
     const gameCode: GameCode = socket.data.gameCode!;
@@ -261,7 +262,7 @@ export class GameController {
       nextRoundStartsAt,
     };
 
-    this.io.to(gameCode).emit('CHALLENGE_MADE', challengeMessage);
+    this.io.to(gameCode).emit(ServerEvent.CHALLENGE_MADE, challengeMessage);
 
     if (gameOver) {
       const gameResult = this.gameService.getGameByCode(gameCode);
@@ -269,7 +270,7 @@ export class GameController {
         const winner = gameResult.value.players[0];
         if (winner) {
           const endMessage: GameEndedPayload = { winnerId: winner.id };
-          this.io.to(gameCode).emit('GAME_ENDED', endMessage);
+          this.io.to(gameCode).emit(ServerEvent.GAME_ENDED, endMessage);
         }
       }
     }
@@ -277,7 +278,7 @@ export class GameController {
     return { ok: true };
   }
 
-  @event('START_GAME')
+  @event(ClientEvent.START_GAME)
   handleStartGame(socket: Socket): ActionResponse {
     const playerId: PlayerId = socket.data.playerId!;
     const gameCode: GameCode = socket.data.gameCode!;
@@ -295,13 +296,13 @@ export class GameController {
       startingPlayerId: startingPlayerId,
       turnDeadline,
     };
-    this.io.to(gameCode).emit('GAME_STARTED', gameStartedMessage);
+    this.io.to(gameCode).emit(ServerEvent.GAME_STARTED, gameStartedMessage);
 
     for (const [playerId, playerDice] of Object.entries(dice)) {
       const diceMessage: DiceRolledPayload = {
         dice: playerDice
       };
-      this.io.to(playerId).emit('DICE_ROLLED', diceMessage);
+      this.io.to(playerId).emit(ServerEvent.DICE_ROLLED, diceMessage);
     }
 
     return { ok: true };
@@ -338,7 +339,7 @@ export class GameController {
   //   return { ok: true };
   // }
 
-  @event('UPDATE_SETTINGS')
+  @event(ClientEvent.UPDATE_SETTINGS)
   handleUpdateSettings(socket: Socket, data: Partial<GameSettings>): ActionResponse {
     const playerId: PlayerId = socket.data.playerId!;
     const gameCode: GameCode = socket.data.gameCode!;
@@ -351,12 +352,12 @@ export class GameController {
     }
 
     const settingsMessage: SettingsUpdatedPayload = result.value;
-    this.io.to(gameCode).emit('SETTINGS_UPDATED', settingsMessage);
+    this.io.to(gameCode).emit(ServerEvent.SETTINGS_UPDATED, settingsMessage);
 
     return { ok: true };
   }
 
-  @event('REORDER_PLAYERS')
+  @event(ClientEvent.REORDER_PLAYERS)
   handleReorderPlayers(socket: Socket, data: { playerIds: string[] }): ActionResponse {
     const playerId: PlayerId = socket.data.playerId!;
     const gameCode: GameCode = socket.data.gameCode!;
@@ -369,12 +370,12 @@ export class GameController {
     }
 
     const reorderMessage: PlayersReorderedPayload = { playerIds: result.value };
-    this.io.to(gameCode).emit('PLAYERS_REORDERED', reorderMessage);
+    this.io.to(gameCode).emit(ServerEvent.PLAYERS_REORDERED, reorderMessage);
 
     return { ok: true };
   }
 
-  @event('RESET_GAME')
+  @event(ClientEvent.RESET_GAME)
   handleResetGame(socket: Socket): ActionResponse {
     const playerId: PlayerId = socket.data.playerId!;
     const gameCode: GameCode = socket.data.gameCode!;
@@ -385,12 +386,12 @@ export class GameController {
     }
 
     const resetMessage: GameResetPayload = result.value;
-    this.io.to(gameCode).emit('GAME_RESET', resetMessage);
+    this.io.to(gameCode).emit(ServerEvent.GAME_RESET, resetMessage);
 
     return { ok: true };
   }
 
-  @event('LEAVE_GAME')
+  @event(ClientEvent.LEAVE_GAME)
   handleLeaveGame(socket: Socket): ActionResponse {
     const playerId: PlayerId = socket.data.playerId!;
     const gameCode: GameCode = socket.data.gameCode!;
@@ -416,13 +417,13 @@ export class GameController {
       playerId,
       newHostId: newHostId ?? undefined,
     };
-    this.io.to(gameCode).emit('PLAYER_LEFT', playerLeftMessage);
+    this.io.to(gameCode).emit(ServerEvent.PLAYER_LEFT, playerLeftMessage);
 
     if (gameOver) {
       const winner = result.value.game.players[0];
       if (winner) {
         const endMessage: GameEndedPayload = { winnerId: winner.id };
-        this.io.to(gameCode).emit('GAME_ENDED', endMessage);
+        this.io.to(gameCode).emit(ServerEvent.GAME_ENDED, endMessage);
       }
     }
 

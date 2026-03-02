@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DieFaceSchema, GameStateSchema, ChallengeResultSchema, GameSettingsSchema, PlayerIdSchema } from './domain.js';
+import { ServerEvent } from './events.js';
 
 // =============================================================================
 // Server → Client Payloads (Zod schemas for runtime validation)
@@ -86,19 +87,21 @@ export type GameResetPayload = z.infer<typeof GameResetPayloadSchema>;
 // Server → Client Events (TypeScript interface for Socket.IO)
 // =============================================================================
 
-export interface ServerToClientEvents {
-  'PLAYER_JOINED': (payload: PlayerJoinedPayload) => void;
-  'PLAYER_LEFT': (payload: PlayerLeftPayload) => void;
-  'PLAYER_FORFEIT': (payload: PlayerForfeitPayload) => void;
-  'GAME_STARTED': (payload: GameStartedPayload) => void;
-  'ROUND_STARTED': (payload: RoundStartedPayload) => void;
-  'DICE_ROLLED': (payload: DiceRolledPayload) => void;
-  'CLAIM_MADE': (payload: ClaimMadePayload) => void;
-  'CHALLENGE_MADE': (payload: ChallengeMadePayload) => void;
-  'GAME_ENDED': (payload: GameEndedPayload) => void;
-  'GAME_STATE': (payload: GameStatePayload) => void;
-  'GAME_RESET': (payload: GameResetPayload) => void;
-  'SETTINGS_UPDATED': (payload: SettingsUpdatedPayload) => void;
-  'PLAYERS_REORDERED': (payload: PlayersReorderedPayload) => void;
-  'ERROR': (payload: ErrorPayload) => void;
-}
+type ServerToClientEventHandlers = {
+  [ServerEvent.PLAYER_JOINED]: (payload: PlayerJoinedPayload) => void;
+  [ServerEvent.PLAYER_LEFT]: (payload: PlayerLeftPayload) => void;
+  [ServerEvent.PLAYER_FORFEIT]: (payload: PlayerForfeitPayload) => void;
+  [ServerEvent.GAME_STARTED]: (payload: GameStartedPayload) => void;
+  [ServerEvent.ROUND_STARTED]: (payload: RoundStartedPayload) => void;
+  [ServerEvent.DICE_ROLLED]: (payload: DiceRolledPayload) => void;
+  [ServerEvent.CLAIM_MADE]: (payload: ClaimMadePayload) => void;
+  [ServerEvent.CHALLENGE_MADE]: (payload: ChallengeMadePayload) => void;
+  [ServerEvent.GAME_ENDED]: (payload: GameEndedPayload) => void;
+  [ServerEvent.GAME_STATE]: (payload: GameStatePayload) => void;
+  [ServerEvent.GAME_RESET]: (payload: GameResetPayload) => void;
+  [ServerEvent.SETTINGS_UPDATED]: (payload: SettingsUpdatedPayload) => void;
+  [ServerEvent.PLAYERS_REORDERED]: (payload: PlayersReorderedPayload) => void;
+  [ServerEvent.ERROR]: (payload: ErrorPayload) => void;
+};
+
+export interface ServerToClientEvents extends ServerToClientEventHandlers {}

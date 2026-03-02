@@ -7,3 +7,4 @@
 [x] Bug: leave game not navigating to home page
 [x] Bug: Sometimes screen just not clickable --> needs to be refreshed to return functionality 
 [ ] Bug : make restart game work, seems to get in this deadlock state where both players are waiting for each other.
+[ ] Simplify --> currentClaim / Claim History

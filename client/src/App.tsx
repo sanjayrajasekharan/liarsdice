@@ -1,10 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ToastProvider } from "@components/ui/Toast";
-import { SessionProvider } from "@components/SessionProvider";
+import { ToastProvider } from "@components/common/Toast";
+import { SessionProvider } from "@components/providers/SessionProvider";
 import LandingPage from "./pages/Landing/Landing";
-import CreateGame from "./pages/CreateGame";
-import JoinGame from "./pages/JoinGame";
+import CreateGame from "./pages/CreateGame/CreateGame";
+import JoinGame from "./pages/JoinGame/JoinGame";
 import Game from "./pages/Game/Game";
 
 const App: React.FC = () => {

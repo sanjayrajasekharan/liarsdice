@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { EntryCard } from '@components/layout';
-import { diceSvgs } from '../../assets/dice';
+import EntryCard from '@components/common/EntryCard/EntryCard';
+import { diceSvgs } from '@assets/dice';
 
 const DICE_FACES = [1, 2, 3, 4, 5, 6] as const;
 const SHUFFLE_INTERVAL_MS = 1000;
