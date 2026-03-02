@@ -178,7 +178,7 @@ export class GameController {
       return;
     }
 
-    const startRoundResult = this.gameService.startRoundAuto(gameCode);
+    const startRoundResult = this.gameService.startRound(gameCode);
     if (startRoundResult.isErr()) {
       return;
     }
@@ -307,35 +307,36 @@ export class GameController {
     return { ok: true };
   }
 
-  @event('START_ROUND')
-  handleStartRound(socket: Socket): ActionResponse {
-    const playerId: PlayerId = socket.data.playerId!;
-    const gameCode: GameCode = socket.data.gameCode!;
 
-    const startRoundResult = this.gameService.startRound(gameCode, playerId);
-    if (startRoundResult.isErr()) {
-      return { ok: false, code: startRoundResult.error, message: getErrorMessage(startRoundResult.error) };
-    }
-
-    const { startingPlayerId, dice } = startRoundResult.value;
-
-    const turnDeadline = this.startTurnTimer(gameCode, startingPlayerId);
-
-    const roundStartedMessage: RoundStartedPayload = {
-      startingPlayerId: startingPlayerId,
-      turnDeadline,
-    };
-    this.io.to(gameCode).emit('ROUND_STARTED', roundStartedMessage);
-
-    for (const [playerId, playerDice] of Object.entries(dice)) {
-      const diceMessage: DiceRolledPayload = {
-        dice: playerDice
-      };
-      this.io.to(playerId).emit('DICE_ROLLED', diceMessage);
-    }
-
-    return { ok: true };
-  }
+  //   const playerId: PlayerId = socket.data.playerId!;
+  //   const gameCode: GameCode = socket.data.gameCode!;
+  // @event('START_ROUND')
+  // handleStartRound(socket: Socket): ActionResponse {
+  //
+  //   const startRoundResult = this.gameService.startRound(gameCode);
+  //   if (startRoundResult.isErr()) {
+  //     return { ok: false, code: startRoundResult.error, message: getErrorMessage(startRoundResult.error) };
+  //   }
+  //
+  //   const { startingPlayerId, dice } = startRoundResult.value;
+  //
+  //   const turnDeadline = this.startTurnTimer(gameCode, startingPlayerId);
+  //
+  //   const roundStartedMessage: RoundStartedPayload = {
+  //     startingPlayerId: startingPlayerId,
+  //     turnDeadline,
+  //   };
+  //   this.io.to(gameCode).emit('ROUND_STARTED', roundStartedMessage);
+  //
+  //   for (const [playerId, playerDice] of Object.entries(dice)) {
+  //     const diceMessage: DiceRolledPayload = {
+  //       dice: playerDice
+  //     };
+  //     this.io.to(playerId).emit('DICE_ROLLED', diceMessage);
+  //   }
+  //
+  //   return { ok: true };
+  // }
 
   @event('UPDATE_SETTINGS')
   handleUpdateSettings(socket: Socket, data: Partial<GameSettings>): ActionResponse {

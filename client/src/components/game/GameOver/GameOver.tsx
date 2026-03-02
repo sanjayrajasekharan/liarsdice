@@ -21,7 +21,7 @@ const isPlayer = (p: Player | undefined): p is Player => p !== undefined;
 const GameOver: React.FC = () => {
   const navigate = useNavigate();
   const players = useGameState(state => state.gameState?.players ?? []);
-  const isHost = useGameState(selectIsHost);
+  // const isHost = useGameState(selectIsHost);
   const myId = useGameState(state => state.playerId);
   const eliminatedPlayerIds = useGameState(state => state.gameState?.eliminatedPlayers ?? []);
   const confettiTriggered = useRef(false);
@@ -64,9 +64,9 @@ const GameOver: React.FC = () => {
     ? [winner, ...loserIds.map(id => players.find(p => p.id === id)).filter(isPlayer)]
     : players;
 
-  const handlePlayAgain = () => {
-    GameService.resetGame();
-  };
+  // const handlePlayAgain = () => {
+  //   GameService.resetGame();
+  // };
 
   const handleReturnHome = () => {
     GameService.clearSession();
@@ -126,16 +126,16 @@ const GameOver: React.FC = () => {
       >
       </motion.div>
       <div className="mt-4 flex gap-3">
-        {isHost && (
-          <button
-            className="btn-primary"
-            onClick={handlePlayAgain}
-          >
-            Play Again
-          </button>
-        )}
+        {/* {isHost && ( */}
+        {/*   <button */}
+        {/*     className="btn-primary" */}
+        {/*     onClick={handlePlayAgain} */}
+        {/*   > */}
+        {/*     Play Again */}
+        {/*   </button> */}
+        {/* )} */}
         <button
-          className="btn-secondary"
+          className="btn-primary"
           onClick={handleReturnHome}
         >
           Return Home

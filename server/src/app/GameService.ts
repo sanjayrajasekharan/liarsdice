@@ -429,7 +429,7 @@ export function startGame(game: GameState, initiatorId: PlayerId): Result<GameSt
   });
 }
 
-export function startRound(game: GameState, _initiatorId: PlayerId): Result<GameState, ErrorCode> {
+export function startRound(game: GameState): Result<GameState, ErrorCode> {
   if (game.stage !== GameStage.PRE_GAME && game.stage !== GameStage.POST_ROUND) {
     return err(ErrorCode.INVALID_GAME_STATE);
   }
@@ -612,13 +612,13 @@ export default class GameService {
     return err(result.error);
   }
 
-  startRound(gameCode: GameCode, initiator: PlayerId): Result<{ startingPlayerId: PlayerId; dice: Record<PlayerId, DieFace[]> }, ErrorCode> {
+  startRound(gameCode: GameCode): Result<{ startingPlayerId: PlayerId; dice: Record<PlayerId, DieFace[]> }, ErrorCode> {
     const gameResult = this.store.getGame(gameCode);
     if (gameResult.isErr()) {
       return err(gameResult.error);
     }
 
-    const result = startRound(gameResult.value, initiator);
+    const result = startRound(gameResult.value);
     if (result.isErr()) {
       return err(result.error);
     }
@@ -632,31 +632,6 @@ export default class GameService {
 
     return ok({ startingPlayerId, dice });
   }
-
-  startRoundAuto(gameCode: GameCode): Result<{ startingPlayerId: PlayerId; dice: Record<PlayerId, DieFace[]> }, ErrorCode> {
-    const gameResult = this.store.getGame(gameCode);
-    if (gameResult.isErr()) {
-      return err(gameResult.error);
-    }
-
-    const game = gameResult.value;
-    const hostId = game.hostId;
-
-    const result = startRound(game, hostId);
-    if (result.isErr()) {
-      return err(result.error);
-    }
-
-    this.store.setGame(result.value);
-
-    const startingPlayerId = result.value.players[result.value.currentTurnIndex].id;
-    const dice = Object.fromEntries(
-      result.value.players.map(p => [p.id, p.dice])
-    ) as Record<PlayerId, DieFace[]>;
-
-    return ok({ startingPlayerId, dice });
-  }
-
   getGameByCode(gameCode: GameCode): Result<GameState, ErrorCode> {
     return this.store.getGame(gameCode);
   }
