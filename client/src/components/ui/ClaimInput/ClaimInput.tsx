@@ -3,6 +3,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { diceSvgs } from "../../../assets/dice";
 import SlidingSelector from "../SlidingSelector/SlidingSelector";
+import { useGameState } from "../../../services/gameService";
+import { DieFace } from "shared/domain";
 
 type ClaimInputProps = {
   currentDieValue: number;
@@ -13,23 +15,24 @@ type ClaimInputProps = {
 };
 
 const DIE_OPTIONS = Object.entries(diceSvgs).map(([value, src]) => ({
-  value: Number(value),
+  value: Number(value) as DieFace,
   label: <img src={src} alt={`Dice ${value}`} className="block h-10 w-10" />,
 }));
 
 const ClaimInput: React.FC<ClaimInputProps> = ({
-  currentDieValue,
-  currentCount,
   isOpen,
   onClose,
   onSubmit
 }) => {
-  const [dieValue, setDieValue] = useState(currentDieValue);
-  const [count, setCount] = useState(currentCount + 1);
+  const currentQuantity = useGameState(state => state.claimHistory.at(-1)?.quantity ?? 0);
+  const currentFaceValue: DieFace = useGameState(state => state.claimHistory.at(-1)?.faceValue ?? 1);
+
+  const [faceValue, setFaceValue] = useState(currentFaceValue);
   const [otherValue, setOtherValue] = useState<number | undefined>(undefined);
   const [otherValueSelected, setOtherValueSelected] = useState(false);
 
-  const startCount = dieValue <= currentDieValue ? currentCount + 1 : currentCount;
+  const startQuantity = faceValue <= currentFaceValue ? currentQuantity + 1 : currentQuantity;
+  const [quantity, setQuantity] = useState(startQuantity);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Map<number | 'other', HTMLElement>>(new Map());
@@ -37,7 +40,7 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
   const [shouldAnimateCount, setShouldAnimateCount] = useState(false);
 
   const updateCountIndicator = useCallback(() => {
-    const selectedKey = otherValueSelected ? 'other' : count;
+    const selectedKey = otherValueSelected ? 'other' : quantity;
     const button = buttonRefs.current.get(selectedKey);
     const container = containerRef.current;
     if (button && container) {
@@ -48,7 +51,7 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
         width: buttonRect.width,
       });
     }
-  }, [count, otherValueSelected]);
+  }, [quantity, otherValueSelected]);
 
   useEffect(() => {
     updateCountIndicator();
@@ -61,27 +64,30 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
   }, [isOpen, updateCountIndicator]);
 
   useEffect(() => {
-    if (isOpen) {
-      setDieValue(currentDieValue);
-      setCount(currentCount + 1);
-      setOtherValue(undefined);
-      setOtherValueSelected(false);
-      setCountIndicatorStyle({ left: 0, width: 0 });
-      setShouldAnimateCount(false);
-      const timer = setTimeout(() => setShouldAnimateCount(true), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, currentDieValue, currentCount]);
+    setShouldAnimateCount(false);
+    const timer = setTimeout(() => setShouldAnimateCount(true), 50);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
-  const handleDieValueChange = (newDieValue: number) => {
-    const newStartCount = newDieValue <= currentDieValue ? currentCount + 1 : currentCount;
-    setDieValue(newDieValue);
-    setCount(newStartCount);
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     setOtherValue(undefined);
+  //     setOtherValueSelected(false);
+  //     setCountIndicatorStyle({ left: 0, width: 0 });
+  //     setShouldAnimateCount(false);
+  //     const timer = setTimeout(() => setShouldAnimateCount(true), 50);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [isOpen, currentDieValue, currentCount]);
+  const handleFaceValueChange = (newFaceValue: DieFace) => {
+    let startQuantity = newFaceValue <= currentFaceValue ? currentQuantity + 1 : currentQuantity;
+    setFaceValue(newFaceValue);
+    setQuantity(startQuantity);
     setOtherValueSelected(false);
   };
 
   const handleSubmit = () => {
-    onSubmit(dieValue, count);
+    onSubmit(faceValue, quantity);
     onClose();
   };
 
@@ -115,15 +121,15 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                 <div className="flex justify-center">
                   <SlidingSelector
                     options={DIE_OPTIONS}
-                    value={dieValue}
-                    onChange={handleDieValueChange}
+                    value={faceValue}
+                    onChange={handleFaceValueChange}
                     buttonClassName="p-2 hover:cursor-pointer"
                   />
                 </div>
 
                 {/* Count selector */}
                 <div ref={containerRef} className="relative flex flex-row gap-2 items-stretch justify-between mt-4 text-xl w-full">
-                  {Array.from({ length: 4 }, (_, i) => i + startCount).map((value) => (
+                  {Array.from({ length: 4 }, (_, i) => i + startQuantity).map((value) => (
                     <button
                       key={value}
                       ref={(el) => {
@@ -132,7 +138,7 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                       className="relative z-10 py-3 px-2 flex-1 flex justify-center items-center rounded-xl
                                  border-2 border-transparent hover:border-primary-300 hover:cursor-pointer transition-colors text-text-primary font-medium"
                       onClick={() => {
-                        setCount(value);
+                        setQuantity(value);
                         setOtherValueSelected(false);
                       }}
                       type="button"
@@ -162,10 +168,10 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                         }
                       }}
                       onBlur={() => {
-                        if (otherValue && otherValue >= startCount) {
-                          setCount(otherValue);
+                        if (otherValue && otherValue >= startQuantity) {
+                          setQuantity(otherValue);
                         }
-                        if (otherValue && otherValue > startCount + 3) {
+                        if (otherValue && otherValue > startQuantity + 3) {
                           setOtherValueSelected(true);
                         } else {
                           setOtherValueSelected(false);
@@ -177,7 +183,6 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                     />
                   </div>
 
-                  {/* Sliding indicator for count */}
                   {countIndicatorStyle.width > 0 && (
                     <div
                       className={`absolute top-0 h-full border-2 border-primary-500 rounded-xl pointer-events-none ${shouldAnimateCount ? 'transition-all duration-200 ease-out' : ''}`}
@@ -189,7 +194,6 @@ const ClaimInput: React.FC<ClaimInputProps> = ({
                   )}
                 </div>
 
-                {/* Action buttons */}
                 <button
                   onClick={handleSubmit}
                   className="btn-primary w-full mt-4"

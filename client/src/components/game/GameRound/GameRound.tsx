@@ -24,6 +24,7 @@ const GameRound: React.FC = () => {
   const isRolling = useGameState(state => state.isRolling);
   const setIsRolling = useGameState(state => state.setIsRolling);
   const currentClaim = useGameState(state => state.currentClaim);
+  console.log(currentClaim);
   const isMyTurn = useGameState(selectIsMyTurn);
   const canChallenge = useGameState(selectCanChallenge);
   const playerId = useGameState(state => state.playerId);
@@ -141,8 +142,8 @@ const GameRound: React.FC = () => {
 
           <ClaimInput
             isOpen={isClaimInputOpen}
-            currentDieValue={currentClaim?.faceValue ?? 1}
-            currentCount={currentClaim?.quantity ?? 0}
+            currentDieValue={currentClaim?.faceValue ?? 0}
+            currentCount={currentClaim?.quantity ?? 1}
             onClose={() => setIsClaimInputOpen(false)}
             onSubmit={(faceValue, count) => handleMakeClaim(count, faceValue as DieFace)}
           />
