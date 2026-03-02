@@ -223,7 +223,7 @@ const useGameState = create<GameStore>((set, get) => ({
           const playerName = forfeitedPlayer?.name ?? 'Someone';
           toast.warning(`${playerName} ran out of time!`);
 
-          let updatedPlayers = currentState.players.map(p =>
+          const updatedPlayers = currentState.players.map(p =>
             p.id === data.playerId
               ? { ...p, remainingDice: p.remainingDice - 1 }
               : p
@@ -366,7 +366,7 @@ const useGameState = create<GameStore>((set, get) => ({
 
           let newEliminatedPlayers = currentState.eliminatedPlayers;
           if (data.loserOut) {
-            newEliminatedPlayers = [...newEliminatedPlayers, data.loserId]
+            newEliminatedPlayers = [...newEliminatedPlayers, data.loserId];
           }
 
           set({

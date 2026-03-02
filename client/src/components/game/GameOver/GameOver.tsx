@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { GameService, useGameState, selectIsHost } from '../../../services/gameService';
+import { Player } from 'shared/domain';
 
 const pageVariants = {
   initial: { opacity: 0, scale: 0.9 },
@@ -14,17 +16,53 @@ const confettiVariants = {
   animate: { y: 0, opacity: 1 },
 };
 
+const isPlayer = (p: Player | undefined): p is Player => p !== undefined;
+
 const GameOver: React.FC = () => {
   const navigate = useNavigate();
   const players = useGameState(state => state.gameState?.players ?? []);
   const isHost = useGameState(selectIsHost);
-  const myId = useGameState(state => state.playerId)
+  const myId = useGameState(state => state.playerId);
+  const eliminatedPlayerIds = useGameState(state => state.gameState?.eliminatedPlayers ?? []);
+  const confettiTriggered = useRef(false);
 
   const winner = players.find(p => p.remainingDice > 0);
-  const losers = useGameState(state => state.gameState?.eliminatedPlayers);
-  losers?.reverse();
+  const isWinner = winner?.id === myId;
 
-  const sortedPlayers = [winner, ...(losers ?? [])].map(id => players.find(p => p.id === id) ?? players[0]);
+  useEffect(() => {
+    if (!isWinner || confettiTriggered.current) return;
+    confettiTriggered.current = true;
+
+    const duration = 3000;
+    const animationEnd = Date.now() + duration;
+    const colors = ['#a786ff', '#fd8bbc', '#eca184', '#f8deb1', '#26ccff', '#88ff5a'];
+
+    const frame = () => {
+      const timeLeft = animationEnd - Date.now();
+      if (timeLeft <= 0) return;
+
+      confetti({
+        particleCount: 3,
+        angle: 270,
+        spread: 80,
+        startVelocity: 25,
+        origin: { x: Math.random(), y: -0.1 },
+        colors,
+        gravity: 0.8,
+        ticks: 300,
+      });
+
+      requestAnimationFrame(frame);
+    };
+
+    frame();
+  }, [isWinner]);
+
+  const loserIds = [...eliminatedPlayerIds].reverse();
+
+  const sortedPlayers: Player[] = winner
+    ? [winner, ...loserIds.map(id => players.find(p => p.id === id)).filter(isPlayer)]
+    : players;
 
   const handlePlayAgain = () => {
     GameService.resetGame();
@@ -51,7 +89,7 @@ const GameOver: React.FC = () => {
         animate="animate"
         transition={{ delay: 0.2, duration: 0.5, type: 'spring' }}
       >
-        {winner?.id === myId && <span className="text-6xl block mb-4">🎉</span>}
+        <span className="text-3xl mt-4 font-mono block mb-4">Game Over!</span>
       </motion.div>
 
       <div className="card w-full max-w-md">
@@ -86,9 +124,6 @@ const GameOver: React.FC = () => {
         animate="animate"
         transition={{ delay: 0.2, duration: 0.5, type: 'spring' }}
       >
-        {winner && (
-          <h2 className="text-xl font-bold text-primary-600 mt-2">{winner.name} Wins!</h2>
-        )}
       </motion.div>
       <div className="mt-4 flex gap-3">
         {isHost && (
