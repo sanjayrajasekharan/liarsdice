@@ -25,7 +25,7 @@ container.bind(RoundTimerService).toSelf().inSingletonScope();
 container.bind(GameController).toSelf().inSingletonScope();
 container.bind(GamesManagerController).toSelf().inSingletonScope();
 
-const corsOrigin = env.CORS_ORIGIN || 'http://localhost:5173';
+const corsOrigin = env.CORS_ORIGIN || ['http://localhost:5173', 'http://localhost:4000'];
 
 const app = new InversifyExpressServer(container)
   .setConfig((app) => {
