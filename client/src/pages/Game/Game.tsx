@@ -5,17 +5,16 @@ import {
   GameService,
   useGameState,
   selectIsHost,
-} from '../../services/gameService';
+} from '@services/gameService';
 import { GameStage } from 'shared/domain';
 import { toast } from '@store/toastStore';
 
-// Import game stage components
-import GameLobby from '../../components/game/GameLobby/GameLobby';
-import GameRound from '../../components/game/GameRound/GameRound';
-import GamePostRound from '../../components/game/GamePostRound/GamePostRound';
-import GameOver from '../../components/game/GameOver/GameOver';
-import LeaveGameButton from '../../components/ui/LeaveGameButton/LeaveGameButton';
-import { diceSvgs } from '../../assets/dice';
+import Lobby from '@components/game/stages/Lobby/Lobby';
+import Round from '@components/game/stages/Round/Round';
+import PostRound from '@components/game/stages/PostRound/PostRound';
+import GameOver from '@components/game/stages/GameOver/GameOver';
+import LeaveGame from '@components/game/LeaveGame/LeaveGame';
+import { diceSvgs } from '@assets/dice';
 
 const Game: React.FC = () => {
   const { gameCode: urlGameCode } = useParams<{ gameCode: string }>();
@@ -30,7 +29,6 @@ const Game: React.FC = () => {
 
   // Connect to socket when component mounts
   useEffect(() => {
-    // If we have a game code from URL but not in store, validate and redirect to join
     if (urlGameCode && !gameCode) {
       setIsValidating(true);
       GameService.getGameStatus(urlGameCode).then((status) => {
@@ -93,13 +91,13 @@ const Game: React.FC = () => {
   const renderStage = () => {
     switch (gameState.stage) {
       case GameStage.PRE_GAME:
-        return <GameLobby key="lobby" isHost={isHost} />;
+        return <Lobby key="lobby" isHost={isHost} />;
 
       case GameStage.ROUND_ROBIN:
-        return <GameRound key="round" />;
+        return <Round key="round" />;
 
       case GameStage.POST_ROUND:
-        return <GamePostRound key="post-round" />;
+        return <PostRound key="post-round" />;
 
       case GameStage.POST_GAME:
         return <GameOver key="game-over" />;
@@ -122,7 +120,7 @@ const Game: React.FC = () => {
           <span className="font-mono text-text-primary">{gameCode}</span>
         </span>
         <div className="flex items-center gap-3">
-          <LeaveGameButton />
+          <LeaveGame />
           <span className="text-sm flex items-center gap-1.5">
             <svg width="8" height="8" viewBox="0 0 8 8" className="shrink-0">
               <circle cx="4" cy="4" r="4" fill={isConnected ? '#22c55e' : '#ef4444'} />

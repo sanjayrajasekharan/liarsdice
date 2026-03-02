@@ -54,7 +54,7 @@ export type GameSettings = z.infer<typeof GameSettingsSchema>;
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   startingDice: 6,
   turnTimeoutSeconds: 60,
-  postRoundDelaySeconds: 20,
+  postRoundDelaySeconds: 10,
 };
 
 export const PlayerDiceCountSchema = z.object({

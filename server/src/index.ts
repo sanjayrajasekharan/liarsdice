@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
 import limiter from '@rest/middleware/limiter.js';
+import { rateLimiterMiddleware, connectionRateLimiterMiddleware } from '@sockets/middleware/rateLimiter.js';
 
 import { Container } from 'inversify';
 import { InversifyExpressServer } from 'inversify-express-utils';
@@ -45,7 +46,9 @@ buildSocketServer(container, server, {
 },
   {
     log: console.log,
-    verbose: true
+    verbose: true,
+    connectionMiddleware: [connectionRateLimiterMiddleware],
+    eventMiddleware: [rateLimiterMiddleware]
   }
 );
 

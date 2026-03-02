@@ -1,12 +1,14 @@
 import { Server, ServerOptions, Socket } from 'socket.io';
 import { createServer, Server as HttpServer } from 'http';
 import { Container } from 'inversify';
-import { SOCKET_METADATA, SocketControllerMeta } from './socket-metadata.js';
+import { SOCKET_METADATA, SocketControllerMeta, SocketMiddleware } from './socket-metadata.js';
 import { getAllSocketControllerConstructors, getControllerEvents } from './socket-discovery.js';
 
 interface BuildOptions {
   log?: (msg: string) => void;
   verbose?: boolean;
+  connectionMiddleware?: SocketMiddleware[];
+  eventMiddleware?: SocketMiddleware[];
 }
 
 export function buildSocketServer(
@@ -17,7 +19,9 @@ export function buildSocketServer(
 ): Server {
   const {
     log = () => { },
-    verbose = false
+    verbose = false,
+    connectionMiddleware = [],
+    eventMiddleware = []
   } = buildOptions;
 
   const server = httpServer || createServer();
@@ -37,6 +41,8 @@ export function buildSocketServer(
   }
 
   container.bind(Server).toConstantValue(io);
+
+  connectionMiddleware.forEach(mw => io.use(mw));
 
   const controllerCtors = getAllSocketControllerConstructors(container);
   log(`Discovered ${controllerCtors.length} socket controllers.`);
@@ -109,7 +115,7 @@ export function buildSocketServer(
 
             console.log(`[DEBUG] Event: ${finalEventName}, args.length: ${args.length}, ack defined: ${!!ack}, data type: ${typeof data}`);
 
-            runMiddlewareChain(socket, ev.middleware, async err => {
+            runMiddlewareChain(socket, [...eventMiddleware, ...ev.middleware], async err => {
               if (err) {
                 log(`Middleware error (${finalEventName}): ${err.message || err}`);
                 if (ack) ack({ error: true, message: err.message || String(err) });
