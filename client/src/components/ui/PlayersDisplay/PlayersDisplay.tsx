@@ -2,6 +2,7 @@ import React, { useState, useRef, useLayoutEffect } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import clsx from "clsx";
 import PlayerClaimsPopover from "../PlayerClaimsPopover/PlayerClaimsPopover";
+import TurnTimer from "../TurnTimer/TurnTimer";
 import {
   useGameState,
   selectClaimHistory,
@@ -60,6 +61,7 @@ interface PlayerPillProps {
   isUser: boolean;
   claims: ClaimHistoryItem[];
   pillWidth: number;
+  turnDeadline: Date | null;
   onPlayerClick?: (playerId: string) => void;
 }
 
@@ -71,6 +73,7 @@ const PlayerPill: React.FC<PlayerPillProps> = ({
   isUser,
   claims,
   pillWidth,
+  turnDeadline,
   onPlayerClick,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -133,7 +136,12 @@ const PlayerPill: React.FC<PlayerPillProps> = ({
   );
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="relative flex flex-col items-center pt-5">
+      {isCurrentTurn && (
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2">
+          <TurnTimer deadline={turnDeadline} />
+        </div>
+      )}
       <PlayerClaimsPopover
         playerName={isUser ? "Your" : playerName}
         claims={claims}
@@ -158,6 +166,7 @@ const PlayersDisplay: React.FC<PlayersDisplayProps> = ({
   const currentPlayer = useGameState(selectCurrentPlayer);
   const playerId = useGameState(state => state.playerId);
   const claimHistory = useGameState(selectClaimHistory);
+  const turnDeadline = useGameState(state => state.turnDeadline);
 
   const visiblePlayers = showEliminated
     ? players
@@ -192,7 +201,7 @@ const PlayersDisplay: React.FC<PlayersDisplayProps> = ({
     <LayoutGroup>
       <motion.div
         ref={containerRef}
-        className="flex flex-wrap items-center justify-center gap-2 p-2 overflow-hidden"
+        className="flex flex-wrap items-center justify-center gap-2 p-2"
         variants={containerVariants}
         initial="initial"
         animate="animate"
@@ -200,6 +209,7 @@ const PlayersDisplay: React.FC<PlayersDisplayProps> = ({
         <AnimatePresence mode="popLayout">
           {visiblePlayers.map((player) => {
             const playerClaims = claimHistory.filter(c => c.playerId === player.id);
+            const isCurrentTurn = player.id === currentPlayer?.id;
 
             return (
               <PlayerPill
@@ -207,10 +217,11 @@ const PlayersDisplay: React.FC<PlayersDisplayProps> = ({
                 playerId={player.id}
                 playerName={player.name}
                 diceCount={player.remainingDice}
-                isCurrentTurn={player.id === currentPlayer?.id}
+                isCurrentTurn={isCurrentTurn}
                 isUser={player.id === playerId}
                 claims={playerClaims}
                 pillWidth={pillWidth}
+                turnDeadline={isCurrentTurn ? turnDeadline : null}
                 onPlayerClick={onPlayerClick}
               />
             );

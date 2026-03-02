@@ -279,6 +279,61 @@ describe('Game', () => {
 - Avoid `scale`, `x`, or `y` transforms during enter/exit animations
 - Add `overflow-x-hidden` to containers if transforms are necessary
 
+### Radix Dialog + Framer Motion
+When combining Radix Dialog (or AlertDialog) with Framer Motion for animated mount/unmount, use this pattern to avoid zombie elements staying in the DOM:
+
+```typescript
+import * as Dialog from '@radix-ui/react-dialog';
+import { AnimatePresence, motion } from 'framer-motion';
+import { getDialogContainer } from '@components/ui/Dialog/dialogUtils';
+
+// Component with internal state
+const MyDialog: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Dialog.Root onOpenChange={setIsOpen}>
+      <Dialog.Trigger asChild>
+        <button>Open</button>
+      </Dialog.Trigger>
+      <AnimatePresence>
+        {isOpen && (
+          <Dialog.Portal forceMount container={getDialogContainer()}>
+            <Dialog.Overlay asChild>
+              <motion.div
+                className="fixed inset-0 bg-black/50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              />
+            </Dialog.Overlay>
+            <Dialog.Content asChild forceMount>
+              <motion.div
+                className="fixed ..."
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+              >
+                {/* Content here */}
+              </motion.div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        )}
+      </AnimatePresence>
+    </Dialog.Root>
+  );
+};
+```
+
+Key requirements:
+- **`forceMount`** on Portal and Content only (NOT on Overlay)
+- **`container={getDialogContainer()}`** on Portal — uses shared container from `dialogUtils.ts`
+- **`AnimatePresence`** wraps the conditional `{isOpen && (...)}`
+- **`asChild`** on Overlay and Content to render `motion.div` directly
+- **`exit`** animations on both Overlay and Content motion.divs
+
+The `getDialogContainer()` utility creates a single reusable DOM element for portals. Without it, Radix's internal container management conflicts with AnimatePresence unmounting.
+
 ### Layout
 - `GameRound` uses `flex-col` with `justify-evenly` for content distribution
 - Action area is `shrink-0` and pinned to bottom

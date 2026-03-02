@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   useGameState,
   selectChallengeResult,
@@ -56,7 +56,7 @@ const GamePostRound: React.FC = () => {
 
   return (
     <motion.div
-      className="flex flex-col justify-center items-center gap-6 p-6"
+      className="min-h-full flex flex-col justify-center items-center gap-6 p-6"
       variants={pageVariants}
       initial="initial"
       animate="animate"
@@ -65,15 +65,15 @@ const GamePostRound: React.FC = () => {
     >
       {isForfeit && (
         <motion.div
-          className="flex flex-col items-center gap-4 p-4 border-2 
+          className="flex flex-col items-center gap-1 p-4 border-2 
                      border-border-light transition-colors duration-200 
-                     border-primary-500 bg-primary-50 shadow-md"
+                     border-primary-500 bg-primary-50 shadow-md rounded-xl"
           variants={resultVariants}
           initial="hidden"
           animate="visible"
           transition={{ duration: 0.4 }}
         >
-          <h3 className="text-2xl font-bold text-text-primary">
+          <h3 className="text-xl font-medium text-text-primary">
             {forfeitedPlayerName} ran out of time!
           </h3>
           <p className="text-text-secondary">
@@ -95,19 +95,14 @@ const GamePostRound: React.FC = () => {
             />
           </div>
 
-          <AnimatePresence>
-            {revealComplete && (
-              <motion.div
-                className="flex flex-col items-center gap-4"
-                variants={resultVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ duration: 0.4 }}
-              >
-                <h3 className="text-xl font-mono">{winnerName} wins!</h3>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <motion.div
+            className="flex flex-col items-center -mt-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: revealComplete ? 1 : 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <h3 className="text-xl font-mono">{winnerName} wins!</h3>
+          </motion.div>
         </>
       )}
 
