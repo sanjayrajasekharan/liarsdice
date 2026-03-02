@@ -37,6 +37,9 @@
       "@assets/*": [
         "src/assets/*"
       ],
+      "@content/*": [
+        "src/content/*"
+      ],
       "shared/*": [
         "../shared/*"
       ]

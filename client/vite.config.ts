@@ -21,6 +21,7 @@ export default defineConfig({
       '@store': path.resolve(__dirname, './src/store'),
       '@styles': path.resolve(__dirname, './src/styles'),
       '@assets': path.resolve(__dirname, './src/assets'),
+      '@content': path.resolve(__dirname, './src/content'),
       'shared': path.resolve(__dirname, '../shared')
     }
   },

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { GameService, useGameState } from '@services/gameService';
 import PlayersList from '@components/game/players/PlayersList/PlayersList';
 import Settings from '@components/game/Settings/Settings';
+import HowToPlay from '@components/game/HowToPlay/HowToPlay';
 import { toast } from '@store/toastStore';
 
 
@@ -84,7 +85,7 @@ const Lobby: React.FC<LobbyProps> = ({ isHost }) => {
         maxPlayers={6}
       />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 text-s">
         {isHost && (
           <Settings />
         )}
@@ -107,8 +108,9 @@ const Lobby: React.FC<LobbyProps> = ({ isHost }) => {
             <polyline points="16 6 12 2 8 6" />
             <line x1="12" y1="2" x2="12" y2="15" />
           </svg>
-          Share Invite Link
+          Invite
         </button>
+        <HowToPlay />
       </div>
 
       {isHost && players.length >= 2 && (
