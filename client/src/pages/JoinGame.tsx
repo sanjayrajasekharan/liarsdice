@@ -64,7 +64,7 @@ const JoinGame: React.FC = () => {
             onClick={handleJoinGame}
             className="btn-primary w-full"
           >
-            Create Game
+            Join Game
           </button>
           <button onClick={() => navigate('/')} className="btn-ghost w-full">
             Back
