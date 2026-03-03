@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
   GameService,
@@ -7,7 +6,6 @@ import {
   selectIsHost,
 } from '@services/gameService';
 import { GameStage } from 'shared/domain';
-import { toast } from '@store/toastStore';
 
 import Lobby from '@components/game/stages/Lobby/Lobby';
 import Round from '@components/game/stages/Round/Round';
@@ -17,77 +15,34 @@ import LeaveGame from '@components/game/LeaveGame/LeaveGame';
 import { diceSvgs } from '@assets/dice';
 
 const Game: React.FC = () => {
-  const { gameCode: urlGameCode } = useParams<{ gameCode: string }>();
-  const navigate = useNavigate();
-  const [isValidating, setIsValidating] = useState(false);
-
   const gameCode = useGameState(state => state.gameCode);
   const gameState = useGameState(state => state.gameState);
   const isConnected = useGameState(state => state.isConnected);
+  const isLeaving = useGameState(state => state.isLeaving);
   const error = useGameState(state => state.error);
   const isHost = useGameState(selectIsHost);
 
-  // Connect to socket when component mounts
   useEffect(() => {
-    if (urlGameCode && !gameCode) {
-      setIsValidating(true);
-      GameService.getGameStatus(urlGameCode).then((status) => {
-        setIsValidating(false);
-        if (status.joinable) {
-          navigate('/join', { state: { gameCode: urlGameCode } });
-        } else {
-          toast.error(status.reason || 'Unable to join game');
-          navigate('/');
-        }
-      });
-      return;
-    }
-
-    // Verify URL matches store
-    if (urlGameCode && gameCode && urlGameCode !== gameCode) {
-      navigate(`/game/${gameCode}`);
-      return;
-    }
-
-    // Connect socket if we have a game code
     if (gameCode && !isConnected) {
       GameService.connectSocket();
     }
+  }, [gameCode, isConnected]);
 
-    // Cleanup on unmount
-    return () => {
-      // Don't disconnect here - let the user stay connected
-      // GameService.disconnectSocket();
-    };
-  }, [gameCode, urlGameCode, isConnected, navigate]);
+  if (isLeaving) return;
 
-  // Render loading state
-  if (isValidating || !gameState) {
+  if (!gameState) {
     return (
       <div className="h-dvh flex items-center justify-center p-4">
         <div className="card text-center">
-          {error ? (
-            <div>
-              <h2 className="text-xl font-bold text-error-600 mb-2">Error</h2>
-              <p className="text-text-secondary mb-4">{error}</p>
-              <button
-                onClick={() => navigate('/')}
-                className="btn-primary"
-              >
-                Back to Home
-              </button>
-            </div>
-          ) : (
-            <p className="text-text-secondary">
-              {isValidating ? 'Checking game...' : 'Connecting to game...'}
-            </p>
-          )}
+          <p className="text-text-secondary">
+            {isLeaving ? 'Leaving game...' : 'Connecting to game...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  // Render stage component with AnimatePresence for transitions
+
   const renderStage = () => {
     switch (gameState.stage) {
       case GameStage.PRE_GAME:
@@ -107,7 +62,6 @@ const Game: React.FC = () => {
     }
   };
 
-  // replace connected / not connected with a better UI element
   return (
     <div className="h-dvh flex flex-col bg-surface-primary overflow-x-hidden">
       <header className="shrink-0 flex items-center justify-between px-4 py-3 bg-surface-elevated border-b border-border-light">

@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ToastProvider } from "@components/common/Toast";
 import { SessionProvider } from "@components/providers/SessionProvider";
 import LandingPage from "./pages/Landing/Landing";
@@ -18,7 +18,9 @@ const App: React.FC = () => {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/create" element={<CreateGame />} />
                 <Route path="/join" element={<JoinGame />} />
+                <Route path="/join/:gameCode" element={<JoinGame />} />
                 <Route path="/game/:gameCode" element={<Game />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
           </div>

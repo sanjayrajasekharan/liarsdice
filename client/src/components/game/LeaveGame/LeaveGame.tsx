@@ -15,8 +15,8 @@ const LeaveGame: React.FC = () => {
     const success = await GameService.leaveGame();
     setIsOpen(false);
     if (success) {
-      navigate('/');
       GameService.clearSession();
+      navigate('/');
     }
   };
 

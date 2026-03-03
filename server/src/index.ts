@@ -13,6 +13,7 @@ import InMemoryStore from '@store/InMemoryStore.js';
 import GameService from '@app/GameService.js';
 import TurnTimerService from '@app/TurnTimerService.js';
 import RoundTimerService from '@app/RoundTimerService.js';
+import ReconnectTimerService from '@app/ReconnectTimerService.js';
 import { buildSocketServer } from '@sockets/socket-utils/socket-builder.js';
 import { GameController } from '@sockets/GameController.js';
 import GamesManagerController from '@rest/GamesMangerController.js';
@@ -22,6 +23,7 @@ container.bind(Store).to(InMemoryStore).inSingletonScope();
 container.bind(GameService).toSelf().inSingletonScope();
 container.bind(TurnTimerService).toSelf().inSingletonScope();
 container.bind(RoundTimerService).toSelf().inSingletonScope();
+container.bind(ReconnectTimerService).toSelf().inSingletonScope();
 container.bind(GameController).toSelf().inSingletonScope();
 container.bind(GamesManagerController).toSelf().inSingletonScope();
 

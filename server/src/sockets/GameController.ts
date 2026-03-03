@@ -7,6 +7,7 @@ import { inject } from "inversify";
 import GameService from "@app/GameService.js";
 import TurnTimerService from "@app/TurnTimerService.js";
 import RoundTimerService from "@app/RoundTimerService.js";
+import ReconnectTimerService from "@app/ReconnectTimerService.js";
 import { DieFace, GameCode, GameSettings, GameStage, PlayerId } from "shared/domain.js";
 import { getErrorMessage } from "shared/errors.js";
 import { authMiddleware } from "@sockets/middleware/authMiddleware.js";
@@ -20,6 +21,7 @@ export class GameController {
     @inject(GameService) private gameService: GameService,
     @inject(TurnTimerService) private turnTimerService: TurnTimerService,
     @inject(RoundTimerService) private roundTimerService: RoundTimerService,
+    @inject(ReconnectTimerService) private reconnectTimerService: ReconnectTimerService,
     @inject(BaseServer) private io: Server
   ) { }
 
@@ -36,13 +38,15 @@ export class GameController {
     socket.join(gameCode);
     socket.join(playerId);
 
+    const wasDisconnected = this.reconnectTimerService.cancelGracePeriod(playerId, gameCode);
+
     const gameStateResult = this.gameService.getGameState(playerId, gameCode);
     if (gameStateResult.isErr()) {
       throw new Error(getErrorMessage(gameStateResult.error));
     }
     const game = gameStateResult.value;
 
-    const isReconnect = game.stage === GameStage.ROUND_ROBIN || game.stage === GameStage.POST_ROUND;
+    const isActiveGameReconnect = game.stage === GameStage.ROUND_ROBIN || game.stage === GameStage.POST_ROUND;
 
     const sanitizedState = this.gameService.getGameStateForPlayer(playerId, gameCode);
     if (sanitizedState.isErr()) {
@@ -50,7 +54,7 @@ export class GameController {
     }
     socket.emit(ServerEvent.GAME_STATE, sanitizedState.value);
 
-    if (isReconnect) {
+    if (isActiveGameReconnect) {
       const diceResult = this.gameService.getPlayerDice(playerId, gameCode);
       if (diceResult.isOk() && diceResult.value.length > 0) {
         socket.emit(ServerEvent.DICE_ROLLED, { dice: diceResult.value });
@@ -61,7 +65,7 @@ export class GameController {
         const nextRoundStartsAt = this.roundTimerService.getDeadline(gameCode);
         socket.emit(ServerEvent.CHALLENGE_MADE, { ...lastChallengeResult, nextRoundStartsAt });
       }
-    } else {
+    } else if (!wasDisconnected) {
       const remainingDiceResult = this.gameService.getPlayerRemainingDice(playerId, gameCode);
       if (remainingDiceResult.isErr()) {
         throw new Error(getErrorMessage(remainingDiceResult.error));
@@ -91,14 +95,22 @@ export class GameController {
     const game = gameStateResult.value;
 
     if (game.stage === GameStage.PRE_GAME || game.stage === GameStage.POST_GAME) {
-      const result = this.gameService.handleDisconnect(gameCode, playerId);
-      if (result.isOk() && result.value.removed) {
-        const playerMessage: PlayerLeftPayload = {
-          playerId,
-          newHostId: result.value.newHostId ?? undefined,
-        };
-        this.io.to(gameCode).emit(ServerEvent.PLAYER_LEFT, playerMessage);
-      }
+      this.reconnectTimerService.startGracePeriod(
+        playerId,
+        gameCode,
+        (pId, gCode) => this.handleReconnectExpired(pId, gCode)
+      );
+    }
+  }
+
+  private handleReconnectExpired(playerId: PlayerId, gameCode: GameCode) {
+    const result = this.gameService.handleDisconnect(gameCode, playerId);
+    if (result.isOk() && result.value.removed) {
+      const playerMessage: PlayerLeftPayload = {
+        playerId,
+        newHostId: result.value.newHostId ?? undefined,
+      };
+      this.io.to(gameCode).emit(ServerEvent.PLAYER_LEFT, playerMessage);
     }
   }
 
