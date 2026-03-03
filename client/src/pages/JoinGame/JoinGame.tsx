@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { GameService } from '@services/gameService';
 import EntryCard from '@components/common/EntryCard/EntryCard';
 import { toast } from '@store/toastStore';
 
 const JoinGame: React.FC = () => {
   const navigate = useNavigate();
-  const [gameCode, setGameCode] = useState('');
-  const [playerName, setPlayerName] = useState('');
   const location = useLocation();
+  const { gameCode: urlGameCode } = useParams();
+  const initialGameCode = urlGameCode || location.state?.gameCode || '';
+  const [gameCode, setGameCode] = useState(initialGameCode);
+  const [playerName, setPlayerName] = useState('');
 
   useEffect(() => {
     if (location.state?.error) {
       toast.error(location.state.error);
     }
-    if (location.state?.gameCode) {
-      setGameCode(location.state.gameCode);
-    }
-  }, [location.state]);
+  }, [location.state?.error]);
 
   const handleJoinGame = async () => {
     if (!gameCode.trim()) {

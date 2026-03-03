@@ -7,7 +7,11 @@ interface SessionProviderProps {
   children: React.ReactNode;
 }
 
-const ENTRY_ROUTES = ['/', '/create', '/join'];
+const ENTRY_ROUTES = ['/', '/create'];
+
+function isEntryRoute(pathname: string): boolean {
+  return ENTRY_ROUTES.includes(pathname) || pathname.startsWith('/join');
+}
 
 function extractGameCodeFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/game\/([^/]+)/);
@@ -33,10 +37,10 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
         const session = await GameService.initializeSession();
         const urlGameCode = extractGameCodeFromPath(location.pathname);
         const isOnGameRoute = urlGameCode !== null;
-        const isOnEntryRoute = ENTRY_ROUTES.includes(location.pathname);
+        const onEntryRoute = isEntryRoute(location.pathname);
 
         if (session) {
-          if (isOnEntryRoute) {
+          if (onEntryRoute) {
             navigate(`/game/${session.gameCode}`, { replace: true });
             lastProcessedPath.current = `/game/${session.gameCode}`;
           } else if (isOnGameRoute && urlGameCode !== session.gameCode) {
