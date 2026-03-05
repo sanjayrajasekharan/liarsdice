@@ -96,7 +96,7 @@ const Round: React.FC = () => {
             <PlayersDisplay />
           </div>
 
-          <div className="shrink-0 pt-4 flex items-center justify-center">
+          <div className="shrink-0 pt-48 flex items-center justify-center">
             <AnimatePresence mode="wait">
               {isMyTurn ? (
                 <motion.div
