@@ -87,13 +87,14 @@ const Round: React.FC = () => {
               currentPlayerId={playerId}
             />
 
+            <PlayersDisplay />
+
             {myDice.length > 0 &&
               <div className="card flex items-center justify-center py-3 sm:py-6">
                 <Dice dice={myDice} />
               </div>
             }
 
-            <PlayersDisplay />
           </div>
 
           <div className="shrink-0 pt-48 flex items-center justify-center">
