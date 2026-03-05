@@ -19,6 +19,10 @@ const meta = {
       options: [1, 2, 3, 4, 5, 6],
       description: 'The face value that was claimed',
     },
+    playerCountsOnes: {
+      control: { type: 'object' },
+      description: 'Array of players with their count of wildcard ones',
+    },
     actualTotal: {
       control: { type: 'number' },
       description: 'Total count of the claimed face across all players',
@@ -40,8 +44,13 @@ export const ThreePlayers: Story = {
       { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 3 },
       { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 1 },
     ],
+    playerCountsOnes: [
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 1 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 0 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 2 },
+    ],
     claimedFace: 4,
-    actualTotal: 6,
+    actualTotal: 9,
     currentPlayerId: 'p1',
   },
 };
@@ -52,8 +61,12 @@ export const TwoPlayers: Story = {
       { playerId: 'p1' as PlayerId, playerName: 'You', count: 3 },
       { playerId: 'p2' as PlayerId, playerName: 'Opponent', count: 1 },
     ],
+    playerCountsOnes: [
+      { playerId: 'p1' as PlayerId, playerName: 'You', count: 0 },
+      { playerId: 'p2' as PlayerId, playerName: 'Opponent', count: 1 },
+    ],
     claimedFace: 6,
-    actualTotal: 4,
+    actualTotal: 5,
     currentPlayerId: 'p1',
   },
 };
@@ -68,8 +81,16 @@ export const SixPlayers: Story = {
       { playerId: 'p5' as PlayerId, playerName: 'Eve', count: 2 },
       { playerId: 'p6' as PlayerId, playerName: 'Frank', count: 1 },
     ],
+    playerCountsOnes: [
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 0 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 1 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 0 },
+      { playerId: 'p4' as PlayerId, playerName: 'Diana', count: 2 },
+      { playerId: 'p5' as PlayerId, playerName: 'Eve', count: 0 },
+      { playerId: 'p6' as PlayerId, playerName: 'Frank', count: 1 },
+    ],
     claimedFace: 3,
-    actualTotal: 9,
+    actualTotal: 13,
     currentPlayerId: 'p1',
   },
 };
@@ -80,6 +101,11 @@ export const PlayerWithZero: Story = {
       { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 2 },
       { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 0 },
       { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 3 },
+    ],
+    playerCountsOnes: [
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 0 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 0 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 0 },
     ],
     claimedFace: 5,
     actualTotal: 5,
@@ -92,6 +118,11 @@ export const ChallengerWins: Story = {
     playerCounts: [
       { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 1 },
       { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 1 },
+      { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 0 },
+    ],
+    playerCountsOnes: [
+      { playerId: 'p1' as PlayerId, playerName: 'Alice', count: 0 },
+      { playerId: 'p2' as PlayerId, playerName: 'Bob', count: 0 },
       { playerId: 'p3' as PlayerId, playerName: 'Charlie', count: 0 },
     ],
     claimedFace: 2,

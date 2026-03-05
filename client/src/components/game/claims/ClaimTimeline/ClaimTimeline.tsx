@@ -35,10 +35,6 @@ const ClaimTimeline: React.FC<ClaimTimelineProps> = ({
   const previousClaims = claimHistory.slice(0, -1).reverse();
   const hasPreviousClaims = previousClaims.length > 0;
 
-  if (!currentClaim && claimHistory.length === 0) {
-    return null;
-  }
-
   return (
     <>
       <button
@@ -47,10 +43,10 @@ const ClaimTimeline: React.FC<ClaimTimelineProps> = ({
         disabled={claimHistory.length < 1}
         className={clsx(
           "card overflow-x-hidden p-3 sm:p-6 w-full text-left",
+          !currentClaim && "invisible",
           hasPreviousClaims && "cursor-pointer hover:bg-surface-secondary transition-colors duration-200"
         )}
       >
-        {/* Current Claim - Compact Display */}
         <AnimatePresence mode="wait">
           {currentClaim && (
             <motion.div

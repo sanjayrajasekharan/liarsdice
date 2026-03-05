@@ -479,6 +479,270 @@ describe('Game', () => {
     });
   });
 
+  describe('wildcard ones', () => {
+    it('should include ones in actualTotal when claiming a non-one face', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player1Id = currentGame.hostId;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p => ({
+          ...p,
+          remainingDice: 5,
+          dice: p.id === player1Id
+            ? [3 as DieFace, 3 as DieFace, 1 as DieFace, 4 as DieFace, 5 as DieFace]
+            : [3 as DieFace, 1 as DieFace, 1 as DieFace, 6 as DieFace, 2 as DieFace],
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 4, faceValue: 3 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        // Player1: two 3s + one 1 = 3 matching; Player2: one 3 + two 1s = 3 matching
+        // actualTotal = 6 (three 3s + three 1s)
+        expect(result.value.result.actualTotal).to.equal(6);
+      }
+    });
+
+    it('should populate playerCounts with only the claimed face (excluding ones)', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player1Id = currentGame.hostId;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p => ({
+          ...p,
+          remainingDice: 3,
+          dice: p.id === player1Id
+            ? [4 as DieFace, 1 as DieFace, 4 as DieFace]
+            : [1 as DieFace, 4 as DieFace, 6 as DieFace],
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 3, faceValue: 4 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        const p1Counts = result.value.result.playerCounts.find(p => p.playerId === player1Id);
+        const p2Counts = result.value.result.playerCounts.find(p => p.playerId === player2Id);
+
+        expect(p1Counts!.count).to.equal(2);
+        expect(p2Counts!.count).to.equal(1);
+      }
+    });
+
+    it('should populate playerCountsOnes with only the count of ones per player', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player1Id = currentGame.hostId;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p => ({
+          ...p,
+          remainingDice: 3,
+          dice: p.id === player1Id
+            ? [4 as DieFace, 1 as DieFace, 4 as DieFace]
+            : [1 as DieFace, 4 as DieFace, 1 as DieFace],
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 3, faceValue: 4 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        const p1Ones = result.value.result.playerCountsOnes.find(p => p.playerId === player1Id);
+        const p2Ones = result.value.result.playerCountsOnes.find(p => p.playerId === player2Id);
+
+        expect(p1Ones!.count).to.equal(1);
+        expect(p2Ones!.count).to.equal(2);
+      }
+    });
+
+    it('should have actualTotal equal to sum of playerCounts + playerCountsOnes', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      const addResult2 = Game.addPlayer(addResult.value.game, 'Player3');
+      if (addResult2.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult2.value.game;
+      const player1Id = currentGame.hostId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map((p, idx) => ({
+          ...p,
+          remainingDice: 4,
+          dice: idx === 0
+            ? [5 as DieFace, 1 as DieFace, 5 as DieFace, 1 as DieFace]
+            : idx === 1
+            ? [5 as DieFace, 2 as DieFace, 1 as DieFace, 3 as DieFace]
+            : [1 as DieFace, 1 as DieFace, 6 as DieFace, 5 as DieFace],
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 5, faceValue: 5 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        const totalFace = result.value.result.playerCounts.reduce((sum, p) => sum + p.count, 0);
+        const totalOnes = result.value.result.playerCountsOnes.reduce((sum, p) => sum + p.count, 0);
+        expect(result.value.result.actualTotal).to.equal(totalFace + totalOnes);
+        // P1: two 5s + two 1s = 4; P2: one 5 + one 1 = 2; P3: one 5 + two 1s = 3; total = 9
+        expect(result.value.result.actualTotal).to.equal(9);
+      }
+    });
+
+    it('should count zero ones for players with no ones', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player1Id = currentGame.hostId;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p => ({
+          ...p,
+          remainingDice: 3,
+          dice: p.id === player1Id
+            ? [3 as DieFace, 3 as DieFace, 3 as DieFace]
+            : [2 as DieFace, 4 as DieFace, 6 as DieFace],
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 2, faceValue: 3 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        result.value.result.playerCountsOnes.forEach(p => {
+          expect(p.count).to.equal(0);
+        });
+        expect(result.value.result.actualTotal).to.equal(3);
+      }
+    });
+
+    it('should let challenger win when ones are not enough to meet the claim', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player1Id = currentGame.hostId;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p => ({
+          ...p,
+          remainingDice: 3,
+          dice: p.id === player1Id
+            ? [2 as DieFace, 1 as DieFace, 6 as DieFace]
+            : [1 as DieFace, 4 as DieFace, 6 as DieFace],
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      // Claim 4 fives — actual: 0 fives + 2 ones = 2 < 4, challenger wins
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 4, faceValue: 5 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.result.actualTotal).to.equal(2);
+        expect(result.value.result.winnerId).to.equal(challengingPlayer);
+      }
+    });
+
+    it('should let claimer win when ones push the total to meet the claim', () => {
+      const addResult = Game.addPlayer(game, 'Player2');
+      if (addResult.isErr()) throw new Error('Failed to add player');
+      let currentGame = addResult.value.game;
+      const player1Id = currentGame.hostId;
+      const player2Id = addResult.value.playerId;
+
+      currentGame = {
+        ...currentGame,
+        players: currentGame.players.map(p => ({
+          ...p,
+          remainingDice: 4,
+          dice: p.id === player1Id
+            ? [5 as DieFace, 1 as DieFace, 1 as DieFace, 3 as DieFace]
+            : [5 as DieFace, 5 as DieFace, 1 as DieFace, 6 as DieFace],
+        })),
+        stage: GameStage.ROUND_ROBIN,
+        currentTurnIndex: 0,
+      };
+
+      // Claim 6 fives — actual: 3 fives + 3 ones = 6 >= 6, claimer wins
+      const claimingPlayer = currentGame.players[currentGame.currentTurnIndex].id;
+      const claim: Claim = { playerId: claimingPlayer, quantity: 6, faceValue: 5 as DieFace };
+      const claimResult = Game.addClaim(currentGame, claim);
+      if (claimResult.isErr()) throw new Error('Failed to add claim');
+
+      const challengingPlayer = claimResult.value.players[claimResult.value.currentTurnIndex].id;
+      const result = Game.challenge(claimResult.value, challengingPlayer);
+
+      expect(result.isOk()).to.be.true;
+      if (result.isOk()) {
+        expect(result.value.result.actualTotal).to.equal(6);
+        expect(result.value.result.winnerId).to.equal(claimingPlayer);
+      }
+    });
+  });
+
   describe('game flow', () => {
     it('should handle a complete round flow with stage transitions', () => {
       const p1Result = Game.addPlayer(game, 'Player1');

@@ -12,7 +12,8 @@ Liar's Dice is a game of bluffing and reasoning. You and your opponents make a s
 Players take turns making *claims* about the total dice on the table (across all players):
 
 ### Claims
-A claim consists of a quantity and face value (e.g., "three ![4](/images/dice/four.svg)s" means there are at least three dice showing a 4).
+A claim consists of a quantity and face value (e.g., "three ![4](/images/dice/four.svg)s" means there are at least three dice showing a 4 or a 1).
+**Note: Ones are wild cards!**
 
 **Raise the Bid** — Each claim must be higher than the last:
 - Increase the quantity

@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import clsx from 'clsx';
 import { DieFace, PlayerDiceCount } from 'shared/domain';
 import { diceSvgs } from "@assets/dice";
-import { containerVariants, rowVariants, diceContainerVariants, dieVariants, eggVariants, footerVariants } from './transitions';
+import { containerVariants, rowVariants, diceContainerVariants, dieVariants, footerVariants } from './transitions';
 
 interface RevealProps {
   playerCounts: PlayerDiceCount[];
+  playerCountsOnes: PlayerDiceCount[];
   claimedFace: DieFace;
   actualTotal: number;
   currentPlayerId: string | null;
@@ -14,12 +15,19 @@ interface RevealProps {
   onAnimationComplete?: () => void;
 }
 
-const Reveal: React.FC<RevealProps> = ({ playerCounts, claimedFace, actualTotal, currentPlayerId, skipAnimation, onAnimationComplete }) => {
+const Reveal: React.FC<RevealProps> = ({ playerCounts, playerCountsOnes, claimedFace, actualTotal, currentPlayerId, skipAnimation, onAnimationComplete }) => {
   useEffect(() => {
     if (skipAnimation && onAnimationComplete) {
       onAnimationComplete();
     }
   }, [skipAnimation, onAnimationComplete]);
+
+  const combinedPlayerCounts = playerCounts.map((player, index) => ({
+    playerId: player.playerId,
+    playerName: player.playerName,
+    count: player.count,
+    onesCount: playerCountsOnes[index].count,
+  }));
 
   return (
     <motion.div
@@ -29,7 +37,7 @@ const Reveal: React.FC<RevealProps> = ({ playerCounts, claimedFace, actualTotal,
       animate="show"
       onAnimationComplete={skipAnimation ? undefined : onAnimationComplete}
     >
-      {playerCounts.map((player, index) => (
+      {combinedPlayerCounts.map((player, index) => (
         <motion.div
           className={clsx(
             "flex items-center justify-between px-4 py-3 border-b border-border-light",
@@ -45,20 +53,20 @@ const Reveal: React.FC<RevealProps> = ({ playerCounts, claimedFace, actualTotal,
             className="flex items-center gap-1"
             variants={diceContainerVariants}
           >
-            {player.count > 0 ? (
-              Array.from({ length: player.count }).map((_, i) => (
+            {player.count + player.onesCount > 0 ? (
+              Array.from({ length: player.count + player.onesCount }).map((_, i) => (
                 <motion.img
                   key={i}
                   className="h-6 w-6"
-                  src={diceSvgs[claimedFace]}
-                  alt={`Die showing ${claimedFace}`}
+                  src={diceSvgs[i < player.count ? claimedFace : 1]}
+                  alt={`Die showing ${i < player.count ? claimedFace : 1}`}
                   variants={dieVariants}
                 />
               ))
+
             ) : (
               <motion.span
                 className="text-text-tertiary text-sm"
-                variants={eggVariants}
               >
                 -
               </motion.span>

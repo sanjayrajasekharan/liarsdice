@@ -87,6 +87,7 @@ const PostRound: React.FC = () => {
           <div className="w-full">
             <Reveal
               playerCounts={challengeResult.playerCounts}
+              playerCountsOnes={challengeResult.playerCountsOnes}
               claimedFace={challengeResult.claimedFace}
               actualTotal={challengeResult.actualTotal}
               currentPlayerId={playerId}
@@ -101,7 +102,7 @@ const PostRound: React.FC = () => {
             animate={{ opacity: revealComplete ? 1 : 0 }}
             transition={{ duration: 0.4 }}
           >
-            <h3 className="text-xl font-mono">{winnerName} wins!</h3>
+            <h3 className="p-4 text-xl font-mono">{winnerName} wins!</h3>
           </motion.div>
         </>
       )}

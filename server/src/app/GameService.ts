@@ -344,7 +344,7 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
   const { quantity, faceValue, playerId: claimerId } = lastClaim;
 
   const actualTotal = game.players.reduce(
-    (total, player) => total + player.dice.filter(d => d === faceValue).length,
+    (total, player) => total + player.dice.filter(d => d === faceValue || d === 1).length,
     0
   );
 
@@ -352,6 +352,12 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
     playerId: player.id,
     playerName: player.name,
     count: player.dice.filter(d => d === faceValue).length,
+  }));
+
+  const playerCountsOnes = game.players.map(player => ({
+    playerId: player.id,
+    playerName: player.name,
+    count: player.dice.filter(d => d === 1).length,
   }));
 
   const winnerId = actualTotal < quantity ? challengerId : claimerId;
@@ -386,6 +392,7 @@ export function challenge(game: GameState, challengerId: PlayerId): Result<{ gam
     claimedFace: faceValue,
     actualTotal,
     playerCounts,
+    playerCountsOnes,
     winnerId,
     loserId,
     loserOut,

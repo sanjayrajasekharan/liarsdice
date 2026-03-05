@@ -71,6 +71,7 @@ export const ChallengeResultSchema = z.object({
   claimedFace: DieFaceSchema,
   actualTotal: z.number(),
   playerCounts: z.array(PlayerDiceCountSchema),
+  playerCountsOnes: z.array(PlayerDiceCountSchema),
   winnerId: PlayerIdSchema,
   loserId: PlayerIdSchema,
   loserOut: z.boolean(),
